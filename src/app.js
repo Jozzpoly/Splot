@@ -1,4 +1,4 @@
-import {SIZE,DECK,RAMP,rampHeight,DT,createWorld,getBody,solids,surfaces,terrain,imprintAt,raycast,canReach,removeBridge,tickWorld,bodyConflicts,snapshot,restore,walk,placeObject,eraseNear,toggleGrip} from './world.mjs';
+import {SIZE,DECK,rampTriangles,DT,createWorld,getBody,solids,surfaces,terrain,imprintAt,raycast,canReach,removeBridge,tickWorld,bodyConflicts,snapshot,restore,walk,placeObject,eraseNear,toggleGrip} from './world.mjs';
 const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),ctx=canvas.getContext('2d'),mctx=mini.getContext('2d');
 const $=id=>document.getElementById(id), keys=new Set();
 let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode='auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
@@ -167,10 +167,12 @@ function bridge(){if(!w.deck)return;
   ctx.save();ctx.strokeStyle='#e6d0a299';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;
   ctx.beginPath();ctx.ellipse(center.x,center.y-13,scale*1.45,scale*1.18,0,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
- const pts=[[RAMP.minX,RAMP.minY],[RAMP.maxX,RAMP.minY],[RAMP.maxX,RAMP.maxY],[RAMP.minX,RAMP.maxY]].map(([x,y])=>XY(x,y,rampHeight(x)));
- const rim=[XY(RAMP.minX,RAMP.maxY,rampHeight(RAMP.minX)),XY(RAMP.maxX,RAMP.maxY,rampHeight(RAMP.maxX)),
-  XY(RAMP.maxX,RAMP.maxY,rampHeight(RAMP.maxX)-.24),XY(RAMP.minX,RAMP.maxY,rampHeight(RAMP.minX)-.24)];
- path(rim,'#655644','#ac926e',1);path(pts,'#8a785a','#cfb994',1.5);
+ // Do not keep a second, hand-drawn definition of the sloped surface.
+ // These faces are the same 3D triangles used by world-space raycasting.
+ const triangles=rampTriangles(),rampTopVertices=[triangles[2][0],triangles[2][1],triangles[2][2],triangles[3][2]];
+ const rim=[triangles[3][2],triangles[2][2],triangles[1][2],triangles[1][1]];
+ path(rim.map(v=>XY(v.x,v.y,v.z)),'#655644','#ac926e',1);
+ path(rampTopVertices.map(v=>XY(v.x,v.y,v.z)),'#8a785a','#cfb994',1.5);
 }
 function actor(b){const p=XY(b.x,b.y,b.z),shadow=XY(b.x,b.y,b.support==='bridge'||b.support==='ramp'?b.z:0),s=scale*.65,clr=color[b.id]||'#b2baa7';ctx.save();
  // This sprite stays upright; world-space heading and gaze are not screen rotation.

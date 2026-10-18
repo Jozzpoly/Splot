@@ -11,7 +11,7 @@ The owner repeatedly rejected technically cleaner but less playable experiments,
 ## What changed in the real game
 
 1. `src/spatial_construction.mjs` is a narrow, finite-thickness sloped-plank primitive. An authored set of two XY endpoints, width, top elevations, thickness and identity produces a walkable height query, finite-volume triangles, a circular-footprint query, an explicitly approximate upright-cylinder contact check and triangle ray hits.
-2. `src/world.mjs` now reconstructs the **same historical K2 ramp** through that primitive. The ramp's `surfaces`, `rampHeight`, `rampTriangles`, contact query, raycast and historical restore validation all consume its geometry. The original fixed deck, navigation, renderer, grip and input stay in place.
+2. `src/world.mjs` now reconstructs the **same historical K2 ramp** through that primitive. The ramp's `surfaces`, `rampHeight`, `rampTriangles`, contact query, raycast and historical restore validation all consume its geometry. The original fixed deck, navigation, cutaway policy, grip and input stay in place. The **ramp drawing** now uses the exact same top/side face vertices as raycasting rather than a separate hard-coded ramp polygon.
 3. `build.py` includes this module in the dependency-free standalone game HTML, with scoped binding names instead of introducing an external runtime or network dependency.
 4. The standalone `index.html` is rebuilt. It is still the K2 playable experience and does **not** contain a new in-game construction tool.
 
@@ -34,12 +34,16 @@ This research scene deliberately does not decide between orthogonal 2D authoring
 - **Baseline before edits:** 72/72 game tests, 15/15 separate K3 tests.
 - **After geometry extraction:** 85/85 tests (72 historical + 13 new), plus 15/15 in the unchanged K3 donor suite. `tests/spatial_construction.test.mjs` includes 840 metamorphic rotated/transposed ray/contact probes; `tests/spatial_scene.test.mjs` verifies two stacked candidate heights, a third differently oriented construction, identity, choice of depth and atomic import failure.
 - **Old-vs-new simulation differential**, local tooling using frozen baseline `world.mjs`: 6500 randomized body/ramp collision configurations, 6500 ray queries, 4250 ticks across five deterministic seeds — **0 remaining divergences**. This proves only equivalence within those tests, not mathematical identity in every scenario.
-- **Browser visual comparison:** old vs newly built K2, same `Przęsło` scenario, paused, same 1280×720 viewport: **0 changed pixels out of 921,600**, same world-state SHA-256, no JavaScript errors. It does not imply improved 2.5D occlusion; the *old image* still has the known problems.
+- **Browser visual comparison:** old vs newly built K2, same `Przęsło` scenario, paused, same 1280×720 viewport: **0 changed pixels out of 921,600** in the final paired capture, same world-state SHA-256, no JavaScript errors. A repeated control comparison of the identical historical HTML against itself also sometimes produces 5,373 low-amplitude differences (up to 3 RGB levels) across the canvas because the view frame count/timing is not perfectly locked. Consequently, do not use one strict pixel equality sample as the release gate. It does not imply improved 2.5D occlusion; the *old image* still has the known problems.
 - Browser gameplay and emulated mobile input passed in the targeted tests; final verification command and CI state should be recorded before promoting any branch.
+
+### Renderer extension falsified a naive QA assumption
+
+The additional ramp-renderer change initially failed at runtime because `bridge()` redeclared a local `top` constant; Node kernel tests remained green. That was corrected before update. Subsequent image captures initially showed 39,309 different pixels due in part to asynchronous camera easing. Once the camera was fixed, a comparison of *unchanged baseline against itself* exhibited the same 5,373 tiny RGB deltas as the changed build. The candidate had at least one exact matching paused frame. This is evidence of a **test-timing confounder**, not a claim of solved visibility. Source-to-geometry parity and interactive browser checks remain necessary.
 
 ## Known failures and high-priority falsifiers
 
-1. The historical bridge remains special-cased in the **renderer, solids and editor**. The new multi-construction scene is *not yet wired into Splot's live game*. Do not call Splot generally authorable in 2.5D.
+1. The historical **deck**, with its occlusion and cutaway logic, remains special-cased in the **renderer, solids and editor**; only the ramp face vertices are derived from the new geometry. The new multi-construction scene is *not yet wired into Splot's live game*. Do not call Splot generally authorable in 2.5D.
 2. Sloped-plank body conflict remains **conservative, cylindrical and kinematic**. It is not a convex rigid-body contact solver. Supported feet may hide overlaps close to the edge, and no torque/tipping is modeled.
 3. `supportCandidates` offers options, not traversability or a definitive support choice. A body can be near several supports; stepping between them requires more rules than sorting by height.
 4. The playable K2 renderer still has artistically and physically incomplete occlusion, cutaway, screen picking and material depiction. Even exact pixel parity is compatible with Owner FAIL.

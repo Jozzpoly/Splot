@@ -30,11 +30,16 @@
     "same_world_state": true,
     "different_pixel_count": 0,
     "max_channel_difference": 0,
-    "total_pixels": 921600
+    "total_pixels": 921600,
+    "repeated_self_control_example": {
+      "different_pixels": 5373,
+      "max_channel_difference": 3,
+      "interpretation": "The camera eases on each render frame. Absolute single-shot pixel count is not a reliable invariant."
+    }
   },
   "binary": {
-    "new_index_sha256": "fe65bd31fa0ccb23c4c211ab1cccc94eb1eccc2baeab1b3671321110d66d4f01",
-    "new_single_file_bytes": 76225
+    "new_index_sha256": "2a8ce9b0db1bef585ce16b9af5b4a1bbe46ed31a3eaff98d8819cd07cd36c97e",
+    "new_single_file_bytes": 76279
   },
   "limits": [
     "Only 1 hard-coded bridge in playable game",
@@ -42,6 +47,6 @@
     "No 3D solver and no generalized navigation",
     "No full visual occlusion or surface-pick integration",
     "No Owner mobile approval",
-    "Exact screenshot parity means no visual improvement"
+    "Screenshot parity is a regression indicator with frame-timing noise, not proof of good 2.5D visuals"
   ]
 }

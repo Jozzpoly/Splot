@@ -1,0 +1,15 @@
+{
+  "seeds": 10,
+  "ticks": 9000,
+  "editsAccepted": 597,
+  "editsRejected": 103,
+  "erasures": 319,
+  "checks": 105474,
+  "roundtrips": 100,
+  "violations": [],
+  "reasons": {
+    "occupied": 103
+  },
+  "invalidations": 0,
+  "violationCount": 0
+}

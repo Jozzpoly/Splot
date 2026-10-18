@@ -1,0 +1,13 @@
+{
+  "seedCount": 12,
+  "stepsPerSeed": 1500,
+  "ticks": 18000,
+  "attempts": 90000,
+  "failures": [],
+  "contacts": 619,
+  "landings": 47,
+  "pathCompleted": 9604,
+  "boarFoodReachedAt": 24.99999999999986,
+  "characterSupportContact": 0,
+  "failureCount": 0
+}

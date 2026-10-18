@@ -1,4 +1,4 @@
-import {makeSlopedPlank,plankHeight,plankAxisHeight,plankTriangles as buildPlankTriangles,plankCylinderContact} from './spatial_construction.mjs';
+import {makeSlopedPlank,plankHeight,plankAxisHeight,plankTriangles as buildPlankTriangles,plankCylinderContact,plankCircleContact,plankRayHits} from './spatial_construction.mjs';
 // SPLOT FORGE: independent falsifiable substrate. All units are world metres,
 // XY is ground, Z is gravity-up. Never imports/modifies the A2 runtime.
 export const SIZE={w:84,h:54};
@@ -17,7 +17,7 @@ const EPS=1e-7;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const inside=(x,y,b)=>x>=b.minX-EPS&&x<=b.maxX+EPS&&y>=b.minY-EPS&&y<=b.maxY+EPS;
 export function createWorld(seed=917){return {
- version:'forge-v1',seed,tick:0,time:0,deck:true,revision:0,authored:[],nextId:1,events:[],history:[],stats:{blocked:0,pushes:0,lands:0,routes:0,drags:0},grips:{},
+ version:'forge-v1',seed,tick:0,time:0,deck:true,revision:0,authored:[],constructions:[],nextId:1,events:[],history:[],stats:{blocked:0,pushes:0,lands:0,routes:0,drags:0},grips:{},
  bodies:[
  {id:'player',kind:'human',x:41.1,y:27.0,z:0,r:.30,h:1.64,mass:72,heading:0,gaze:0,support:'ground',vz:0,walk:0},
  {id:'scout',kind:'human',x:41.1,y:27.0,z:2.60,r:.30,h:1.64,mass:60,heading:Math.PI,gaze:Math.PI,support:'bridge',vz:0,walk:0},
@@ -39,6 +39,25 @@ export function solids(w){const a=[
   box('pillar-se',46.45,29.58,47,30.08,0,2.6)];
  if(w.deck){a.push(box('slab-center',37,24,47,26.15,2.28,2.6),box('slab-south',37,27.85,47,30,2.28,2.6),box('slab-middle',37.5,26.15,47,27.85,2.28,2.6));}
  return a.concat(w.authored||[]);}
+const authoredPlanks=w=>(w.constructions||[]).map(makeSlopedPlank);
+const plankById=(w,id)=>authoredPlanks(w).find(s=>s.id===id);
+export function constructionMeshes(w){return authoredPlanks(w).map(shape=>({id:shape.id,triangles:buildPlankTriangles(shape)}));}
+export function pickConstructionAtProjection(w,x,groundY){
+ // Canvas projection is screenY = base + .67*scale*(y-camY) - .53*scale*z.
+ // The ray through a pixel therefore changes world Y as height changes.
+ const k=.53/.67,high={x,y:groundY+8*k,z:8},low={x,y:groundY-.5*k,z:-.5};
+ return authoredPlanks(w).flatMap(s=>plankRayHits(s,high,low).filter(hit=>hit.kind==='top'))
+ .sort((a,b)=>a.t-b.t).filter((h,i,list)=>!list.slice(0,i).some(prev=>prev.id===h.id&&Math.abs(prev.t-h.t)<1e-7));
+}
+
+function constructionSupport(s,x,y,r=0){
+ if(r>0&&!plankCircleContact(s,{x,y,r}))return null;
+ const height=plankHeight(s,x,y);
+ if(height!==null)return height;
+ // A crate's footprint retains contact at a finite edge; axis height is an
+ // acknowledged kinematic approximation, not a tipping/torque calculation.
+ return r>0?plankAxisHeight(s,x,y):null;
+}
 export function surfaces(w,x,y,r=0){const s=[{id:'ground',z:0}];if(w.deck){
   // Deck support uses the same physical rectangle as its solid slab. A body
   // for crates remains supported while some of its footprint still touches it.
@@ -46,10 +65,19 @@ export function surfaces(w,x,y,r=0){const s=[{id:'ground',z:0}];if(w.deck){
   if(r>0?circleRect({x,y,r},DECK):inside(x,y,DECK))s.push({id:'bridge',z:2.6});
   const rampZ=plankHeight(MAIN_RAMP,x,y);
   if(rampZ!==null)s.push({id:'ramp',z:rampZ});
- }return s;}
+ }for(const plank of authoredPlanks(w)){const z=constructionSupport(plank,x,y,r);if(z!==null)s.push({id:plank.id,z});}
+ return s;}
 function circleRect(b,s){const xx=clamp(b.x,s.minX,s.maxX),yy=clamp(b.y,s.minY,s.maxY);return (b.x-xx)**2+(b.y-yy)**2<(b.r-EPS)**2;}
 function touchesRampSlab(b){
  return plankCylinderContact(MAIN_RAMP,b,'ramp');
+}
+function touchesAuthoredPlank(s,b){
+ if(!plankCylinderContact(s,b,s.id))return false;
+ // A body already approaching from a supported surface may step up to the
+ // thin upper face. The volume below that ledge still blocks low actors.
+ const z=constructionSupport(s,b.x,b.y,b.r);
+ if(z!==null&&b.support!==null&&z>=b.z-.01&&z-b.z<=.23&&b.z>=z-s.thickness-.05)return false;
+ return true;
 }
 function zOverlap(a,b){return a.z<b.z+b.h-EPS&&a.z+a.h>b.z+EPS;}
 function circles(a,b){return (a.x-b.x)**2+(a.y-b.y)**2<(a.r+b.r-EPS)**2;}
@@ -58,13 +86,14 @@ export function bodyConflicts(w,b,moves=new Map(),ignoreIds=new Set()){
  if(bs.x-bs.r<0||bs.y-bs.r<0||bs.x+bs.r>SIZE.w||bs.y+bs.r>SIZE.h)hit.push('bounds');
  for(const s of solids(w)){if(circleRect(bs,s)&&bs.z<s.maxZ-EPS&&bs.z+bs.h>s.minZ+EPS)hit.push(s.id);}
  if(w.deck&&touchesRampSlab(bs))hit.push('ramp-slab');
+ for(const plank of authoredPlanks(w))if(touchesAuthoredPlank(plank,bs))hit.push(plank.id);
  for(const q of w.bodies){if(q.id===b.id||ignoreIds.has(q.id))continue;const qp={...q,...(moves.get(q.id)||{})};if(circles(bs,qp)&&zOverlap(bs,qp))hit.push(q.id);}
  return hit;
 }
 function requestedSupport(w,b,x,y){
  const opts=surfaces(w,x,y,b.kind==='crate'?b.r:0).filter(o=>Math.abs(o.z-b.z)<.24+EPS);
  const same=opts.find(o=>o.id===b.support);
- const entry=opts.find(o=>o.id==='ramp'&&o.z<.22&&b.support==='ground');
+ const entry=opts.find(o=>(o.id==='ramp'||o.id.startsWith('made-ramp-'))&&o.z<.22&&b.support==='ground');
  return entry||same||opts.sort((a,c)=>Math.abs(a.z-b.z)-Math.abs(c.z-b.z))[0]||null;
 }
 // Shared material memory: accepted ground contacts only. The small grid is a
@@ -101,6 +130,7 @@ export function proposeHorizontal(w,actorId,dx,dy,{strength=120}={}){
    const current=getBody(w,id);const p=loc.get(id);const pos={...current,...p};
    for(const vol of solids(w)){if(circleRect(pos,vol)&&pos.z<vol.maxZ-EPS&&pos.z+pos.h>vol.minZ+EPS)return {ok:false,reason:'static',hits:[vol.id]};}
    if(w.deck&&touchesRampSlab(pos))return {ok:false,reason:'static',hits:['ramp-slab']};
+   for(const plank of authoredPlanks(w))if(touchesAuthoredPlank(plank,pos))return {ok:false,reason:'static',hits:[plank.id]};
    if(pos.x-pos.r<0||pos.x+pos.r>SIZE.w||pos.y-pos.r<0||pos.y+pos.r>SIZE.h)return {ok:false,reason:'bounds',hits:['bounds']};
    for(const other of w.bodies){if(group.has(other.id))continue;
     if(circles(pos,other)&&zOverlap(pos,other)){
@@ -209,6 +239,11 @@ export function walk(w,id,dx,dy,{strength=120,emit=true}={}){
 // Every accepted edit changes the canonical collision/query/navigation world.
 function touchTopology(w){w.revision++;w.nav.path=[];w.nav.targetKey='';w.nav.lastReplan=0;}
 function boxIntersects(a,b){return a.minX<b.maxX-EPS&&a.maxX>b.minX+EPS&&a.minY<b.maxY-EPS&&a.maxY>b.minY+EPS&&a.minZ<b.maxZ-EPS&&a.maxZ>b.minZ+EPS;}
+function plankBounds(p){
+ const vs=buildPlankTriangles(p).flat();return {id:p.id,minX:Math.min(...vs.map(q=>q.x)),maxX:Math.max(...vs.map(q=>q.x)),minY:Math.min(...vs.map(q=>q.y)),maxY:Math.max(...vs.map(q=>q.y)),minZ:Math.min(...vs.map(q=>q.z)),maxZ:Math.max(...vs.map(q=>q.z))};
+}
+function constructionObstacles(w){return [...solids(w),...authoredPlanks(w).map(plankBounds),...(w.deck?[{...plankBounds(MAIN_RAMP),id:'historic-ramp'}]:[])];}
+
 export function placeObject(w,kind,x,y,{level='ground'}={}){
  if(!['crate','wall'].includes(kind)||!Number.isFinite(x)||!Number.isFinite(y))return {ok:false,reason:'bad-input'};
  const z=level==='bridge'&&w.deck&&inside(x,y,DECK)?2.6:0;
@@ -227,7 +262,44 @@ export function placeObject(w,kind,x,y,{level='ground'}={}){
  if(hits.length)return {ok:false,reason:'occupied',hits};
  w.authored.push(v);w.nextId++;touchTopology(w);event(w,'authored',{id,kind,x,y,z});return {ok:true,id,kind};
 }
+// One authoring action creates two finite-volume planks: a sloped access and a
+// flat elevated surface. Each obeys exactly the same support/contact/ray laws.
+// No new terrain modes, bespoke physics or per-stage navigation scripts.
+export function placeScaffold(w,x,y,{turns=0,height=1.8}={}){
+ if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(height)||height<.9||height>3.0||
+    !Number.isInteger(turns)||turns<0||turns>3)return {ok:false,reason:'invalid-geometry'};
+ if((w.constructions||[]).length>=20||w.bodies.length+w.authored.length>70)return {ok:false,reason:'edit-budget'};
+ const angles=[[1,0],[0,1],[-1,0],[0,-1]],v=angles[turns],rampLength=3.6,deckLength=4.2;
+ const rx=x+rampLength*v[0],ry=y+rampLength*v[1];
+ const defs=[
+  {id:'made-ramp-'+w.nextId,ax:x,ay:y,bx:rx,by:ry,width:1.75,z0:0,z1:height,thickness:.23},
+  {id:'made-platform-'+(w.nextId+1),ax:rx,ay:ry,bx:rx+deckLength*v[0],by:ry+deckLength*v[1],width:3.0,z0:height,z1:height,thickness:.27}
+ ];
+ const shapes=defs.map(makeSlopedPlank);
+ // Test footprint and occupied volume before committing either part.
+ const aabbs=shapes.map(plankBounds);
+ if(aabbs.some(b=>b.minX<.3||b.minY<.3||b.maxX>SIZE.w-.3||b.maxY>SIZE.h-.3))return {ok:false,reason:'bounds'};
+ const obstacles=constructionObstacles(w);
+ // Existing static AABBs (and stage AABBs) must not be penetrated in volume.
+ for(const candidate of aabbs)for(const o of obstacles)if(boxIntersects(candidate,o))return {ok:false,reason:'occupied',hits:[o.id]};
+ for(const body of w.bodies)if(shapes.some(s=>plankCylinderContact(s,body,s.id)))return {ok:false,reason:'actor-contact',hits:[body.id]};
+ w.constructions.push(...defs);w.nextId+=2;touchTopology(w);
+ for(const d of defs)event(w,'authored-construction',{id:d.id,kind:d.id.includes('ramp')?'ramp':'platform',x:d.ax,y:d.ay,z:d.z1});
+ return {ok:true,ids:defs.map(d=>d.id)};
+}
+export function eraseConstruction(w,id){
+ const index=(w.constructions||[]).findIndex(v=>v.id===id);
+ if(index<0)return {ok:false,reason:'not-authored-construction'};
+ w.constructions.splice(index,1);touchTopology(w);event(w,'erased-construction',{id});
+ for(const actorId of Object.keys(w.grips||{})){
+  const a=getBody(w,actorId),b=getBody(w,w.grips[actorId]);
+  if(a?.support===id||b?.support===id)clearGrip(w,actorId,'construction-removed');
+ }
+ for(const b of w.bodies)if(b.support===id){b.support=null;b.vz=0;event(w,'support-lost',{id:b.id,from:id});}
+ return {ok:true,id};
+}
 export function eraseObject(w,id){
+ if((w.constructions||[]).some(s=>s.id===id))return eraseConstruction(w,id);
  let idx=w.authored.findIndex(s=>s.id===id);
  if(idx>=0){w.authored.splice(idx,1);touchTopology(w);event(w,'erased',{id});return {ok:true,id};}
  if(Object.values(w.grips||{}).includes(id))return {ok:false,reason:'held-by-actor'};
@@ -236,6 +308,9 @@ export function eraseObject(w,id){
  return {ok:false,reason:'not-authored'};
 }
 export function eraseNear(w,x,y,{level='ground',radius=.75}={}){
+ const construction=authoredPlanks(w).filter(s=>plankCircleContact(s,{x,y,r:radius}))
+  .sort((a,b)=>Math.hypot((a.ax+a.bx)/2-x,(a.ay+a.by)/2-y)-Math.hypot((b.ax+b.bx)/2-x,(b.ay+b.by)/2-y))[0];
+ if(construction)return eraseConstruction(w,construction.id);
  const z=level==='bridge'?2.6:0;
  const candidates=[...w.authored.map(s=>({id:s.id,x:(s.minX+s.maxX)/2,y:(s.minY+s.maxY)/2,z:s.minZ})),...w.bodies.filter(b=>b.id.startsWith('made-crate-'))];
  const hit=candidates.filter(a=>Math.abs(a.z-z)<.12&&Math.hypot(a.x-x,a.y-y)<=radius).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];
@@ -267,6 +342,10 @@ export function gravityStep(w,dt=DT){
   if(!a||!b||a.support===null||b.support===null||Math.abs(a.z-b.z)>.95)clearGrip(w,actorId,'support-lost');}
  for(const b of [...w.bodies].sort((a,b)=>a.z-b.z)){
   if(b.support==='bridge'&&!w.deck){b.support=null;event(w,'support-lost',{id:b.id});}
+  if(b.support?.startsWith('made-')&&b.support?.includes('-')&&!['made-crate-','made-wall-'].some(prefix=>b.support.startsWith(prefix))){
+   const p=plankById(w,b.support),z=p&&constructionSupport(p,b.x,b.y,b.kind==='crate'?b.r:0);
+   if(z===null||z===undefined||Math.abs(b.z-z)>.045){const old=b.support;b.support=null;b.vz=0;event(w,'support-lost',{id:b.id,from:old});}
+  }
   if(b.support?.startsWith('solid:')){
    const id=b.support.slice(6),v=solids(w).find(s=>s.id===id);
    if(!v||!circleRect(b,v)||Math.abs(b.z-v.maxZ)>.02){
@@ -280,7 +359,7 @@ export function gravityStep(w,dt=DT){
   const nextVz=Math.max(-15,b.vz-9.81*dt),target=b.z+nextVz*dt;
   let best={z:0,support:'ground'};
   const ceilingCandidates=[];
-  for(const s of surfaces(w,b.x,b.y))if(s.z<=b.z+EPS&&s.z>=best.z)best={z:s.z,support:s.id};
+  for(const s of surfaces(w,b.x,b.y,b.kind==='crate'?b.r:0))if(s.z<=b.z+EPS&&s.z>=best.z)best={z:s.z,support:s.id};
   for(const wall of solids(w))if(circleRect(b,wall)&&wall.maxZ<=b.z+EPS&&wall.maxZ>=best.z)best={z:wall.maxZ,support:'solid:'+wall.id};
   for(const other of w.bodies){if(b.id===other.id||other.z+other.h>b.z+EPS||!horizontalOverlap(b,other))continue;
    if(other.z+other.h>=best.z)best={z:other.z+other.h,support:'body:'+other.id};}
@@ -324,6 +403,7 @@ export function raycast(w,start,end,{ignore=[]}={}){const d={x:end.x-start.x,y:e
   const t=rayTriangle(start,end,tri);
   if(t!==null&&t>=0&&t<1-1e-7&&(!best||t<best.t))best={id:'ramp-slab',t,at:{x:start.x+t*d.x,y:start.y+t*d.y,z:start.z+t*d.z}};
  }
+ for(const plank of authoredPlanks(w)){if(ignore.includes(plank.id))continue;for(const hit of plankRayHits(plank,start,end))if(hit.t>=0&&hit.t<1-1e-7&&(!best||hit.t<best.t))best={id:plank.id,t:hit.t,at:hit.at};}
  for(const b of w.bodies){if(ignore.includes(b.id))continue;const t=rayCylinder(start,d,b);if(t!==null&&t>=0&&t<1-1e-7&&(!best||t<best.t))best={id:b.id,t,at:{x:start.x+t*d.x,y:start.y+t*d.y,z:start.z+t*d.z}};}
  return best;}
 export function canReach(w,actorId,targetId,reach=1.85){const a=getBody(w,actorId),b=getBody(w,targetId);if(!a||!b)return {ok:false,reason:'missing'};
@@ -380,16 +460,31 @@ export function tickWorld(w,commands={},dt=DT){w.tick++;w.time+=dt;w.events=[];
  if(w.tick%30===0)event(w,'world-heartbeat',{time:w.time});
  return w.events;
 }
-export function snapshot(w){return JSON.stringify({version:w.version,seed:w.seed,tick:w.tick,time:w.time,deck:w.deck,revision:w.revision,authored:w.authored,nextId:w.nextId,bodies:w.bodies,goal:w.goal,nav:w.nav,stats:w.stats,imprints:w.imprints,grips:w.grips});}
+export function snapshot(w){return JSON.stringify({version:w.version,seed:w.seed,tick:w.tick,time:w.time,deck:w.deck,revision:w.revision,authored:w.authored,constructions:w.constructions||[],nextId:w.nextId,bodies:w.bodies,goal:w.goal,nav:w.nav,stats:w.stats,imprints:w.imprints,grips:w.grips});}
 export function restore(json){const v=typeof json==='string'?JSON.parse(json):json;
  if(v.version!=='forge-v1'||!Array.isArray(v.bodies)||v.bodies.length<5||v.bodies.length>75)throw new Error('Incompatible snapshot');
- const w=createWorld(v.seed);Object.assign(w,{...v,authored:v.authored||[],nextId:v.nextId||1,grips:v.grips||{},events:[],history:[],traces:[]});
+ const w=createWorld(v.seed);Object.assign(w,{...v,authored:v.authored||[],constructions:v.constructions||[],nextId:v.nextId||1,grips:v.grips||{},events:[],history:[],traces:[]});
  const ids=w.bodies.map(b=>b.id),essential=['player','scout','boar','crate','deck-crate'];
  if(new Set(ids).size!==ids.length||essential.some(id=>!ids.includes(id))||w.bodies.some(b=>!essential.includes(b.id)&&(!/^made-crate-\d+$/.test(b.id)||b.kind!=='crate')))throw new Error('Invalid body roster');
  if(!Array.isArray(w.authored)||w.authored.length>75||w.authored.some(o=>!/^made-wall-\d+$/.test(o.id)||!Number.isFinite(o.minX)||!Number.isFinite(o.minY)||!Number.isFinite(o.minZ)||!Number.isFinite(o.maxX)||!Number.isFinite(o.maxY)||!Number.isFinite(o.maxZ)||o.minX>=o.maxX||o.minY>=o.maxY||o.minZ>=o.maxZ||o.minX<0||o.minY<0||o.maxX>SIZE.w||o.maxY>SIZE.h))throw new Error('Invalid authored solids');
  if(w.authored.some(o=>o.minZ!==0&&!(w.deck&&Math.abs(o.minZ-2.6)<.01&&inside((o.minX+o.maxX)/2,(o.minY+o.maxY)/2,DECK))))throw new Error('Unsupported authored volume');
+ const shapes=w.constructions||[];if(!Array.isArray(shapes)||shapes.length>20)throw new Error('Invalid construction list');
+ const names=new Set([...ids,...w.authored.map(a=>a.id)]);
+ for(const def of shapes){if(!/^made-(ramp|platform)-\d+$/.test(def.id)||names.has(def.id))throw new Error('Invalid construction identity');names.add(def.id);
+  const valid=['id','ax','ay','bx','by','width','z0','z1','thickness'];if(Object.keys(def).length!==valid.length||valid.some(k=>!Object.hasOwn(def,k)))throw new Error('Invalid construction fields');
+  const shape=makeSlopedPlank(def),verts=buildPlankTriangles(shape).flat();
+  if(verts.some(q=>q.x<.3-EPS||q.y<.3-EPS||q.x>SIZE.w-.3+EPS||q.y>SIZE.h-.3+EPS))
+   throw new Error('Invalid construction bounds');
+ }
+ // A saved author's geometry may not silently intersect permanent collision
+ // volumes, the historic ramp, or other separately authored constructions.
+ const staticBoxes=constructionObstacles({...w,constructions:[]});
+ const constructedBoxes=shapes.map(def=>plankBounds(makeSlopedPlank(def)));
+ for(const b of constructedBoxes){if(staticBoxes.some(o=>boxIntersects(b,o)))throw new Error('Invalid construction overlap '+b.id);}
+ for(let i=0;i<constructedBoxes.length;i++)for(let j=i+1;j<constructedBoxes.length;j++)
+  if(boxIntersects(constructedBoxes[i],constructedBoxes[j]))throw new Error('Invalid construction overlap '+constructedBoxes[i].id);
  if(w.authored.some(a=>ids.includes(a.id))||new Set(w.authored.map(x=>x.id)).size!==w.authored.length)throw new Error('Repeated authored ids');
- const numericIds=[...ids,...w.authored.map(x=>x.id)].filter(x=>/^made-(crate|wall)-\d+$/.test(x)).map(x=>Number(x.split('-').at(-1)));
+ const numericIds=[...ids,...w.authored.map(x=>x.id),...shapes.map(x=>x.id)].filter(x=>/^made-(crate|wall|ramp|platform)-\d+$/.test(x)).map(x=>Number(x.split('-').at(-1)));
  if(!Number.isSafeInteger(w.nextId)||w.nextId<=Math.max(0,...numericIds))throw new Error('Invalid authoring sequence');
  for(const v of w.authored)if(solids({...w,authored:[]}).some(s=>boxIntersects(s,v)))throw new Error('Authored volume overlap with static solids');
  for(let i=0;i<w.authored.length;i++)for(let j=i+1;j<w.authored.length;j++)if(boxIntersects(w.authored[i],w.authored[j]))throw new Error('Authored solids overlap');
@@ -399,13 +494,17 @@ export function restore(json){const v=typeof json==='string'?JSON.parse(json):js
   if(b.support==='ground'&&Math.abs(b.z)>.015)throw new Error('Invalid ground support for '+b.id);
   if(b.support==='bridge'&&(!w.deck||!(b.kind==='crate'?circleRect(b,DECK):inside(b.x,b.y,DECK))||Math.abs(b.z-2.6)>.015))throw new Error('Invalid bridge support for '+b.id);
   if(b.support==='ramp'&&(!w.deck||plankHeight(MAIN_RAMP,b.x,b.y)===null||Math.abs(b.z-plankHeight(MAIN_RAMP,b.x,b.y))>.02))throw new Error('Invalid ramp support for '+b.id);
+  if(typeof b.support==='string'&&/^made-(ramp|platform)-/.test(b.support)){
+   const p=plankById(w,b.support),z=p&&constructionSupport(p,b.x,b.y,b.kind==='crate'?b.r:0);
+   if(z===null||z===undefined||Math.abs(b.z-z)>.045)throw new Error('Invalid construction support '+b.id);
+  }
   if(typeof b.support==='string'&&b.support.startsWith('body:')){
    const q=getBody(w,b.support.slice(5));if(!q||!circles(b,q)||Math.abs(b.z-q.z-q.h)>.02)throw new Error('Invalid body support for '+b.id);
   }
   if(typeof b.support==='string'&&b.support.startsWith('solid:')){
    const o=solids(w).find(x=>x.id===b.support.slice(6));if(!o||!circleRect(b,o)||Math.abs(b.z-o.maxZ)>.02)throw new Error('Invalid solid support for '+b.id);
   }
-  if(b.support!==null&&!['ground','bridge','ramp'].includes(b.support)&&!b.support.startsWith('body:')&&!b.support.startsWith('solid:'))throw new Error('Unknown support for '+b.id);
+  if(b.support!==null&&!['ground','bridge','ramp'].includes(b.support)&&!/^made-(ramp|platform)-/.test(b.support)&&!b.support.startsWith('body:')&&!b.support.startsWith('solid:'))throw new Error('Unknown support for '+b.id);
  }
  if(!w.grips||typeof w.grips!=='object'||Array.isArray(w.grips))throw new Error('Invalid grips');
  const used=new Set();for(const [id,crateId]of Object.entries(w.grips)){

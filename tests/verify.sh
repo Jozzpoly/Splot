@@ -10,3 +10,5 @@ python tests/browser_view.py
 python tests/browser_depth.py
 python tests/mobile_owner_contract.py
 python tests/mobile_rotation.py
+
+python tests/browser_scaffold.py

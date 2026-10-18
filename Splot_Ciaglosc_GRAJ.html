@@ -1,0 +1,795 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"><title>SPLOT / Forge — próba fundamentów</title><style>
+:root{color-scheme:dark;--paper:#f2e5c9;--muted:#92a7a3;--gold:#deb78a;--field:#142e34}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#0b1a20;color:var(--paper);font:14px/1.45 system-ui,Segoe UI,Arial}button{color:var(--paper);font:inherit;background:#273e43;border:1px solid #4c6564;border-radius:10px;padding:9px 12px;cursor:pointer;touch-action:manipulation}button:hover{background:#335159}button:disabled{opacity:.4}button:focus-visible{outline:2px solid var(--gold)}.shell{max-width:1600px;margin:auto;padding:16px;display:grid;gap:12px}.top{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}.eyebrow{font:700 11px ui-monospace,monospace;letter-spacing:.22em;color:#c89c71}.headline{font-weight:700;font-size:clamp(21px,2vw,30px);letter-spacing:-.04em}.sub{color:var(--muted);font-size:12px}.workspace{display:grid;grid-template-columns:minmax(0,1fr) 282px;gap:12px}.stage{align-self:start;position:relative;overflow:hidden;border:1px solid #4e6a65;border-radius:18px;background:#133139;min-width:0;min-height:550px;box-shadow:0 14px 42px rgba(0,0,0,.25)}#world{display:block;width:100%;height:clamp(550px,71vh,740px);touch-action:none}.corner{position:absolute;top:14px;left:16px;pointer-events:none;font-size:10px;letter-spacing:.22em;color:#f4d9ac;font-weight:700;text-shadow:0 2px 8px #000}.bottom{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;color:#e2d9be;font-size:11px}.bottom span{background:#12252bd9;padding:7px 10px;border:1px solid #4a605e80;border-radius:7px}.panel{border:1px solid #344b4e;border-radius:18px;background:#16282e;padding:14px;display:flex;flex-direction:column;gap:15px}.section{display:flex;flex-direction:column;gap:8px}.label{font:700 10px ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;color:#caaa7f}.buttons{display:flex;gap:6px;flex-wrap:wrap}.buttons button{font-size:12px;padding:7px 9px}.small{font-size:12px;color:#adc1b9}.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fact{background:#20383e;padding:10px;border-radius:10px}.fact strong{display:block;font-size:20px}.fact span{font-size:10px;color:#c1c3ac}#minimap{width:100%;height:auto;border:1px solid #526963;border-radius:8px;background:#203c3b}.event{font:11px ui-monospace,monospace;color:#c5cbbe;background:#21363b;border-radius:5px;padding:4px 6px;margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.explainer{border-left:2px solid #bd9970;padding-left:10px}.toolbar{display:flex;flex-wrap:wrap;gap:8px}.toolbar button{font-size:12px}.cycle-scenario{display:none;position:absolute;right:12px;top:12px;font-size:11px;padding:7px 10px}[data-tool][aria-pressed="true"]{background:#805c3d;color:#fff0d6;border-color:#e8b97f!important}.editor-floating{display:none;position:absolute;top:48px;right:12px;z-index:6;gap:5px;flex-wrap:wrap;max-width:220px}.editor-floating button{padding:5px 7px;font-size:11px;background:#153038ee}.editor-floating button[aria-pressed="true"]{background:#805c3d}
+.mobile-controls{display:none}.footer{color:#91a8a5;font-size:12px;line-height:1.6}.footer strong{color:#dcc9a9}#status{color:#e9cda7;min-height:40px}.pill{border:1px solid #516f6a;border-radius:99px;padding:3px 7px;color:#b8d2c8;font-size:10px}.hint{color:#bed5c8}
+@media(max-width:960px){.shell{padding:8px}.workspace{grid-template-columns:1fr}.stage{min-height:430px}#world{height:clamp(430px,70vh,690px)}.panel{display:grid;grid-template-columns:1fr 1fr;gap:13px}.panel .wide{grid-column:span 2}.editor-floating{display:flex}.mobile-controls{display:block;position:absolute;bottom:56px;left:15px;right:15px;pointer-events:none}.dpad{display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px;gap:4px;width:max-content;pointer-events:auto}.dpad button{background:#12272be0;border:1px solid #89a49b8c;padding:3px;touch-action:none}.dpad .up{grid-column:2}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}.action-touch{position:absolute;right:0;bottom:4px;pointer-events:auto}.bottom{bottom:7px}}@media(max-width:530px){.top{display:none}.shell{padding:0}.workspace{gap:0}.stage{border-radius:0;border:0;min-height:0}#world{height:100dvh}.panel{display:flex;padding:12px}.sub{max-width:38ch}.footer{display:none}}
+@media (max-height:500px) and (orientation:landscape) and (max-width:960px){
+ .shell{display:block;max-width:none;padding:0}.top,.panel,.footer{display:none}
+ .workspace{display:block}.stage{width:100vw;height:100dvh;min-height:0;border:0;border-radius:0}
+ #world{height:100dvh;width:100vw}.mobile-controls{display:block;bottom:40px;left:14px;right:14px}
+ .mobile-controls .dpad{grid-template-columns:40px 40px 40px;grid-template-rows:40px 40px;gap:3px}
+ .mobile-controls .action-touch{bottom:1px}.corner{top:11px;left:12px;font-size:9px;right:130px}
+ .cycle-scenario{display:block;z-index:5}.editor-floating{display:flex}.bottom{bottom:3px;font-size:10px}.bottom span{padding:4px 7px}
+ }
+
+/* Mobile is a dedicated input surface, not a shrunk desktop dashboard. */
+.mobile-top,#mobile-toast,#mobile-close-menu{display:none}
+@media (max-width:960px) and (pointer:coarse), (max-width:530px) {
+ html,body{width:100%;height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none}
+ html,body,.stage,.stage *,button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+ .shell,.workspace,.stage{margin:0;padding:0;width:100%;max-width:none;height:100dvh;min-height:0;display:block;overflow:hidden;border:0;border-radius:0}
+ .top,.footer,.corner,.bottom,.editor-floating,.cycle-scenario{display:none!important}
+ #world{width:100%;height:100dvh;display:block;touch-action:none}
+ .panel{display:none;position:fixed;inset:0;z-index:23;width:100%;height:100dvh;overflow:auto;overscroll-behavior:contain;background:#11262bfa;padding:calc(env(safe-area-inset-top) + 70px) 16px calc(env(safe-area-inset-bottom) + 30px);border:0;border-radius:0;grid-template-columns:1fr;align-content:start;gap:14px;-webkit-user-select:none;user-select:none}
+ body.mobile-menu-open .panel{display:grid!important}
+ body.mobile-menu-open .panel .wide{grid-column:span 1}
+ .panel button{min-height:48px;touch-action:manipulation}
+ .panel .small{font-size:12px;line-height:1.5}
+ .mobile-top{display:flex;position:absolute;left:calc(env(safe-area-inset-left) + 10px);right:calc(env(safe-area-inset-right) + 10px);top:calc(env(safe-area-inset-top) + 9px);height:48px;z-index:12;pointer-events:none;align-items:center;justify-content:space-between;gap:9px}
+ .mobile-top>span{background:#10252ac9;border:1px solid #5e817d80;padding:9px 12px;border-radius:12px;font-size:12px;font-weight:650;white-space:nowrap;max-width:52vw;overflow:hidden;text-overflow:ellipsis}
+ .mobile-top-actions{display:flex;gap:8px;pointer-events:auto}
+ .mobile-top-actions button{min-width:48px;width:48px;height:48px;padding:0;font-size:24px;background:#10282be8;border-color:#7089859c;touch-action:none}
+ #mobile-close-menu{display:none;position:fixed;right:calc(env(safe-area-inset-right) + 16px);top:calc(env(safe-area-inset-top) + 12px);min-height:48px;z-index:25;background:#344b4f;touch-action:manipulation}
+ body.mobile-menu-open #mobile-close-menu{display:block}
+ body.mobile-menu-open .mobile-top,body.mobile-menu-open .mobile-controls,body.mobile-menu-open #mobile-toast{visibility:hidden}
+ #mobile-toast{display:block;pointer-events:none;position:absolute;z-index:11;top:calc(env(safe-area-inset-top) + 64px);left:50%;transform:translateX(-50%);padding:7px 11px;border:1px solid #6e877f80;border-radius:10px;background:#122930e8;color:#f0d8ae;font-size:12px;text-align:center;line-height:1.3;max-width:min(82vw,340px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .25s}
+ #mobile-toast.shown{opacity:1}
+ .mobile-controls{display:flex;position:absolute;z-index:12;left:calc(env(safe-area-inset-left) + 13px);right:calc(env(safe-area-inset-right) + 13px);bottom:calc(env(safe-area-inset-bottom) + 12px);height:140px;pointer-events:none;justify-content:space-between;align-items:flex-end;gap:12px;touch-action:none}
+ .joystick{width:138px;height:138px;flex:0 0 138px;position:relative;pointer-events:auto;touch-action:none;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#1b454693,#0b2834aa 72%);border:2px solid #a3d2bd74;box-shadow:inset 0 0 22px #091c1a70}
+ .joystick-ring{width:87px;height:87px;border:1px dashed #a2c7b17c;border-radius:50%;display:grid;place-items:center;pointer-events:none}
+ .joystick-knob{width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,#46766f,#1d4653);border:2px solid #e1dfb49c;box-shadow:0 4px 14px #05151980;transform:translate(0px,0px);will-change:transform}
+ .mobile-actions{height:142px;display:flex;flex-direction:column;gap:10px;justify-content:end;pointer-events:auto;align-items:stretch;min-width:116px;max-width:42%;touch-action:none}
+ .mobile-actions button{height:64px;min-height:64px;padding:6px 11px;background:#133238eb;border:1px solid #91b7a7ba;border-radius:16px;font-size:15px;font-weight:700;touch-action:none;white-space:nowrap}
+ #mobile-grip{background:#745c42e8;border-color:#e0b87fbb}
+ #mobile-touch-info{background:#1a4042e9}
+}
+@media (max-height:460px) and (orientation:landscape) and (pointer:coarse) {
+ .mobile-controls{height:112px;bottom:calc(env(safe-area-inset-bottom) + 6px)}
+ .joystick{width:110px;height:110px;flex-basis:110px}
+ .joystick-ring{width:72px;height:72px}.joystick-knob{width:50px;height:50px}
+ .mobile-actions{height:116px;gap:6px;min-width:116px}
+ .mobile-actions button{min-height:54px;height:54px;font-size:14px}
+ .mobile-top{top:calc(env(safe-area-inset-top) + 5px)}
+ #mobile-toast{top:calc(env(safe-area-inset-top) + 57px)}
+}
+</style></head><body><main class="shell"><header class="top"><span class="eyebrow">SPLOT / KAMPANIA CIĄGŁOŚCI</span><span class="headline">Splot — ręce, materia i przestrzeń</span><span class="pill">wersja badawcza; zachowuje grywalność K2</span><span class="sub">84 × 54 · przestrzeń XYZ · kontakt · autorskie przeszkody</span></header><div class="workspace"><div class="stage"><canvas id="world" aria-label="Interaktywna scena Splot Forge"></canvas><span class="corner">PRZĘSŁO / STAN AUTORYTATYWNY</span><button id="cycle" class="cycle-scenario">Scena ↻</button>
+<div class="editor-floating"><button data-tool="none">Ruch</button><button data-tool="crate">Skrzynia</button><button data-tool="wall">Mur</button><button data-tool="erase">Usuń</button><button onclick="document.getElementById('viewmode').click()">Przekrój (C)</button></div><div class="mobile-top"><span id="mobile-level" aria-live="off">DÓŁ · 0,0 m</span><div class="mobile-top-actions"><button id="mobile-view" aria-label="Przełącz widok poziomów" title="Przełącz widok">◧</button><button id="mobile-options" aria-expanded="false" aria-label="Otwórz narzędzia i scenariusze">☰</button></div></div>
+<div id="mobile-toast" aria-live="polite" aria-atomic="true"></div>
+<div class="mobile-controls"><div class="joystick" id="mobile-joystick" role="group" aria-label="Wirtualny joystick kierunku ruchu"><div class="joystick-ring"><div id="joystick-knob" class="joystick-knob"></div></div></div><div class="mobile-actions"><button id="mobile-grip" aria-label="Chwyć lub puść skrzynię">Chwyt</button><button id="mobile-touch-info" aria-label="Zmień sterowaną postać">Poziom ↕</button></div></div>
+<button id="mobile-close-menu" aria-label="Zamknij panel narzędzi">Zamknij ×</button><div class="bottom"><span id="status">Wczytywanie...</span><span>WASD • E: chwyt • C: przekrój • 3/4/5: edytor</span></div></div><aside class="panel"><div class="section wide"><div class="label">Scenariusze falsyfikacyjne</div><div class="buttons"><button data-scenario="skrot">Skrót dzika</button><button data-scenario="przeciaganie">Chwyt</button><button data-scenario="zrzut">Zrzut z mostu</button><button data-scenario="przeslo">Przęsło</button><button data-scenario="kontakt">Kontakt</button><button data-scenario="upadek">Upadek</button><button data-scenario="obchodzenie">Obejście</button><button data-scenario="blokada">Zatarasowanie</button><button data-scenario="zagroda">Zagroda</button></div><div class="small">To ten sam kernel i jedna mapa. Każda scena atakuje inne założenie modelu.</div></div><div class="section"><div class="label">Sterowanie / próba</div><div class="buttons"><button id="actor">Postać: dół</button><button id="remove">Usuń most</button><button id="grip">Chwyć skrzynię (E)</button><button id="reach">Sprawdź zasięg</button><button id="play">Pauza</button><button id="reset">Reset</button><button id="ai">Dzik: działa</button><button id="debug">Debug: nie</button><button id="viewmode">Widok: automatyczny (C)</button></div></div><div class="section wide"><div class="label">Warsztat przestrzeni — tryb autora</div>
+<div class="buttons"><button data-tool="none">Ruch (0)</button><button data-tool="crate">Skrzynia (3)</button><button data-tool="wall">Mur (4)</button><button data-tool="erase">Usuń (5)</button></div>
+<div class="small">Wybierz narzędzie i wskaż miejsce w świecie. Przyciski są uprawnieniem edytora. Chwyt E przeciąga skrzynię po podparciu; ciężar przekraczający krawędź wyrywa się z chwytu i spada. To nadal uproszczona kinematyka, nie symulacja rąk. Zmiany wpływają na fizyczne kolizje i trasę dzika. Wybór poziomu wynika z wybranej postaci.</div><div id="builder-info" class="small"></div>
+<div class="buttons"><button id="export-world">Eksport świata</button><label class="small">Import JSON <input id="import-world" type="file" accept="application/json,.json" style="width:115px"></label></div>
+</div><div class="section"><div class="label">Mierzony stan</div><div class="facts"><div class="fact"><strong id="clock">0</strong><span>czas symulacji</span></div><div class="fact"><strong id="height">0</strong><span>wysokość stóp</span></div></div><div class="small">Podpora: <strong id="support" style="color:#eed2a4">ground</strong></div><div id="stats" class="small"></div></div><div class="section"><div class="label">Świat 84 × 54 / minimapa</div><canvas id="minimap" width="264" height="158"></canvas></div><div class="section wide"><div class="label">Dziennik zatwierdzonych zdarzeń</div><div id="events"></div></div><div class="section wide explainer"><div class="label">Granica dowodów</div><div class="small">Edytor nie jest symulacją budowania. To NIE jest kompletny silnik fizyczny. Postacie mogą po zawaleniu mostu stanąć na sobie; dzik korzysta z mapy A*, a nie autentycznej percepcji. Chwyt jest kinematycznym więzem, bez momentów obrotowych i dynamiki. Renderer jest diagnostyczny, nie wybranym art direction.</div></div></aside></div><div class="footer"><strong>Cel:</strong> ten sam kontakt powinien dawać spójne następstwo: zamiar → rozwiązanie → zatwierdzony ruch → widoczne zdarzenie. Nie sugerujemy prawdziwych impulsów tam, gdzie kod operuje tylko geometrycznymi ograniczeniami. Źródła, testy i kontrprzykłady dołączono do osobnej paczki.</div></main><script>
+'use strict';
+const {makeSlopedPlank,plankHeight,plankAxisHeight,buildPlankTriangles,plankCylinderContact} = (()=>{
+// A deliberately narrow geometry primitive for Splot's experimental 2.5D.
+// One authored, finite-thickness sloped plank (XY ground, Z up) produces
+// contact footprint, top-support height, occupied volume approximation,
+// full triangles and ray hits. It is NOT a physics solver or a map format.
+const EPS=1e-7;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z});
+const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+const cross=(a,b)=>({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x});
+const faceIndices=[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];
+function makeSlopedPlank({id,ax,ay,bx,by,width,z0,z1,thickness}){
+ const nums=[ax,ay,bx,by,width,z0,z1,thickness];
+ if(typeof id!=='string'||!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(id)||nums.some(n=>!Number.isFinite(n))||width<=0||thickness<=0)
+  throw new TypeError('invalid sloped plank');
+ const length=Math.hypot(bx-ax,by-ay);
+ if(length<.001||length>1000||width>1000||Math.abs(z1-z0)>1000||thickness>100)throw new RangeError('sloped plank out of range');
+ const tx=(bx-ax)/length,ty=(by-ay)/length;
+ return Object.freeze({id,ax,ay,bx,by,width,z0,z1,thickness,length,tx,ty,nx:-ty,ny:tx});
+}
+function coords(s,x,y){const dx=x-s.ax,dy=y-s.ay;return {u:dx*s.tx+dy*s.ty,v:dx*s.nx+dy*s.ny};}
+function plankAxisHeight(s,x,y){const {u}=coords(s,x,y);return s.z0+(s.z1-s.z0)*clamp(u/s.length,0,1);}
+function plankHeight(s,x,y){const {u,v}=coords(s,x,y);if(u < -EPS||u>s.length+EPS||Math.abs(v)>s.width/2+EPS)return null;
+ return plankAxisHeight(s,x,y);
+}
+function plankCircleContact(s,b){const {u,v}=coords(s,b.x,b.y);const nearU=clamp(u,0,s.length),nearV=clamp(v,-s.width/2,s.width/2);
+ return (u-nearU)**2+(v-nearV)**2 <= b.r*b.r+EPS;
+}
+function xyz(s,u,v,z){return {x:s.ax+s.tx*u+s.nx*v,y:s.ay+s.ty*u+s.ny*v,z};}
+function plankTriangles(s){const half=s.width/2;
+ const b0=xyz(s,0,-half,s.z0-s.thickness),b1=xyz(s,s.length,-half,s.z1-s.thickness),b2=xyz(s,s.length,half,s.z1-s.thickness),b3=xyz(s,0,half,s.z0-s.thickness);
+ const t0=xyz(s,0,-half,s.z0),t1=xyz(s,s.length,-half,s.z1),t2=xyz(s,s.length,half,s.z1),t3=xyz(s,0,half,s.z0);
+ const verts=[b0,b1,b2,b3,t0,t1,t2,t3];return faceIndices.map(indices=>indices.map(i=>verts[i]));
+}
+function plankCylinderContact(s,b,supportId=s.id,{lowStep=.32}={}){
+ if(!plankCircleContact(s,b))return false;
+ const {u}=coords(s,b.x,b.y),left=clamp(u-b.r,0,s.length),right=clamp(u+b.r,0,s.length);
+ const a=s.z0+(s.z1-s.z0)*(left/s.length),c=s.z0+(s.z1-s.z0)*(right/s.length);
+ const low=Math.min(a,c)-s.thickness,high=Math.max(a,c);
+ // A low accessible entry edge is a step-up, not a full-height wall.
+ if(b.support==='ground'&&high<=lowStep)return false;
+ // No duplicate collision between a foot and its own support plane.
+ // Legacy K2 support is centre-based; at a side boundary the body's foot
+ // may still overlap the plank even when its centre left its footprint.
+ // Preserve that contact policy during migration rather than silently changing
+ // how actors exit the ramp. A stronger contact solver remains an open issue.
+ const centreAxisZ=plankAxisHeight(s,b.x,b.y);
+ if(b.support===supportId&&Math.abs(b.z-centreAxisZ)<.05)return false;
+ return b.z<high-EPS&&b.z+b.h>low+EPS;
+}
+function triT(start,end,tri){const v=sub(end,start),e1=sub(tri[1],tri[0]),e2=sub(tri[2],tri[0]),h=cross(v,e2),det=dot(e1,h);
+ if(Math.abs(det)<1e-10)return null;const inv=1/det,delta=sub(start,tri[0]),u=inv*dot(delta,h);if(u<-EPS||u>1+EPS)return null;
+ const q=cross(delta,e1),w=inv*dot(v,q);if(w<-EPS||u+w>1+EPS)return null;
+ const t=inv*dot(e2,q);return t>=-EPS&&t<=1+EPS?t:null;
+}
+function plankRayHits(s,start,end){const hits=[];for(const [i,triangle]of plankTriangles(s).entries()){
+ const t=triT(start,end,triangle);if(t===null)continue;
+ hits.push({id:s.id,kind:i<2?'bottom':i<4?'top':'side',t,at:{x:start.x+(end.x-start.x)*t,y:start.y+(end.y-start.y)*t,z:start.z+(end.z-start.z)*t}});
+ }return hits.sort((a,b)=>a.t-b.t);
+}
+
+return {makeSlopedPlank,plankHeight,plankAxisHeight,buildPlankTriangles:plankTriangles,plankCylinderContact};
+})();
+
+// SPLOT FORGE: independent falsifiable substrate. All units are world metres,
+// XY is ground, Z is gravity-up. Never imports/modifies the A2 runtime.
+const SIZE={w:84,h:54};
+const DECK={id:'bridge',minX:37,maxX:47,minY:24,maxY:30,minZ:2.28,maxZ:2.60};
+const RAMP={id:'ramp',minX:34,maxX:37,minY:26.15,maxY:27.85};
+const RAMP_THICKNESS=.24;
+// Preserve the exact K2 shape/location, but derive its surface and collision
+// triangles from the general, rotated sloped-plank primitive.
+const MAIN_RAMP=makeSlopedPlank({id:'ramp',ax:RAMP.minX,ay:(RAMP.minY+RAMP.maxY)/2,
+ bx:RAMP.maxX,by:(RAMP.minY+RAMP.maxY)/2,width:RAMP.maxY-RAMP.minY,
+ z0:0,z1:DECK.maxZ,thickness:RAMP_THICKNESS});
+const rampHeight=x=>plankAxisHeight(MAIN_RAMP,x,(RAMP.minY+RAMP.maxY)/2);
+const rampTriangles=()=>buildPlankTriangles(MAIN_RAMP);
+const DT=1/60;
+const EPS=1e-7;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const inside=(x,y,b)=>x>=b.minX-EPS&&x<=b.maxX+EPS&&y>=b.minY-EPS&&y<=b.maxY+EPS;
+function createWorld(seed=917){return {
+ version:'forge-v1',seed,tick:0,time:0,deck:true,revision:0,authored:[],nextId:1,events:[],history:[],stats:{blocked:0,pushes:0,lands:0,routes:0,drags:0},grips:{},
+ bodies:[
+ {id:'player',kind:'human',x:41.1,y:27.0,z:0,r:.30,h:1.64,mass:72,heading:0,gaze:0,support:'ground',vz:0,walk:0},
+ {id:'scout',kind:'human',x:41.1,y:27.0,z:2.60,r:.30,h:1.64,mass:60,heading:Math.PI,gaze:Math.PI,support:'bridge',vz:0,walk:0},
+ {id:'boar',kind:'boar',x:40,y:22.5,z:0,r:.37,h:.83,mass:86,heading:1,gaze:1,support:'ground',vz:0,walk:0},
+ {id:'crate',kind:'crate',x:43.0,y:27.0,z:0,r:.41,h:.82,mass:32,support:'ground',vz:0},
+ {id:'deck-crate',kind:'crate',x:43.6,y:27,z:2.60,r:.41,h:.82,mass:32,support:'bridge',vz:0}],
+ goal:{x:49.2,y:28.4,z:0,id:'food',eaten:false},
+ nav:{path:[],targetKey:'',lastReplan:0}, imprints:{}, traces:[]};}
+const getBody=(w,id)=>w.bodies.find(b=>b.id===id);
+function box(id,x0,y0,x1,y1,z0,z1){return {id,minX:x0,minY:y0,maxX:x1,maxY:y1,minZ:z0,maxZ:z1};}
+function solids(w){const a=[
+  box('north-wall',47.4,22.5,48.15,27.3,0,2.2),
+  box('south-wall',47.4,28.55,48.15,32,0,2.2),
+  box('old-stone',36.4,22.7,37.4,23.65,0,1.45),
+  box('tree-trunk',50.0,26.2,50.7,27.3,0,2.5),
+  box('pillar-nw',37,23.92,37.55,24.42,0,2.6),
+  box('pillar-ne',46.45,23.92,47,24.42,0,2.6),
+  box('pillar-sw',37,29.58,37.55,30.08,0,2.6),
+  box('pillar-se',46.45,29.58,47,30.08,0,2.6)];
+ if(w.deck){a.push(box('slab-center',37,24,47,26.15,2.28,2.6),box('slab-south',37,27.85,47,30,2.28,2.6),box('slab-middle',37.5,26.15,47,27.85,2.28,2.6));}
+ return a.concat(w.authored||[]);}
+function surfaces(w,x,y,r=0){const s=[{id:'ground',z:0}];if(w.deck){
+  // Deck support uses the same physical rectangle as its solid slab. A body
+  // for crates remains supported while some of its footprint still touches it.
+  // Without rotational physics this models edge contact, NOT tipping forces.
+  if(r>0?circleRect({x,y,r},DECK):inside(x,y,DECK))s.push({id:'bridge',z:2.6});
+  const rampZ=plankHeight(MAIN_RAMP,x,y);
+  if(rampZ!==null)s.push({id:'ramp',z:rampZ});
+ }return s;}
+function circleRect(b,s){const xx=clamp(b.x,s.minX,s.maxX),yy=clamp(b.y,s.minY,s.maxY);return (b.x-xx)**2+(b.y-yy)**2<(b.r-EPS)**2;}
+function touchesRampSlab(b){
+ return plankCylinderContact(MAIN_RAMP,b,'ramp');
+}
+function zOverlap(a,b){return a.z<b.z+b.h-EPS&&a.z+a.h>b.z+EPS;}
+function circles(a,b){return (a.x-b.x)**2+(a.y-b.y)**2<(a.r+b.r-EPS)**2;}
+function bodyConflicts(w,b,moves=new Map(),ignoreIds=new Set()){
+ const loc=moves.get(b.id)||b;const bs={...b,...loc};const hit=[];
+ if(bs.x-bs.r<0||bs.y-bs.r<0||bs.x+bs.r>SIZE.w||bs.y+bs.r>SIZE.h)hit.push('bounds');
+ for(const s of solids(w)){if(circleRect(bs,s)&&bs.z<s.maxZ-EPS&&bs.z+bs.h>s.minZ+EPS)hit.push(s.id);}
+ if(w.deck&&touchesRampSlab(bs))hit.push('ramp-slab');
+ for(const q of w.bodies){if(q.id===b.id||ignoreIds.has(q.id))continue;const qp={...q,...(moves.get(q.id)||{})};if(circles(bs,qp)&&zOverlap(bs,qp))hit.push(q.id);}
+ return hit;
+}
+function requestedSupport(w,b,x,y){
+ const opts=surfaces(w,x,y,b.kind==='crate'?b.r:0).filter(o=>Math.abs(o.z-b.z)<.24+EPS);
+ const same=opts.find(o=>o.id===b.support);
+ const entry=opts.find(o=>o.id==='ramp'&&o.z<.22&&b.support==='ground');
+ return entry||same||opts.sort((a,c)=>Math.abs(a.z-b.z)-Math.abs(c.z-b.z))[0]||null;
+}
+// Shared material memory: accepted ground contacts only. The small grid is a
+// semantic gameplay field, not a texture-driven illusion of extra forces.
+const imprintKey=(x,y)=>Math.floor(x*2.5)+','+Math.floor(y*2.5);
+function imprintAt(w,x,y){return w.imprints[imprintKey(x,y)]||0;}
+function materialFactor(w,x,y){const t=terrain(x,y,w.seed),fresh=t==='grass'?.87:t==='soil'?.96:1;
+ return Math.min(1,fresh+(1-fresh)*imprintAt(w,x,y)*.9);}
+function applyImprint(w,b,dx,dy){if(b.support!=='ground'||(!dx&&!dy))return;
+ const d=Math.hypot(dx,dy),pressure=b.mass/(b.kind==='crate'?45:100),key=imprintKey(b.x,b.y),prev=w.imprints[key]||0;
+ w.imprints[key]=Math.min(1,prev+Math.min(.17,d*pressure*.32));
+}
+function event(w,type,detail={}){const e={tick:w.tick,type,...detail};w.events.push(e);w.history.push(e);if(w.history.length>220)w.history.shift();return e;}
+// An action either commits every moved body in this substep, or none.
+// This is a kinematic constraint prototype, not a force/impulse solver.
+function proposeHorizontal(w,actorId,dx,dy,{strength=120}={}){
+ const mover=getBody(w,actorId);if(!mover)return {ok:false,reason:'not-found'};
+ if(mover.support===null&&mover.kind!=='human')return {ok:false,reason:'airborne'};
+ const loc=new Map(),group=new Set([actorId]);
+ // An airborne human can steer horizontally, but never re-acquire a platform
+ // by a horizontal move alone. Gravity remains the only landing resolver.
+ const airborne=mover.support===null;
+ const support=airborne?null:requestedSupport(w,mover,mover.x+dx,mover.y+dy);
+ if(!support){
+  // Leaving a high walkable surface is allowed; the body enters free fall.
+  // Ground-to-bridge without a ramp remains forbidden.
+  if(mover.support==='ground')return {ok:false,reason:'no-support',hits:[]};
+  loc.set(actorId,{x:mover.x+dx,y:mover.y+dy,z:mover.z,support:null});
+ } else loc.set(actorId,{x:mover.x+dx,y:mover.y+dy,z:support.z,support:support.id});
+ let totalMass=0;
+ for(let iter=0;iter<w.bodies.length+1;iter++){
+  let changed=false;
+  for(const id of [...group]){
+   const current=getBody(w,id);const p=loc.get(id);const pos={...current,...p};
+   for(const vol of solids(w)){if(circleRect(pos,vol)&&pos.z<vol.maxZ-EPS&&pos.z+pos.h>vol.minZ+EPS)return {ok:false,reason:'static',hits:[vol.id]};}
+   if(w.deck&&touchesRampSlab(pos))return {ok:false,reason:'static',hits:['ramp-slab']};
+   if(pos.x-pos.r<0||pos.x+pos.r>SIZE.w||pos.y-pos.r<0||pos.y+pos.r>SIZE.h)return {ok:false,reason:'bounds',hits:['bounds']};
+   for(const other of w.bodies){if(group.has(other.id))continue;
+    if(circles(pos,other)&&zOverlap(pos,other)){
+     if(other.kind!=='crate'||other.support===null)return {ok:false,reason:'actor-contact',hits:[other.id]};
+     totalMass+=other.mass;if(totalMass>strength)return {ok:false,reason:'mass',hits:[other.id]};
+     const os=requestedSupport(w,other,other.x+dx,other.y+dy);
+     // An elevated crate can lose its support when a real contact pushes it
+     // across an edge. Grounded crates cannot tunnel through unavailable ledges.
+     if(!os&&other.support==='ground')return {ok:false,reason:'crate-support',hits:[other.id]};
+     group.add(other.id);loc.set(other.id,{x:other.x+dx,y:other.y+dy,z:os?.z??other.z,support:os?.id??null});changed=true;
+    }
+   }
+  }
+  if(!changed){
+   // Final group collision must be checked at proposed poses, including group pairs.
+   const moved=[...group].map(id=>({...getBody(w,id),...loc.get(id)}));
+   for(let i=0;i<moved.length;i++)for(let j=i+1;j<moved.length;j++)if(circles(moved[i],moved[j])&&zOverlap(moved[i],moved[j]))return {ok:false,reason:'group-overlap',hits:[moved[i].id,moved[j].id]};
+   return {ok:true,moves:loc,pushed:[...group].filter(id=>id!==actorId),mass:totalMass,support:support?.id??null};
+  }
+ }
+ return {ok:false,reason:'too-many-contacts'};
+}
+// CONTACT EXPERIMENT K2: grip is a physical relationship, not a teleport.
+// The crate stays grounded. Only accepted joint movement updates both bodies.
+// No lifting, torque, articulated arms, impulses or rope simulation are claimed.
+function clearGrip(w,actorId,reason='release',emit=true){
+ const crateId=w.grips?.[actorId];if(!crateId)return {ok:false,reason:'not-gripping'};
+ delete w.grips[actorId];if(emit)event(w,'grip-released',{actor:actorId,crate:crateId,reason});
+ return {ok:true,actor:actorId,crate:crateId};
+}
+function toggleGrip(w,actorId='player',targetId=null){
+ const actor=getBody(w,actorId);
+ if(!actor||actor.kind!=='human')return {ok:false,reason:'not-human'};
+ if(w.grips?.[actorId])return clearGrip(w,actorId);
+ if(actor.support===null)return {ok:false,reason:'airborne'};
+ const candidates=w.bodies.filter(b=>b.kind==='crate'&&(targetId===null||b.id===targetId))
+   .sort((a,b)=>Math.hypot(a.x-actor.x,a.y-actor.y)-Math.hypot(b.x-actor.x,b.y-actor.y));
+ for(const b of candidates){
+  const dist=Math.hypot(b.x-actor.x,b.y-actor.y);
+  if(dist>1.18+EPS||dist<actor.r+b.r-EPS||Math.abs(b.z-actor.z)>.95||b.support===null||
+     Object.values(w.grips||{}).includes(b.id))continue;
+  if(b.mass>45)continue;
+  if(!canReach(w,actorId,b.id,1.85).ok)continue;
+  w.grips=w.grips||{};w.grips[actorId]=b.id;
+  event(w,'grip-start',{actor:actorId,crate:b.id,distance:dist});
+  return {ok:true,actor:actorId,crate:b.id,distance:dist};
+ }
+ return {ok:false,reason:'no-reachable-grounded-crate'};
+}
+function proposeDrag(w,actorId,dx,dy){
+ const a=getBody(w,actorId),b=getBody(w,w.grips?.[actorId]);
+ if(!a||!b||a.support===null||b.support===null||Math.abs(a.z-b.z)>.95)return {ok:false,reason:'broken-grip'};
+ // Force both to follow identical displacement. If either fails, NEITHER moves.
+ const sa=requestedSupport(w,a,a.x+dx,a.y+dy),sb=requestedSupport(w,b,b.x+dx,b.y+dy);
+ if(!sa||(!sb&&b.support==='ground')||(sb&&Math.abs(sa.z-sb.z)>.95))return {ok:false,reason:'joint-support'};
+ // Ground-drag grip has no suspended load capacity. It can pull the crate
+ // over a ledge, but it releases at the accepted edge-crossing step.
+ const slipsOffEdge=!sb&&b.support!=='ground';
+ const moves=new Map([[a.id,{x:a.x+dx,y:a.y+dy,z:sa.z,support:sa.id}],
+  [b.id,{x:b.x+dx,y:b.y+dy,z:sb?.z??b.z,support:sb?.id??null}]]);
+ for(const v of [a,b]){
+  const hits=bodyConflicts(w,v,moves);
+  if(hits.length)return {ok:false,reason:'joint-collision',hits};
+ }
+ return {ok:true,moves,pushed:[],dragged:b.id,mass:b.mass,support:sa.id,releaseGripOnCommit:slipsOffEdge};
+}
+// Notify ordinary navigation of moved *dynamic* obstacles without running A*
+// every physics substep. Persistent anchors bound invalidation frequency.
+function informDynamicTopology(w,b,from){
+ if(b.kind!=='crate')return;
+ w.nav.motionAnchors=w.nav.motionAnchors||{};
+ const anchor=w.nav.motionAnchors[b.id]||from;
+ if(!w.nav.motionAnchors[b.id])w.nav.motionAnchors[b.id]={x:anchor.x,y:anchor.y};
+ if(Math.hypot(b.x-anchor.x,b.y-anchor.y)>=.42){
+  w.nav.motionAnchors[b.id]={x:b.x,y:b.y};touchTopology(w);
+ }
+}
+function commitHorizontal(w,id,dx,dy,{strength=120,emit=true}={}){
+ const p=w.grips?.[id]?proposeDrag(w,id,dx,dy):proposeHorizontal(w,id,dx,dy,{strength});
+ if(!p.ok){if(emit){w.stats.blocked++;event(w,'blocked',{actor:id,reason:p.reason,hits:p.hits||[],requested:[dx,dy]});}return {...p,delta:{dx:0,dy:0}};}
+ for(const [bodyId,loc]of p.moves){const b=getBody(w,bodyId),from={x:b.x,y:b.y,z:b.z,support:b.support};Object.assign(b,loc);applyImprint(w,b,dx,dy);if(bodyId!==id)informDynamicTopology(w,b,from); if(from.support!==null&&b.support===null&&emit)event(w,'support-lost',{id:bodyId,from:from.support}); if(bodyId===id){b.heading=Math.atan2(dy,dx);b.walk=(b.walk||0)+Math.hypot(dx,dy);}else if(emit){event(w,'object-moved',{id:bodyId,from,to:{x:b.x,y:b.y,z:b.z},source:id});}}
+ if(p.dragged){w.stats.drags=(w.stats.drags||0)+1;if(emit)event(w,'drag',{actor:id,crate:p.dragged,dx,dy});}
+ if(p.releaseGripOnCommit)clearGrip(w,id,'edge-lost-support',emit);
+ if(p.pushed.length){w.stats.pushes++;if(emit)event(w,'push',{actor:id,targets:p.pushed,mass:p.mass,dx,dy});}
+ if(emit)event(w,'moved',{id,dx,dy,support:getBody(w,id).support});
+ return {ok:true,delta:{dx,dy},pushed:p.pushed};
+}
+function walk(w,id,dx,dy,{strength=120,emit=true}={}){
+ const count=Math.max(1,Math.ceil(Math.hypot(dx,dy)/.055));let moved={dx:0,dy:0},blocked=0;
+ for(let i=0;i<count;i++){
+  let p=commitHorizontal(w,id,dx/count,dy/count,{strength,emit});
+  if(p.ok){moved.dx+=p.delta.dx;moved.dy+=p.delta.dy;}
+  else{
+   // An explicit, testable slide policy, not hidden position correction.
+   if(Math.abs(dx)>EPS&&Math.abs(dy)>EPS){const xa=commitHorizontal(w,id,dx/count,0,{strength,emit});const ya=xa.ok?{ok:false}:commitHorizontal(w,id,0,dy/count,{strength,emit});
+    if(xa.ok){moved.dx+=dx/count;if(emit)event(w,'slide',{actor:id,axis:'x'});}
+    else if(ya.ok){moved.dy+=dy/count;if(emit)event(w,'slide',{actor:id,axis:'y'});}
+    else blocked++;
+   }else blocked++;
+  }
+ }
+ return {delta:moved,blocked};
+}
+// Authoring actions are explicit privileged editor powers. They do not simulate
+// carrying, lifting, constructing with tools, or physical ownership.
+// Every accepted edit changes the canonical collision/query/navigation world.
+function touchTopology(w){w.revision++;w.nav.path=[];w.nav.targetKey='';w.nav.lastReplan=0;}
+function boxIntersects(a,b){return a.minX<b.maxX-EPS&&a.maxX>b.minX+EPS&&a.minY<b.maxY-EPS&&a.maxY>b.minY+EPS&&a.minZ<b.maxZ-EPS&&a.maxZ>b.minZ+EPS;}
+function placeObject(w,kind,x,y,{level='ground'}={}){
+ if(!['crate','wall'].includes(kind)||!Number.isFinite(x)||!Number.isFinite(y))return {ok:false,reason:'bad-input'};
+ const z=level==='bridge'&&w.deck&&inside(x,y,DECK)?2.6:0;
+ if(level==='bridge'&&z!==2.6)return {ok:false,reason:'no-deck'};
+ if(x<1||y<1||x>SIZE.w-1||y>SIZE.h-1)return {ok:false,reason:'bounds'};
+ if(w.bodies.length+w.authored.length>75)return {ok:false,reason:'edit-budget'};
+ if(kind==='crate'){
+  const id='made-crate-'+w.nextId;
+  const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:z>0?'bridge':'ground',vz:0};
+  const hit=bodyConflicts(w,b);if(hit.length)return {ok:false,reason:'occupied',hits:hit};
+  w.bodies.push(b);w.nextId++;touchTopology(w);event(w,'authored',{id,kind,x,y,z});return {ok:true,id,kind};
+ }
+ const id='made-wall-'+w.nextId, v=box(id,x-.4,y-.4,x+.4,y+.4,z,z+1.5);
+ const hits=solids(w).filter(s=>boxIntersects(s,v)).map(s=>s.id);
+ for(const b of w.bodies)if(circleRect(b,v)&&zOverlap(b,{z:v.minZ,h:v.maxZ-v.minZ}))hits.push(b.id);
+ if(hits.length)return {ok:false,reason:'occupied',hits};
+ w.authored.push(v);w.nextId++;touchTopology(w);event(w,'authored',{id,kind,x,y,z});return {ok:true,id,kind};
+}
+function eraseObject(w,id){
+ let idx=w.authored.findIndex(s=>s.id===id);
+ if(idx>=0){w.authored.splice(idx,1);touchTopology(w);event(w,'erased',{id});return {ok:true,id};}
+ if(Object.values(w.grips||{}).includes(id))return {ok:false,reason:'held-by-actor'};
+ idx=w.bodies.findIndex(b=>b.id===id&&b.id.startsWith('made-crate-'));
+ if(idx>=0){w.bodies.splice(idx,1);if(w.nav.motionAnchors)delete w.nav.motionAnchors[id];touchTopology(w);event(w,'erased',{id});return {ok:true,id};}
+ return {ok:false,reason:'not-authored'};
+}
+function eraseNear(w,x,y,{level='ground',radius=.75}={}){
+ const z=level==='bridge'?2.6:0;
+ const candidates=[...w.authored.map(s=>({id:s.id,x:(s.minX+s.maxX)/2,y:(s.minY+s.maxY)/2,z:s.minZ})),...w.bodies.filter(b=>b.id.startsWith('made-crate-'))];
+ const hit=candidates.filter(a=>Math.abs(a.z-z)<.12&&Math.hypot(a.x-x,a.y-y)<=radius).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];
+ return hit?eraseObject(w,hit.id):{ok:false,reason:'no-edit-nearby'};
+}
+function removeBridge(w){if(!w.deck)return;
+ for(const actorId of Object.keys(w.grips||{})){
+  const actor=getBody(w,actorId),crate=getBody(w,w.grips[actorId]);
+  // A structural change only breaks constraints which actually depended on
+  // the removed surface; the rest of the world retains its local relationships.
+  if(!actor||!crate||['bridge','ramp'].includes(actor.support)||['bridge','ramp'].includes(crate.support))
+   clearGrip(w,actorId,'structure-removed');
+ }
+ // Editor-authored static walls on the bridge have no independent support.
+ // Remove them explicitly; do not pretend that fixed AABBs are falling rigid bodies.
+ const noLongerSupported=w.authored.filter(a=>a.minZ>1);
+ for(const a of noLongerSupported)event(w,'editor-part-lost',{id:a.id,reason:'bridge-destroyed'});
+ w.authored=w.authored.filter(a=>a.minZ<=1);
+ w.deck=false;touchTopology(w);event(w,'structure-removed',{id:'bridge'});
+ for(const b of w.bodies){if(b.support==='bridge'||b.support==='ramp'){
+  b.support=null;b.vz=0;event(w,'support-lost',{id:b.id,from:'bridge'});
+ }}
+}
+function horizontalOverlap(a,b){return circles(a,b);}
+// Free fall is time-integrated. A body may temporarily stand on another body:
+// intentionally a falsifiable limitation, not a claim of proper character physics.
+function gravityStep(w,dt=DT){
+ for(const actorId of Object.keys(w.grips||{})){const a=getBody(w,actorId),b=getBody(w,w.grips[actorId]);
+  if(!a||!b||a.support===null||b.support===null||Math.abs(a.z-b.z)>.95)clearGrip(w,actorId,'support-lost');}
+ for(const b of [...w.bodies].sort((a,b)=>a.z-b.z)){
+  if(b.support==='bridge'&&!w.deck){b.support=null;event(w,'support-lost',{id:b.id});}
+  if(b.support?.startsWith('solid:')){
+   const id=b.support.slice(6),v=solids(w).find(s=>s.id===id);
+   if(!v||!circleRect(b,v)||Math.abs(b.z-v.maxZ)>.02){
+    const old=b.support;b.support=null;b.vz=0;event(w,'support-lost',{id:b.id,from:old});
+   }
+  }
+  if(b.support?.startsWith('body:')){
+   const q=getBody(w,b.support.slice(5));if(!q||!horizontalOverlap(b,q)||Math.abs(b.z-(q.z+q.h))>.02){b.support=null;event(w,'support-lost',{id:b.id,from:'body'});}else{b.z=q.z+q.h;continue;}
+  }
+  if(b.support!==null)continue;
+  const nextVz=Math.max(-15,b.vz-9.81*dt),target=b.z+nextVz*dt;
+  let best={z:0,support:'ground'};
+  const ceilingCandidates=[];
+  for(const s of surfaces(w,b.x,b.y))if(s.z<=b.z+EPS&&s.z>=best.z)best={z:s.z,support:s.id};
+  for(const wall of solids(w))if(circleRect(b,wall)&&wall.maxZ<=b.z+EPS&&wall.maxZ>=best.z)best={z:wall.maxZ,support:'solid:'+wall.id};
+  for(const other of w.bodies){if(b.id===other.id||other.z+other.h>b.z+EPS||!horizontalOverlap(b,other))continue;
+   if(other.z+other.h>=best.z)best={z:other.z+other.h,support:'body:'+other.id};}
+  if(target<=best.z+EPS){b.z=best.z;b.vz=0;b.support=best.support;w.stats.lands++;event(w,'land',{id:b.id,on:best.support,z:b.z});}
+  else {b.z=target;b.vz=nextVz;}
+ }
+}
+const rayBox=(a,v,box)=>{let lo=0,hi=1;for(const [c,mi,ma]of [['x','minX','maxX'],['y','minY','maxY'],['z','minZ','maxZ']]){
+ const d=v[c];if(Math.abs(d)<1e-11){if(a[c]<box[mi]||a[c]>box[ma])return null;continue;}
+ let t1=(box[mi]-a[c])/d,t2=(box[ma]-a[c])/d;if(t1>t2)[t1,t2]=[t2,t1];lo=Math.max(lo,t1);hi=Math.min(hi,t2);if(lo>hi)return null;
+ }return lo;};
+// Ray against exactly the SAME vertical cylinder used by body collision, not
+// the cylinder's axis-aligned bounding rectangle (a former visibility lie).
+function rayCylinder(start,d,b){
+ const x=start.x-b.x,y=start.y-b.y;const a=d.x*d.x+d.y*d.y;
+ let entry=0,exit=1;
+ if(a<1e-12){if(x*x+y*y>b.r*b.r)return null;}
+ else {const B=2*(x*d.x+y*d.y),C=x*x+y*y-b.r*b.r,D=B*B-4*a*C;if(D<0)return null;
+  const root=Math.sqrt(D);entry=Math.max(entry,(-B-root)/(2*a));exit=Math.min(exit,(-B+root)/(2*a));}
+ const z0=b.z,z1=b.z+b.h;
+ if(Math.abs(d.z)<1e-12){if(start.z<z0||start.z>z1)return null;}
+ else {let t0=(z0-start.z)/d.z,t1=(z1-start.z)/d.z;if(t0>t1)[t0,t1]=[t1,t0];entry=Math.max(entry,t0);exit=Math.min(exit,t1);}
+ return entry<=exit&&exit>=0&&entry<=1?Math.max(0,entry):null;
+}
+const subtract=(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z});
+const cross=(a,b)=>({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x});
+const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+function rayTriangle(start,end,tri){
+ const d=subtract(end,start),e1=subtract(tri[1],tri[0]),e2=subtract(tri[2],tri[0]);
+ const h=cross(d,e2),det=dot(e1,h);
+ if(Math.abs(det)<1e-10)return null;
+ const inv=1/det,off=subtract(start,tri[0]),u=inv*dot(off,h);
+ if(u<-EPS||u>1+EPS)return null;
+ const q=cross(off,e1),v=inv*dot(d,q);
+ if(v<-EPS||u+v>1+EPS)return null;
+ const t=inv*dot(e2,q);return t>=-EPS&&t<=1+EPS?t:null;
+}
+function raycast(w,start,end,{ignore=[]}={}){const d={x:end.x-start.x,y:end.y-start.y,z:end.z-start.z};let best=null;
+ for(const s of solids(w)){if(ignore.includes(s.id))continue;const t=rayBox(start,d,s);if(t!==null&&t>=0&&t<1-1e-7&&(!best||t<best.t))best={id:s.id,t,at:{x:start.x+t*d.x,y:start.y+t*d.y,z:start.z+t*d.z}};}
+ if(w.deck&&!ignore.includes('ramp-slab'))for(const tri of rampTriangles()){
+  const t=rayTriangle(start,end,tri);
+  if(t!==null&&t>=0&&t<1-1e-7&&(!best||t<best.t))best={id:'ramp-slab',t,at:{x:start.x+t*d.x,y:start.y+t*d.y,z:start.z+t*d.z}};
+ }
+ for(const b of w.bodies){if(ignore.includes(b.id))continue;const t=rayCylinder(start,d,b);if(t!==null&&t>=0&&t<1-1e-7&&(!best||t<best.t))best={id:b.id,t,at:{x:start.x+t*d.x,y:start.y+t*d.y,z:start.z+t*d.z}};}
+ return best;}
+function canReach(w,actorId,targetId,reach=1.85){const a=getBody(w,actorId),b=getBody(w,targetId);if(!a||!b)return {ok:false,reason:'missing'};
+ const start={x:a.x,y:a.y,z:a.z+Math.min(1.1,a.h*.65)},end={x:b.x,y:b.y,z:b.z+b.h*.55},dist=Math.hypot(start.x-end.x,start.y-end.y,start.z-end.z);
+ if(dist>reach)return {ok:false,reason:'far',distance:dist};const hit=raycast(w,start,end,{ignore:[a.id,b.id]});return hit?{ok:false,reason:'occluded',by:hit.id}:{ok:true,distance:dist};}
+const hash=(x,y,seed)=>{let h=Math.imul((x|0)^seed,374761393)+Math.imul(y|0,668265263);h=Math.imul(h^(h>>>13),1274126177);return (h^(h>>>16))>>>0;};
+function terrain(x,y,seed){const h=hash(Math.floor(x*4),Math.floor(y*4),seed)%1000;return h<140?'stony':h<610?'grass':'soil';}
+function cellId(x,y){return x+','+y;}
+function route(w,from,to,grid=.42){
+ // The nav grid is derived from actual endpoints, not from a demo-specific area.
+ // Keep a bounded search margin so small local problems stay cheap; distant
+ // or elaborate detours still require a scalable, world-wide planner.
+ const margin=8;
+ const x0=Math.max(0,Math.floor((Math.min(from.x,to.x)-margin)/grid));
+ const y0=Math.max(0,Math.floor((Math.min(from.y,to.y)-margin)/grid));
+ const x1=Math.min(Math.ceil(SIZE.w/grid)-1,Math.floor((Math.max(from.x,to.x)+margin)/grid));
+ const y1=Math.min(Math.ceil(SIZE.h/grid)-1,Math.floor((Math.max(from.y,to.y)+margin)/grid));
+ const ox=x0*grid,oy=y0*grid,W=x1-x0+1,H=y1-y0+1;
+ const inGrid=(x,y)=>x>=0&&y>=0&&x<W&&y<H; const world=(x,y)=>({x:ox+(x+.5)*grid,y:oy+(y+.5)*grid});
+ const nearest=p=>({x:clamp(Math.floor((p.x-ox)/grid),0,W-1),y:clamp(Math.floor((p.y-oy)/grid),0,H-1)});
+ const s=nearest(from),g=nearest(to),start=cellId(s.x,s.y);let nodes=new Map([[start,{x:s.x,y:s.y,g:0,f:0,from:null}]]),open=[start],closed=new Set();
+ const heuristic=(x,y)=>Math.hypot(g.x-x,g.y-y);
+ for(let step=0;step<2500&&open.length;step++){
+  open.sort((a,b)=>nodes.get(a).f-nodes.get(b).f);let id=open.shift(),n=nodes.get(id);if(closed.has(id))continue;closed.add(id);
+  if(n.x===g.x&&n.y===g.y){const p=[];let cur=id;while(cur){const z=nodes.get(cur);p.unshift(world(z.x,z.y));cur=z.from;}return p;}
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+   let xx=n.x+dx,yy=n.y+dy;if(!inGrid(xx,yy))continue;const nid=cellId(xx,yy);if(closed.has(nid))continue;
+   const pt=world(xx,yy),body={...getBody(w,'boar'),x:pt.x,y:pt.y,z:0,r:.39,h:.83};
+   if(bodyConflicts(w,body,new Map(),new Set(['player','scout','boar'])).filter(v=>v!=='food').length)continue;
+   const ng=n.g+1+(terrain(pt.x,pt.y,w.seed)==='grass'?.08:0)*(1-imprintAt(w,pt.x,pt.y)),existing=nodes.get(nid);if(existing&&ng>=existing.g)continue;
+   nodes.set(nid,{x:xx,y:yy,g:ng,f:ng+heuristic(xx,yy),from:id});open.push(nid);
+  }
+ }
+ return [];
+}
+function updateBoar(w,dt=DT){const b=getBody(w,'boar'),t=w.goal;if(!b||b.support===null||t.eaten)return;
+ if(Math.hypot(t.x-b.x,t.y-b.y)<.65){event(w,'food-reached',{by:b.id});w.goal.eaten=true;w.revision++;return;}
+ const targetKey=`${t.x},${t.y},${t.z||0}`;
+ // No-route is a legitimate result, not an instruction to run A* every tick.
+ // Replan on a topology edit, goal change or a bounded periodic retry.
+ if(!w.nav.lastReplan||w.nav.targetKey!==targetKey||w.nav.revision!==w.revision||w.tick-w.nav.lastReplan>180){
+  w.nav.path=route(w,b,t);w.nav.lastReplan=w.tick;w.nav.targetKey=targetKey;w.nav.revision=w.revision;
+  w.stats.routes++;event(w,'route-planned',{by:'boar',points:w.nav.path.length});
+ }
+ if(!w.nav.path.length)return;let wp=w.nav.path[0],d=Math.hypot(wp.x-b.x,wp.y-b.y);if(d<.19){w.nav.path.shift();return;}
+ const surface=materialFactor(w,b.x,b.y),dx=(wp.x-b.x)/d*dt*1.22*surface,dy=(wp.y-b.y)/d*dt*1.22*surface;const moved=walk(w,'boar',dx,dy,{strength:0,emit:false});
+ if(Math.hypot(moved.delta.dx,moved.delta.dy)<1e-5){w.nav.path=[];event(w,'route-blocked',{by:'boar'});}
+ else if(w.tick%12===0)event(w,'locomotion',{id:'boar',dx:moved.delta.dx,dy:moved.delta.dy});
+}
+function tickWorld(w,commands={},dt=DT){w.tick++;w.time+=dt;w.events=[];
+ const id=commands.selected||'player',d=commands.move||[0,0],l=Math.hypot(d[0],d[1]);if(l>.001){const m=(commands.precision?1.6:3.6)*(w.grips?.[id]?.66:1)*materialFactor(w,getBody(w,id).x,getBody(w,id).y);walk(w,id,d[0]/l*m*dt,d[1]/l*m*dt,{strength:commands.strength??120});}
+ gravityStep(w,dt);
+ if(commands.ai!==false)updateBoar(w,dt);
+ if(w.tick%30===0)event(w,'world-heartbeat',{time:w.time});
+ return w.events;
+}
+function snapshot(w){return JSON.stringify({version:w.version,seed:w.seed,tick:w.tick,time:w.time,deck:w.deck,revision:w.revision,authored:w.authored,nextId:w.nextId,bodies:w.bodies,goal:w.goal,nav:w.nav,stats:w.stats,imprints:w.imprints,grips:w.grips});}
+function restore(json){const v=typeof json==='string'?JSON.parse(json):json;
+ if(v.version!=='forge-v1'||!Array.isArray(v.bodies)||v.bodies.length<5||v.bodies.length>75)throw new Error('Incompatible snapshot');
+ const w=createWorld(v.seed);Object.assign(w,{...v,authored:v.authored||[],nextId:v.nextId||1,grips:v.grips||{},events:[],history:[],traces:[]});
+ const ids=w.bodies.map(b=>b.id),essential=['player','scout','boar','crate','deck-crate'];
+ if(new Set(ids).size!==ids.length||essential.some(id=>!ids.includes(id))||w.bodies.some(b=>!essential.includes(b.id)&&(!/^made-crate-\d+$/.test(b.id)||b.kind!=='crate')))throw new Error('Invalid body roster');
+ if(!Array.isArray(w.authored)||w.authored.length>75||w.authored.some(o=>!/^made-wall-\d+$/.test(o.id)||!Number.isFinite(o.minX)||!Number.isFinite(o.minY)||!Number.isFinite(o.minZ)||!Number.isFinite(o.maxX)||!Number.isFinite(o.maxY)||!Number.isFinite(o.maxZ)||o.minX>=o.maxX||o.minY>=o.maxY||o.minZ>=o.maxZ||o.minX<0||o.minY<0||o.maxX>SIZE.w||o.maxY>SIZE.h))throw new Error('Invalid authored solids');
+ if(w.authored.some(o=>o.minZ!==0&&!(w.deck&&Math.abs(o.minZ-2.6)<.01&&inside((o.minX+o.maxX)/2,(o.minY+o.maxY)/2,DECK))))throw new Error('Unsupported authored volume');
+ if(w.authored.some(a=>ids.includes(a.id))||new Set(w.authored.map(x=>x.id)).size!==w.authored.length)throw new Error('Repeated authored ids');
+ const numericIds=[...ids,...w.authored.map(x=>x.id)].filter(x=>/^made-(crate|wall)-\d+$/.test(x)).map(x=>Number(x.split('-').at(-1)));
+ if(!Number.isSafeInteger(w.nextId)||w.nextId<=Math.max(0,...numericIds))throw new Error('Invalid authoring sequence');
+ for(const v of w.authored)if(solids({...w,authored:[]}).some(s=>boxIntersects(s,v)))throw new Error('Authored volume overlap with static solids');
+ for(let i=0;i<w.authored.length;i++)for(let j=i+1;j<w.authored.length;j++)if(boxIntersects(w.authored[i],w.authored[j]))throw new Error('Authored solids overlap');
+ for(const b of w.bodies){if(!Number.isFinite(b.x)||!Number.isFinite(b.y)||!Number.isFinite(b.z)||b.z<0)throw new Error('Bad body coordinate '+b.id);}
+ if(Object.values(w.imprints).some(v=>!Number.isFinite(v)||v<0||v>1))throw new Error('Invalid material imprint');
+ for(const b of w.bodies){
+  if(b.support==='ground'&&Math.abs(b.z)>.015)throw new Error('Invalid ground support for '+b.id);
+  if(b.support==='bridge'&&(!w.deck||!(b.kind==='crate'?circleRect(b,DECK):inside(b.x,b.y,DECK))||Math.abs(b.z-2.6)>.015))throw new Error('Invalid bridge support for '+b.id);
+  if(b.support==='ramp'&&(!w.deck||plankHeight(MAIN_RAMP,b.x,b.y)===null||Math.abs(b.z-plankHeight(MAIN_RAMP,b.x,b.y))>.02))throw new Error('Invalid ramp support for '+b.id);
+  if(typeof b.support==='string'&&b.support.startsWith('body:')){
+   const q=getBody(w,b.support.slice(5));if(!q||!circles(b,q)||Math.abs(b.z-q.z-q.h)>.02)throw new Error('Invalid body support for '+b.id);
+  }
+  if(typeof b.support==='string'&&b.support.startsWith('solid:')){
+   const o=solids(w).find(x=>x.id===b.support.slice(6));if(!o||!circleRect(b,o)||Math.abs(b.z-o.maxZ)>.02)throw new Error('Invalid solid support for '+b.id);
+  }
+  if(b.support!==null&&!['ground','bridge','ramp'].includes(b.support)&&!b.support.startsWith('body:')&&!b.support.startsWith('solid:'))throw new Error('Unknown support for '+b.id);
+ }
+ if(!w.grips||typeof w.grips!=='object'||Array.isArray(w.grips))throw new Error('Invalid grips');
+ const used=new Set();for(const [id,crateId]of Object.entries(w.grips)){
+  const a=getBody(w,id),b=getBody(w,crateId);
+  if(!a||a.kind!=='human'||!b||b.kind!=='crate'||used.has(crateId)||a.support===null||b.support===null||Math.abs(a.z-b.z)>.95||
+   Math.hypot(a.x-b.x,a.y-b.y)>1.18+EPS||b.mass>45||!canReach(w,id,crateId,1.85).ok)
+   throw new Error('Invalid grip: '+id);
+  used.add(crateId);
+ }
+ for(const b of w.bodies)if(bodyConflicts(w,b).length)throw new Error('Snapshot contains overlaps: '+b.id+' '+bodyConflicts(w,b).join(','));
+ return w;}
+
+const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),ctx=canvas.getContext('2d'),mctx=mini.getContext('2d');
+const $=id=>document.getElementById(id), keys=new Set();
+let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode='auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
+let cam={x:42,y:27}, scale=45,tone='phys',tool='none',note='Użyj WASD. Sytuacja istnieje wewnątrz świata 84×54, nie w miniaturowym zamienniku.',pulse=[],lastFrame=performance.now(),accumulator=0,lastUi=0,frames=0;
+let errors=[];window.addEventListener('error',e=>errors.push(e.message));
+let mobileStick={x:0,y:0,id:null},mobileToastAt=0;
+function closeMobileMenu(){document.body.classList.remove('mobile-menu-open');$('mobile-options').setAttribute('aria-expanded','false');resetMobileStick();}
+function resetMobileStick(){mobileStick.x=mobileStick.y=0;mobileStick.id=null;$('joystick-knob').style.transform='translate(0px,0px)';}
+$('mobile-options').addEventListener('click',()=>{if(document.body.classList.contains('mobile-menu-open'))closeMobileMenu();else {resetMobileStick();document.body.classList.add('mobile-menu-open');$('mobile-options').setAttribute('aria-expanded','true');}});
+$('mobile-close-menu').addEventListener('click',closeMobileMenu);
+function updateMobileStick(e){const r=$('mobile-joystick').getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2;
+ const max=r.width*.30,rx=e.clientX-cx,ry=e.clientY-cy,len=Math.hypot(rx,ry),f=len?Math.min(1,max/len):1;
+ const x=rx*f,y=ry*f;let nx=x/max,ny=y/max;
+ if(Math.hypot(nx,ny)<.14)nx=ny=0;
+ mobileStick.x=nx;mobileStick.y=ny;$('joystick-knob').style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;
+}
+const stick=$('mobile-joystick');
+stick.addEventListener('pointerdown',e=>{if(mobileStick.id!==null)return;e.preventDefault();mobileStick.id=e.pointerId;stick.setPointerCapture(e.pointerId);updateMobileStick(e)});
+stick.addEventListener('pointermove',e=>{if(e.pointerId!==mobileStick.id)return;e.preventDefault();updateMobileStick(e)});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(ev,e=>{if(mobileStick.id===e.pointerId)resetMobileStick()});
+window.addEventListener('blur',()=>{resetMobileStick();keys.clear()});
+window.addEventListener('orientationchange',resetMobileStick);
+document.addEventListener('contextmenu',e=>{if(matchMedia('(pointer:coarse)').matches&&e.target.closest('.stage'))e.preventDefault();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){resetMobileStick();keys.clear()}});
+// Mobile secondary touches may not synthesize a click while another finger
+// holds the joystick. Commit actions on touch pointerdown, suppress duplicate
+// synthetic clicks, but retain mouse/keyboard activation for accessibility.
+function bindMobileAction(id,desktopId){const el=$(id);let lastTouch=-1e9;
+ el.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.pointerType==='pen'){e.preventDefault();lastTouch=performance.now();$(desktopId).click();}});
+ el.addEventListener('click',()=>{if(performance.now()-lastTouch>650)$(desktopId).click();});
+}
+bindMobileAction('mobile-view','viewmode');
+bindMobileAction('mobile-grip','grip');
+bindMobileAction('mobile-touch-info','actor');
+
+const color={player:'#79dbc3',scout:'#e5b878',boar:'#cf8670',crate:'#bd9473','deck-crate':'#bd9473'};
+function syncButtons(){ $('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+(getBody(w,selected)?.z??0).toFixed(1)+' m';$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt'; $('play').textContent=running?'Pauza':'Uruchom'; $('actor').textContent=selected==='player'?'Postać: dół':'Postać: góra'; $('debug').textContent=showDebug?'Debug: tak':'Debug: nie';$('ai').textContent=ai?'Dzik: działa':'Dzik: stop'; $('remove').disabled=!w.deck; $('viewmode').textContent='Widok: '+(viewMode==='auto'?'automatyczny':viewMode==='cut'?'przekrój':'pełna bryła')+' (C)'; }
+function msg(t){note=t;$('status').textContent=t;const el=$('mobile-toast');el.textContent=t;el.classList.add('shown');mobileToastAt=performance.now();}
+function setScenario(type){closeMobileMenu();w=createWorld();selected='player';scenario=type;running=true;ai=true;
+ if(type==='skrot'){
+  Object.assign(getBody(w,'player'),{x:46.7,y:27.93,z:0,support:'ground'});
+  Object.assign(getBody(w,'crate'),{x:47.75,y:27.93,z:0,support:'ground'});
+  Object.assign(getBody(w,'boar'),{x:43.8,y:27.93,z:0,support:'ground'});
+  w.goal={id:'food',x:50.2,y:27.93,z:0,eaten:false};
+  msg('SKRÓT: skrzynia blokuje przejście. Dzik ma długie obejście. Złap E, odciągnij skrzynię na bok, obserwuj nową trasę (H).');
+ }else if(type==='przeciaganie'){
+  Object.assign(getBody(w,'player'),{x:42.0,y:27,z:0,support:'ground'});
+  msg('CHWYT: E chwyta skrzynię obok. WASD przeciąga ją po gruncie, E puszcza. Zbuduj przeszkodę edytorem i sprawdź opór.');
+ }else if(type==='zrzut'){
+  selected='scout';ai=false;
+  Object.assign(getBody(w,'scout'),{x:45.88,y:27.95,z:2.60,support:'bridge',heading:0});
+  Object.assign(getBody(w,'deck-crate'),{x:46.83,y:27.95,z:2.60,support:'bridge'});
+  msg('ZRZUT: jesteś na moście. E łapie skrzynię, D przeciąga ją za krawędź. Chwyt puści ciężar, a skrzynia naprawdę spadnie.');
+ }else if(type==='kontakt'){
+  Object.assign(getBody(w,'player'),{x:42.15,y:27,heading:0});Object.assign(getBody(w,'crate'),{x:43,y:27});
+  Object.assign(getBody(w,'boar'),{x:42.52,y:27.66});ai=false;
+  msg('KONTAKT: Postać napiera na skrzynię, ale przeszkoda blokuje ruch. Odrzucone pchnięcie NIE może przesunąć skrzyni.');
+ }else if(type==='upadek'){
+  selected='scout';removeBridge(w);msg('UPADEK: most usunięty. Obserwuj proces spadania i nieprzekraczanie brył. Stan na głowie innej postaci jest znanym błędem modelu.');
+ }else if(type==='blokada'){
+  Object.assign(getBody(w,'player'),{x:46.4,y:27.93,heading:0});Object.assign(getBody(w,'crate'),{x:47.76,y:27.93});
+  ai=true;msg('BLOKADA: Skrzynia zatkała wąski prześwit. Wypchnij ją na wschód i obserwuj, jak dzik przelicza drogę (H).');
+ }else if(type==='zagroda'){
+  const boar=getBody(w,'boar');Object.assign(boar,{x:40,y:35,z:0,support:'ground'});
+  Object.assign(getBody(w,'player'),{x:43.4,y:37.2,z:0,support:'ground'});
+  w.goal={id:'food',x:45,y:35,z:0,eaten:false};
+  for(let i=0;i<=4;i++)for(let j=0;j<=4;j++)if(i===0||i===4||j===0||j===4)
+   placeObject(w,'wall',38.4+i*.8,33.4+j*.8);
+  msg('ZAGRODA: Zwierzę jest w środku rzeczywiście zamkniętej konstrukcji. Edytuj mury (5), zostaw otwór i obserwuj — bez specjalnej reguły ucieczki.');
+ }else if(type==='obchodzenie'){
+  ai=true;msg('OBCHODZENIE: dzik szuka drogi do pokarmu za ścianą. Uproszczony A* zna mapę — to nie jest percepcja zwierzęcia.');
+ }else msg('PRZĘSŁO: dwie postacie na tym samym XY, ale różne Z i podpory. Spróbuj przejść pod mostem i wejść rampą.');
+ document.querySelector('.corner').textContent=type.toUpperCase()+' / ŚWIAT XYZ';
+ $('mobile-toast').classList.remove('shown');mobileToastAt=0;
+ cam=type==='zagroda'?{x:43.4,y:37.2}:type==='skrot'?{x:47,y:27.93}:type==='zrzut'?{x:45.4,y:27.8}:{x:42,y:27};pulse=[];setTool('none');syncButtons();}
+// Authoring mode is an explicit debug/editor privilege, NOT an in-world hand/grab.
+// Pointer positions are mapped through the same CSS-pixel projection as drawScene.
+function setTool(k){tool=k;for(const b of document.querySelectorAll('[data-tool]')){b.setAttribute('aria-pressed',String(b.dataset.tool===k));b.style.borderColor=b.dataset.tool===k?'#e8b97f':'';} }
+for(const b of document.querySelectorAll('[data-tool]'))b.addEventListener('click',()=>{setTool(b.dataset.tool);closeMobileMenu();});
+canvas.addEventListener('pointerdown',e=>{
+ if(tool==='none')return;
+ e.preventDefault();const r=canvas.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
+ const b=getBody(w,selected),level=b?.support==='bridge'?'bridge':'ground',z=level==='bridge'?2.6:0;
+ const x=cam.x+(sx-viewW*.51)/scale,y=cam.y+(sy-viewH*.57+z*scale*.53)/(scale*.67);
+ const result=tool==='erase'?eraseNear(w,x,y,{level}):placeObject(w,tool,x,y,{level});
+ msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${result.id}. Obiekt uczestniczy w kolizji, promieniach, nawigacji i zapisie.`:
+  `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}). Świat nie został zmieniony.`);updateUI();
+});
+$('export-world').onclick=()=>{const data=new Blob([snapshot(w)],{type:'application/json'}),url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download='Splot_Forge_Authored_World.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1200);msg('Wyeksportowano świat. To zapis badawczy Forge, nie save produkcyjny.');};
+$('import-world').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const replacement=restore(await file.text());w=replacement;selected='player';cam={x:getBody(w,selected).x,y:getBody(w,selected).y};syncButtons();updateUI();msg('Import przyjęty — geometria zapisu przeszła walidację.');}catch(err){msg('Import odrzucony: '+err.message);}finally{e.target.value='';}});
+$('cycle').onclick=()=>{const scenes=['skrot','przeciaganie','zrzut','przeslo','kontakt','upadek','obchodzenie','blokada','zagroda'];setScenario(scenes[(scenes.indexOf(scenario)+1)%scenes.length])};$('reset').onclick=()=>setScenario(scenario);$('actor').onclick=()=>{selected=selected==='player'?'scout':'player';msg('Sterujesz postacią '+(selected==='player'?'na dole':'na górze')+'.');syncButtons()};
+$('remove').onclick=()=>{removeBridge(w);msg('Usunięto most; grawitacja działa w czasie, a nowe kontakty wynikają z geometrii.');syncButtons()};
+$('viewmode').onclick=()=>{viewMode=viewMode==='auto'?'cut':viewMode==='cut'?'solid':'auto';syncButtons()};
+$('play').onclick=()=>{running=!running;syncButtons()};$('debug').onclick=()=>{showDebug=!showDebug;syncButtons()};$('ai').onclick=()=>{ai=!ai;syncButtons()};
+$('grip').onclick=()=>{const r=toggleGrip(w,selected);msg(r.ok?(w.grips?.[selected]?`CHWYT: ${r.crate}. Skrzynia pozostaje na podłożu; przesuwasz oba ciała wspólnie.`:`PUSZCZONO: ${r.crate}.`):`CHWYT: odmowa (${r.reason}). Zbliż się do skrzyni na tym samym podłożu.`);updateUI()};
+$('reach').onclick=()=>{const a=getBody(w,selected),objs=w.bodies.filter(x=>x.kind==='crate').sort((a,b)=>Math.hypot(a.x-getBody(w,selected).x,a.y-getBody(w,selected).y)-Math.hypot(b.x-getBody(w,selected).x,b.y-getBody(w,selected).y));const r=canReach(w,selected,objs[0].id);msg('Próba zasięgu do '+objs[0].id+': '+(r.ok?'kontakt możliwy':'brak kontaktu — '+r.reason));};
+for(const n of document.querySelectorAll('[data-scenario]'))n.onclick=()=>setScenario(n.dataset.scenario);
+function down(k){keys.add(k);}function up(k){keys.delete(k);}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k))e.preventDefault();if(e.repeat&&['tab',' ','x','r','h','e','1','2','3','4','5','0'].includes(k))return;
+ if(k==='tab'){$('actor').click();return;}if(k===' ') {$('play').click();return;}if(k==='x'){$('remove').click();return;}if(k==='r'){$('reset').click();return;}if(k==='h'){$('debug').click();return;}if(k==='e'){$('grip').click();return;}if(k==='c'){$('viewmode').click();return;}if(k==='3'){setTool('crate');return;}if(k==='4'){setTool('wall');return;}if(k==='5'){setTool('erase');return;}if(k==='0'){setTool('none');return;}if(k==='1'||k==='2'){selected=k==='1'?'player':'scout';syncButtons();return;}down(k);
+});addEventListener('keyup',e=>up(e.key.toLowerCase()));addEventListener('blur',()=>keys.clear());
+for(const el of document.querySelectorAll('[data-dir]')){const k=el.dataset.dir;el.addEventListener('pointerdown',e=>{e.preventDefault();down(k);el.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,()=>up(k));}
+function resize(){dpr=Math.min(2.5,devicePixelRatio||1);let r=canvas.getBoundingClientRect();viewW=r.width;viewH=r.height;canvas.width=Math.max(1,Math.round(viewW*dpr));canvas.height=Math.max(1,Math.round(viewH*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);}
+window.addEventListener('resize',resize);resize();
+function shade(col,a=1){return col}const between=(a,b,t)=>a+(b-a)*t;
+function visualHash(x,y,z=0){let n=(Math.imul(Math.floor(x)*374761393,1)^Math.imul(Math.floor(y)*668265263,1)^Math.imul(z*1903,1))|0;n=Math.imul(n^(n>>>13),1274126177);return (n^(n>>>16))>>>0;}
+function XY(x,y,z=0){return {x:viewW*.51+(x-cam.x)*scale,y:viewH*.57+(y-cam.y)*scale*.67-z*scale*.53};}
+function path(points,fill,stroke,width=1){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.lineWidth=width;ctx.strokeStyle=stroke;ctx.stroke();}}
+function rect(x,y,w,h,fill){ctx.fillStyle=fill;ctx.fillRect(x,y,w,h);}
+function line(a,b,col,w=1,ds=[]){ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.setLineDash(ds);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash([]);}
+function disk(x,y,r,col){ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+function polygonXY(box,z=0){return [XY(box.minX,box.minY,z),XY(box.maxX,box.minY,z),XY(box.maxX,box.maxY,z),XY(box.minX,box.maxY,z)];}
+function blockVolume(b,material='#52625e',opacity=1){const base=polygonXY(b,b.minZ),top=polygonXY(b,b.maxZ);ctx.save();ctx.globalAlpha=opacity;
+ path([base[2],base[3],top[3],top[2]],'#233b40');path([base[1],base[2],top[2],top[1]],'#293e42');path(top,material,'#b7a68c',1);
+ const c=XY((b.minX+b.maxX)/2,(b.minY+b.maxY)/2,b.maxZ);if(showDebug){ctx.fillStyle='#f1d4a2';ctx.font='9px monospace';ctx.fillText(b.id,c.x-18,c.y-3);}ctx.restore();}
+function background(){rect(0,0,viewW,viewH,'#102b31');
+ // Draw the same 84×54 world; only the camera clips its current region.
+ const x0=Math.max(0,Math.floor(cam.x-viewW/(2*scale)-3)),x1=Math.min(84,Math.ceil(cam.x+viewW/(2*scale)+3));
+ const y0=Math.max(0,Math.floor(cam.y-viewH/(1.34*scale)-3)),y1=Math.min(54,Math.ceil(cam.y+viewH/(1.34*scale)+3));
+ for(let j=y0;j<y1;j++)for(let i=x0;i<x1;i++){
+  const p=XY(i,j),t=terrain(i,j,w.seed),h=hash(i,j,w.seed);
+  const c=t==='grass'?(h%4===0?'#31504a':'#2d4945'):t==='soil'?'#415048':'#3c4e50';rect(p.x,p.y,scale+1,scale*.67+1,c);
+  const k=visualHash(i*2,j*2,917);if(k%4!==0)continue;
+  ctx.strokeStyle=t==='grass'?'rgba(161,184,125,.30)':'rgba(181,176,137,.17)';ctx.lineWidth=1.3;
+  for(let n=0;n<2;n++){let a=XY(i+.25+(k%19)/36+n*.18,j+.3+n*.12),tip={x:a.x+(k%7-3)*.7,y:a.y-3-(k%5)};line(a,tip,ctx.strokeStyle,1.2)}
+ }
+ // Material biography: visible, persistent and mechanical. Only committed
+ // ground contacts may alter these cells. The renderer never writes them.
+ for(const [k,v] of Object.entries(w.imprints)){
+  const [gx,gy]=k.split(',').map(Number);const x=(gx+.5)/2.5,y=(gy+.5)/2.5;
+  if(x<x0-1||x>x1+1||y<y0-1||y>y1+1)continue;
+  const p=XY(x,y);ctx.fillStyle=`rgba(178,139,91,${Math.min(.5,v*.56)})`;
+  ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.38,scale*.22,0,0,Math.PI*2);ctx.fill();
+ }
+ // Material distinct and positionally stable: path to bridge and old stone site.
+ for(let x=34;x<52;x+=.38){let p=XY(x,27.2+Math.sin(x*.72)*.15),r=visualHash(x*8,1,17);disk(p.x,p.y,2.1+(r%2),'rgba(176,149,105,.10)')}
+ const bounds=[XY(0,0),XY(84,0),XY(84,54),XY(0,54)];path(bounds,null,'rgba(236,221,167,.25)',2);
+}
+function groundDetails(){
+ const g=XY(w.goal.x,w.goal.y,0);if(!w.goal.eaten){disk(g.x,g.y,14,'rgba(211,172,76,.09)');disk(g.x,g.y,5.3,'#d4a85b');disk(g.x-2,g.y-3,2,'#f0d69b');}
+ // Structural shadow visually follows the same bridge footprint.
+ if(w.deck){const under=polygonXY(DECK,0);path(under,'rgba(2,16,20,.22)');}
+}
+function bridge(){if(!w.deck)return;
+ const selectedBody=getBody(w,selected),under=selectedBody.z<DECK.minZ-.01;
+ const top=polygonXY(DECK,DECK.maxZ),base=polygonXY(DECK,DECK.minZ);
+ const focusUnder=viewMode==='auto'&&under&&selectedBody.x>DECK.minX-.45&&selectedBody.x<DECK.maxX+.45&&selectedBody.y>DECK.minY-.45&&selectedBody.y<DECK.maxY+.45;
+ const center=XY(selectedBody.x,selectedBody.y,selectedBody.z);
+ // A deliberate, *local* visual cutaway. Surface material remains visible as a
+ // faint projection where the selected actor is occluded. World physics, nav,
+ // picking and save are independent of this camera mode.
+ const deckPass=(alpha,region)=>{ctx.save();
+  if(region){ctx.beginPath();
+   if(region==='outside')ctx.rect(0,0,viewW,viewH);
+   ctx.moveTo(center.x+scale*1.45,center.y-13);
+   ctx.ellipse(center.x,center.y-13,scale*1.45,scale*1.18,0,0,Math.PI*2);
+   ctx.clip(region==='outside'?'evenodd':'nonzero');
+  }
+  ctx.globalAlpha=alpha;
+  path([base[2],base[3],top[3],top[2]],'#574d44');path([base[1],base[2],top[2],top[1]],'#594c3c');path(top,'#ac895e','#e5c795',2);
+  for(let x=37.5;x<47;x+=.85){const a=XY(x,24,2.6),b=XY(x,30,2.6);line(a,b,'rgba(59,65,59,.38)',1.3);}
+  ctx.restore();
+ };
+ deckPass(viewMode==='cut'?.19:.98,focusUnder?'outside':null);
+ if(focusUnder){deckPass(.20,'inside');
+  ctx.save();ctx.strokeStyle='#e6d0a299';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.ellipse(center.x,center.y-13,scale*1.45,scale*1.18,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+ }
+ const pts=[[RAMP.minX,RAMP.minY],[RAMP.maxX,RAMP.minY],[RAMP.maxX,RAMP.maxY],[RAMP.minX,RAMP.maxY]].map(([x,y])=>XY(x,y,rampHeight(x)));
+ const rim=[XY(RAMP.minX,RAMP.maxY,rampHeight(RAMP.minX)),XY(RAMP.maxX,RAMP.maxY,rampHeight(RAMP.maxX)),
+  XY(RAMP.maxX,RAMP.maxY,rampHeight(RAMP.maxX)-.24),XY(RAMP.minX,RAMP.maxY,rampHeight(RAMP.minX)-.24)];
+ path(rim,'#655644','#ac926e',1);path(pts,'#8a785a','#cfb994',1.5);
+}
+function actor(b){const p=XY(b.x,b.y,b.z),shadow=XY(b.x,b.y,b.support==='bridge'||b.support==='ramp'?b.z:0),s=scale*.65,clr=color[b.id]||'#b2baa7';ctx.save();
+ // This sprite stays upright; world-space heading and gaze are not screen rotation.
+ if(b.support===null&&b.z>.15){
+  const anchor=XY(b.x,b.y,0);ctx.strokeStyle='rgba(221,220,185,.35)';ctx.lineWidth=1.2;ctx.setLineDash([2,5]);
+  ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(anchor.x,anchor.y);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(7,18,20,.25)';ctx.beginPath();ctx.ellipse(anchor.x+4,anchor.y+4,b.r*scale*.8,b.r*scale*.34,0,0,Math.PI*2);ctx.fill();
+ }
+ ctx.fillStyle='rgba(0,12,17,.38)';ctx.beginPath();ctx.ellipse(shadow.x+2,shadow.y+2,b.r*scale*.82,b.r*scale*.38,0,0,Math.PI*2);ctx.fill();
+ if(b.kind==='crate'){
+  const h=Math.max(12,b.h*scale*.58),r=b.r*scale*.89;
+  rect(p.x-r,p.y-h,r*2,h,'#ad8a65');rect(p.x-r,p.y-h,r*2,3,'#dcc49e');line({x:p.x-r+2,y:p.y-h+5},{x:p.x+r-2,y:p.y-4},'#6e5748',2);
+  line({x:p.x+r-2,y:p.y-h+5},{x:p.x-r+2,y:p.y-4},'#6e5748',2);ctx.strokeStyle='#4d3e32';ctx.lineWidth=2;ctx.strokeRect(p.x-r,p.y-h,r*2,h);
+ }else if(b.kind==='boar'){
+  const s=scale*.75,dir=Math.cos(b.heading)>=0?1:-1;
+  disk(p.x-dir*5,p.y-14,s*.43,'#9b7765');disk(p.x+dir*5,p.y-16,s*.34,'#c08f70');rect(p.x-dir*13,p.y-10,4,9,'#644e44');rect(p.x+dir*8,p.y-10,4,9,'#644e44');
+  disk(p.x+dir*15,p.y-15,5,'#d5ac88');disk(p.x+dir*9,p.y-20,2,'#201b1b');
+ }else{
+  const bodyTop=p.y-b.h*scale*.56,headY=bodyTop+9,front=Math.sin(b.heading)>=.27,back=Math.sin(b.heading)<=-.27,side=!front&&!back,dir=Math.cos(b.heading)>=0?1:-1;
+  const phase=Math.sin((b.walk||0)*8.6),stride=(b.support===null?0:phase)*5;
+  line({x:p.x-5,y:p.y-2},{x:p.x-5+stride,y:p.y-18},'#2f3e43',5);line({x:p.x+5,y:p.y-2},{x:p.x+5-stride,y:p.y-18},'#344449',5);
+  path([{x:p.x-10,y:headY+18},{x:p.x+10,y:headY+18},{x:p.x+12,y:p.y-16},{x:p.x-12,y:p.y-16}],clr,'#182c30',2);
+  const arm=phase*4;line({x:p.x-10,y:headY+23},{x:p.x-14,y:p.y-23+arm},'#bf967c',4);line({x:p.x+10,y:headY+23},{x:p.x+14,y:p.y-23-arm},'#bf967c',4);
+  disk(p.x,headY,10,'#cbaa8f');path([{x:p.x-10,y:headY-2},{x:p.x-7,y:headY-10},{x:p.x+7,y:headY-10},{x:p.x+10,y:headY-2}], '#4b413f');
+  if(front){disk(p.x-4,headY+2,1.4,'#263338');disk(p.x+4,headY+2,1.4,'#263338');}
+  if(side){disk(p.x+dir*5,headY+1,1.6,'#263338');}if(back){rect(p.x-8,headY-2,16,3,'#584f49')}
+ }
+ if(w.grips?.[selected]===b.id){const holder=getBody(w,selected),hp=XY(holder.x,holder.y,holder.z);line({x:hp.x,y:hp.y-holder.h*scale*.27},{x:p.x,y:p.y-b.h*scale*.3},'#f3ca86',3);}
+ if(b.id===selected){ctx.strokeStyle='#f2d5a1';ctx.lineWidth=1.7;ctx.setLineDash([3,4]);ctx.beginPath();ctx.ellipse(p.x,p.y-16,Math.max(22,b.r*scale+11),b.kind==='crate'?18:31,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([])}
+ if(showDebug){line(p,XY(b.x,b.y,0),clr,1.2,[3,4]);ctx.font='11px ui-monospace,monospace';ctx.fillStyle='#f2e4be';ctx.fillText(`${b.id} ${b.z.toFixed(2)} / ${b.support||'FALL'}`,p.x-32,p.y-b.h*scale*.56-13)}
+ ctx.restore();}
+function groundOverlay(){for(const v of solids(w).filter(s=>!s.id.startsWith('slab')))blockVolume(v,v.id.startsWith('pillar')?'#766c58':'#5a6664',1)}
+function drawPulses(){
+ pulse=pulse.filter(p=>w.time-p.last<.40);
+ for(const p of pulse){const age=(w.time-p.last)/.40,pt=XY(p.x,p.y,p.z),radius=10+Math.min(7,Math.log1p(p.count)*1.8);
+  ctx.save();ctx.globalAlpha=Math.max(0,(1-age)*.42);ctx.strokeStyle=p.type==='push'?'#f3bb83':'#9bdebd';ctx.lineWidth=1.7;
+  ctx.beginPath();ctx.ellipse(pt.x,pt.y,radius,radius*.45,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+ }
+}
+function drawScene(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,viewW,viewH);background();groundDetails();
+ // The deck is a real occluder in the painter's order. Lower bodies render
+ // BEFORE it; upper bodies AFTER it. Transparent cutaway remains a deliberate
+ // view aid, never a physical change to the bridge.
+ groundOverlay();
+ const ordered=[...w.bodies].sort((a,b)=>a.y-b.y);
+ for(const b of ordered.filter(b=>b.z+b.h<DECK.minZ+.035))actor(b);
+ bridge();
+ for(const b of ordered.filter(b=>b.z+b.h>=DECK.minZ+.035))actor(b);
+ drawPulses();
+ if(showDebug){if(w.nav.path.length){ctx.strokeStyle='#ffd19a';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();w.nav.path.forEach((v,i)=>{const p=XY(v.x,v.y,0);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.stroke();ctx.setLineDash([])}
+ const p=getBody(w,selected);ctx.fillStyle='#f3dcaa';ctx.font='12px monospace';ctx.fillText(`KANON XYZ x:${p.x.toFixed(2)} y:${p.y.toFixed(2)} z:${p.z.toFixed(2)}`,18,22);}
+}
+function drawMini(){let width=mini.width,height=mini.height;mctx.fillStyle='#223c3b';mctx.fillRect(0,0,width,height);const ox=3,oy=3,sx=(width-6)/SIZE.w,sy=(height-6)/SIZE.h;for(let j=0;j<SIZE.h;j+=2)for(let i=0;i<SIZE.w;i+=2){mctx.fillStyle=terrain(i,j,w.seed)==='grass'?'#355b4c':'#4d5449';mctx.fillRect(ox+i*sx,oy+j*sy,sx*2+1,sy*2+1)}
+ if(w.deck){mctx.fillStyle='#cb9c67';mctx.fillRect(ox+37*sx,oy+24*sy,10*sx,6*sy)} for(const b of w.authored){mctx.fillStyle='#b78c66';mctx.fillRect(ox+b.minX*sx,oy+b.minY*sy,(b.maxX-b.minX)*sx,(b.maxY-b.minY)*sy)}
+ for(const b of w.bodies){mctx.fillStyle=color[b.id];mctx.fillRect(ox+b.x*sx-2,oy+b.y*sy-2,4,4)}let c=getBody(w,selected);mctx.strokeStyle='#f3deb6';mctx.strokeRect(ox+(cam.x-9)*sx,oy+(cam.y-6)*sy,18*sx,12*sy);
+}
+function updateUI(){let b=getBody(w,selected);$('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+b.z.toFixed(1)+' m'+(tool!=='none'?' · '+({crate:'SKRZYNIA',wall:'MUR',erase:'USUŃ'}[tool]||tool):'');$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt';$('clock').textContent=w.time.toFixed(1)+' s';$('height').textContent=b.z.toFixed(2)+' m';$('support').textContent=b.support||'w powietrzu';$('stats').textContent=`Ruchy skrzyń: ${w.stats.pushes}  ·  Odmowy: ${w.stats.blocked}  ·  Lądowania: ${w.stats.lands}  ·  Planowania: ${w.stats.routes}  ·  Przeciąganie: ${w.stats.drags||0}`;
+ $('grip').textContent=w.grips?.[selected]?'Puść skrzynię (E)':'Chwyć skrzynię (E)';
+ $('builder-info').textContent=`Mury: ${w.authored.length} · dodatkowe skrzynie: ${w.bodies.filter(b=>b.id.startsWith('made-crate-')).length} · rewizja: ${w.revision}`;
+ $('events').replaceChildren(...w.history.slice(-5).reverse().map(e=>{let d=document.createElement('div');d.className='event';d.textContent=`${(e.tick/60).toFixed(1)}s  ${e.type} ${e.id||e.actor||e.by||''}`;return d}));}
+function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){accumulator+=dt;for(let i=0;accumulator>=DT&&i<6;i++,accumulator-=DT){let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);if(!dx&&!dy){dx=mobileStick.x;dy=mobileStick.y;}let ev=tickWorld(w,{selected,move:[dx,dy],precision:keys.has('shift'),ai});for(const e of ev){
+  if(e.type==='grip-released'&&e.reason==='edge-lost-support')
+   msg('KRAWĘDŹ: skrzynia straciła podparcie; chwyt nie utrzymał jej ciężaru.');
+  if(e.type==='land'&&e.id?.includes('crate'))
+   msg('LĄDOWANIE: skrzynia osiadła na '+(e.on==='ground'?'gruncie':e.on)+'.');
+  if(e.type==='push'||e.type==='land'||e.type==='blocked'||e.type==='drag'){
+ const id=e.actor||e.id||selected,b=getBody(w,id);if(!b)continue;
+ const existing=pulse.find(p=>p.type===e.type&&p.id===id&&w.time-p.last<.33);
+ if(existing){existing.x=b.x;existing.y=b.y;existing.z=b.z;existing.count++;existing.last=w.time;}
+ else pulse.push({id,type:e.type,x:b.x,y:b.y,z:b.z,count:1,last:w.time});
+ }}}}
+ if(mobileToastAt&&t-mobileToastAt>2700){$('mobile-toast').classList.remove('shown');mobileToastAt=0;}
+ const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
+setScenario('przeciaganie');requestAnimationFrame(loop);
+window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>placeObject(w,kind,x,y,{level}),erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get viewMode(){return viewMode},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};
+
+</script></body></html>

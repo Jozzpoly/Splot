@@ -1,21 +1,17 @@
+import {makeSlopedPlank,plankHeight,plankAxisHeight,plankTriangles as buildPlankTriangles,plankCylinderContact} from './spatial_construction.mjs';
 // SPLOT FORGE: independent falsifiable substrate. All units are world metres,
 // XY is ground, Z is gravity-up. Never imports/modifies the A2 runtime.
 export const SIZE={w:84,h:54};
 export const DECK={id:'bridge',minX:37,maxX:47,minY:24,maxY:30,minZ:2.28,maxZ:2.60};
 export const RAMP={id:'ramp',minX:34,maxX:37,minY:26.15,maxY:27.85};
 export const RAMP_THICKNESS=.24;
-export const rampHeight=x=>2.6*Math.max(0,Math.min(1,(x-RAMP.minX)/(RAMP.maxX-RAMP.minX)));
-// ONE sloped, finite-thickness plank: physics and rays derive from the same
-// construction. The board has open air underneath its high end (not a filled
-// earth wedge). This remains a fixed experimental construction, not a general
-// authoring format or a physics engine.
-const rampVertices=()=>{
- const {minX:a,maxX:b,minY:c,maxY:d}=RAMP,t=RAMP_THICKNESS;
- return [{x:a,y:c,z:-t},{x:b,y:c,z:2.6-t},{x:b,y:d,z:2.6-t},{x:a,y:d,z:-t},
-         {x:a,y:c,z:0},{x:b,y:c,z:2.6},{x:b,y:d,z:2.6},{x:a,y:d,z:0}];
-};
-const rampFaces=[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];
-export const rampTriangles=()=>{const v=rampVertices();return rampFaces.map(ids=>ids.map(i=>v[i]));};
+// Preserve the exact K2 shape/location, but derive its surface and collision
+// triangles from the general, rotated sloped-plank primitive.
+const MAIN_RAMP=makeSlopedPlank({id:'ramp',ax:RAMP.minX,ay:(RAMP.minY+RAMP.maxY)/2,
+ bx:RAMP.maxX,by:(RAMP.minY+RAMP.maxY)/2,width:RAMP.maxY-RAMP.minY,
+ z0:0,z1:DECK.maxZ,thickness:RAMP_THICKNESS});
+export const rampHeight=x=>plankAxisHeight(MAIN_RAMP,x,(RAMP.minY+RAMP.maxY)/2);
+export const rampTriangles=()=>buildPlankTriangles(MAIN_RAMP);
 export const DT=1/60;
 const EPS=1e-7;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -48,21 +44,12 @@ export function surfaces(w,x,y,r=0){const s=[{id:'ground',z:0}];if(w.deck){
   // for crates remains supported while some of its footprint still touches it.
   // Without rotational physics this models edge contact, NOT tipping forces.
   if(r>0?circleRect({x,y,r},DECK):inside(x,y,DECK))s.push({id:'bridge',z:2.6});
-  if(inside(x,y,RAMP))s.push({id:'ramp',z:rampHeight(x)});
+  const rampZ=plankHeight(MAIN_RAMP,x,y);
+  if(rampZ!==null)s.push({id:'ramp',z:rampZ});
  }return s;}
 function circleRect(b,s){const xx=clamp(b.x,s.minX,s.maxX),yy=clamp(b.y,s.minY,s.maxY);return (b.x-xx)**2+(b.y-yy)**2<(b.r-EPS)**2;}
 function touchesRampSlab(b){
- if(!circleRect(b,RAMP))return false;
- // The cylinder has an XY footprint. Its leading/back edges define the
- // occupied vertical interval of the tilted slab along its contact region.
- const xLow=Math.max(RAMP.minX,b.x-b.r),xHigh=Math.min(RAMP.maxX,b.x+b.r);
- const low=rampHeight(xLow)-RAMP_THICKNESS,high=rampHeight(xHigh);
- // A shallow leading edge belongs to the step-up transition, not a side wall.
- if(b.support==='ground'&&high<=.32)return false;
- // The game's upright cylinder approximation must not interpret its own
- // supported feet as penetrating the rising board under them.
- if(b.support==='ramp'&&Math.abs(b.z-rampHeight(b.x))<.05)return false;
- return b.z<high-EPS&&b.z+b.h>low+EPS;
+ return plankCylinderContact(MAIN_RAMP,b,'ramp');
 }
 function zOverlap(a,b){return a.z<b.z+b.h-EPS&&a.z+a.h>b.z+EPS;}
 function circles(a,b){return (a.x-b.x)**2+(a.y-b.y)**2<(a.r+b.r-EPS)**2;}
@@ -411,7 +398,7 @@ export function restore(json){const v=typeof json==='string'?JSON.parse(json):js
  for(const b of w.bodies){
   if(b.support==='ground'&&Math.abs(b.z)>.015)throw new Error('Invalid ground support for '+b.id);
   if(b.support==='bridge'&&(!w.deck||!(b.kind==='crate'?circleRect(b,DECK):inside(b.x,b.y,DECK))||Math.abs(b.z-2.6)>.015))throw new Error('Invalid bridge support for '+b.id);
-  if(b.support==='ramp'&&(!w.deck||!inside(b.x,b.y,RAMP)||Math.abs(b.z-2.6*(b.x-RAMP.minX)/(RAMP.maxX-RAMP.minX))>.02))throw new Error('Invalid ramp support for '+b.id);
+  if(b.support==='ramp'&&(!w.deck||plankHeight(MAIN_RAMP,b.x,b.y)===null||Math.abs(b.z-plankHeight(MAIN_RAMP,b.x,b.y))>.02))throw new Error('Invalid ramp support for '+b.id);
   if(typeof b.support==='string'&&b.support.startsWith('body:')){
    const q=getBody(w,b.support.slice(5));if(!q||!circles(b,q)||Math.abs(b.z-q.z-q.h)>.02)throw new Error('Invalid body support for '+b.id);
   }

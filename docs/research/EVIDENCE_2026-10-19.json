@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-19",
+  "status": "research candidate only — not Owner accepted",
+  "source_commit_before": "cd9e5d0a18216f45ec65f5f8515f0d4c57f827bd",
+  "tests": {
+    "game_plus_research": {
+      "passed": 85,
+      "failed": 0,
+      "command": "node --test tests/*.test.mjs"
+    },
+    "isolated_K3_donor": {
+      "passed": 15,
+      "failed": 0,
+      "command": "node --test donors/k3-geometry/geometry.test.mjs"
+    },
+    "full_verification": {
+      "exit": 0,
+      "command": "bash tests/verify.sh"
+    },
+    "differential_vs_frozen_old_world": {
+      "body_cases": 6500,
+      "ray_cases": 6500,
+      "simulation_steps": 4250,
+      "collision_mismatches": 0,
+      "ray_mismatches": 0,
+      "simulation_mismatches": 0
+    }
+  },
+  "renderer_parity": {
+    "same_world_state": true,
+    "different_pixel_count": 0,
+    "max_channel_difference": 0,
+    "total_pixels": 921600
+  },
+  "binary": {
+    "new_index_sha256": "fe65bd31fa0ccb23c4c211ab1cccc94eb1eccc2baeab1b3671321110d66d4f01",
+    "new_single_file_bytes": 76225
+  },
+  "limits": [
+    "Only 1 hard-coded bridge in playable game",
+    "New multi-construction scene is research-only",
+    "No 3D solver and no generalized navigation",
+    "No full visual occlusion or surface-pick integration",
+    "No Owner mobile approval",
+    "Exact screenshot parity means no visual improvement"
+  ]
+}

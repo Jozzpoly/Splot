@@ -112,7 +112,21 @@ export function createRapierBridge(world,R){
   if(world.paused)return;
   if(!Number.isFinite(dt)||dt<=0||dt>.05)throw Error('invalid-dt');
   syncStatics();syncBodies();engine.timestep=dt;
-  const human=refs.get('human');if(human)moveActor(human,input[0],input[1],dt,4.1);
+  const human=refs.get('human');
+  let control=[input[0],input[1]];
+  if(world.grip&&human){
+   const c=refs.get(world.grip);
+   if(c){
+    const dx=human.b.x-c.b.x,dy=human.b.y-c.b.y,d=norm(dx,dy);
+    if(d>.001){
+     const outward=(control[0]*dx+control[1]*dy)/d;
+     if(outward>0){const ratio=Math.max(0,Math.min(1,(1.55-d)/.35));
+      control=[control[0]-dx/d*outward*(1-ratio),control[1]-dy/d*outward*(1-ratio)];
+     }
+    }
+   }
+  }
+  if(human)moveActor(human,control[0],control[1],dt,4.1);
   const boar=refs.get('boar');
   if(boar){const b=boar.b,dx=world.food.x-b.x,dy=world.food.y-b.y,len=norm(dx,dy);
    moveActor(boar,len>.8?dx/len:0,len>.8?dy/len:0,dt,2.6);}

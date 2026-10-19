@@ -1,0 +1,49 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Splot — Rapier causal spike (research only)</title>
+<style>body{background:#102024;color:#dce8e4;font:15px/1.6 system-ui;max-width:850px;margin:48px auto;padding:0 24px}pre{white-space:pre-wrap;border:1px solid #4d6568;padding:18px;border-radius:9px}small{color:#acc3bc}</style></head>
+<body><h1>Splot / physics-only challenger</h1><p>Wąski pomiar fizyki, <strong>nie nowa gra</strong>, nie test kamery i nie wybór silnika. Tylko grawitacja, kontakty i zmiana sceny.</p>
+<pre id="result" aria-live="polite">Ładowanie Rapier 0.21.0…</pre><small>CDN ESM i WebAssembly, uruchamiane wyłącznie na żądanie w przeglądarce. Żadne dane użytkownika nie są wysyłane do aplikacji.</small>
+<script type="module">
+const output=document.getElementById('result'),lines=[],t0=performance.now();
+const log=(name,ok,more='')=>{lines.push((ok?'PASS':'FAIL')+' / '+name+(more?' / '+more:''));output.textContent=lines.join('\n')};
+const approx=(a,b,tol)=>Math.abs(a-b)<=tol;
+try{
+ const m=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
+ const R=m.default||m;
+ if(typeof R.init==='function')await R.init();
+ const world=new R.World({x:0,y:0,z:-9.81});
+ world.timestep=1/60;
+ const fixed=(x,y,z,hx,hy,hz,rot=null)=>{
+  const desc=R.RigidBodyDesc.fixed().setTranslation(x,y,z);
+  if(rot)desc.setRotation(rot);
+  const body=world.createRigidBody(desc);
+  world.createCollider(R.ColliderDesc.cuboid(hx,hy,hz),body);
+  return body;
+ };
+ fixed(21,16,-.35,21,16,.35);
+ const theta=Math.atan2(2.4,5), q={x:0,y:-Math.sin(theta/2),z:0,w:Math.cos(theta/2)};
+ fixed(15.5,13,1.09,Math.hypot(5,2.4)/2,1.15,.12,q);
+ const deck=fixed(23,13,2.25,5,2,.15);
+ const crate=world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(23,13,4.6).setCanSleep(false));
+ world.createCollider(R.ColliderDesc.cuboid(.43,.43,.43),crate);
+ for(let i=0;i<180;i++)world.step();
+ const z1=crate.translation().z;
+ log('skrzynia ląduje na statycznym podeście',approx(z1,2.83,.22),'z='+z1.toFixed(3));
+ world.removeRigidBody(deck);
+ for(let i=0;i<180;i++)world.step();
+ const z2=crate.translation().z;
+ log('usunięcie podpory ma konsekwencję fizyczną',z2<.7&&z2>.25,'z='+z2.toFixed(3));
+ const intruder=world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(9,8,.8).setCanSleep(false));
+ world.createCollider(R.ColliderDesc.cuboid(.28,.28,.8),intruder);
+ for(let i=0;i<30;i++)world.step();
+ const before=intruder.translation();
+ fixed(9,8,.70,.6,.6,.55);
+ for(let i=0;i<90;i++)world.step();
+ const after=intruder.translation();
+ const separation=Math.hypot(after.x-before.x,after.y-before.y,after.z-before.z);
+ log('kontakt po dodaniu bryły do dynamicznego ciała',separation>.08,'ruch='+separation.toFixed(3)+'m (nie dowodzi poprawnej polityki edycji)');
+ const bodyCount=world.bodies.len();
+ log('krótkie wykonanie WebAssembly',true,'bodies='+bodyCount+', '+(performance.now()-t0).toFixed(0)+'ms z pobraniem modułu');
+ lines.push('\nNIE TESTOWANO: controller gracza na rampie, jointów, CCD, chwytu, edytora, mobile, fps ani feel.');
+ output.textContent=lines.join('\n');output.dataset.state='done';
+}catch(err){log('ŁADOWANIE / PRÓBA',false,String(err?.stack||err));output.dataset.state='error';}
+</script></body></html>

@@ -100,12 +100,11 @@ export function createRapierBridge(world,R){
  syncStatics();syncBodies();
  function moveActor(ref,dx,dy,dt,speed){
   const len=norm(dx,dy),power=Math.min(1,len),scale=len?power/len:0;
-  const stepZ=-.055; // diagnostic: reproduce proven isolated KCC target exactly
+  const stepZ=ref.b.support===null?Math.max(-.4,-.055+ref.fallVelocity*dt):-.055;
   ref.kcc.computeColliderMovement(ref.c,{x:dx*scale*speed*dt,y:dy*scale*speed*dt,z:stepZ});
   const d=ref.kcc.computedMovement(),p=ref.rb.translation();
   ref.rb.setNextKinematicTranslation({x:p.x+d.x,y:p.y+d.y,z:p.z+d.z});
-  if(ref.kcc.computedGrounded?.())ref.fallVelocity=0;
-  else ref.fallVelocity=Math.max(-20,ref.fallVelocity-9.81*dt);
+  // Support is resolved after physics step; do not infer free-fall from slope contact alone.
   if(len>1e-3)ref.b.yaw=Math.atan2(dy,dx);
  }
  function advance(dt,input=[0,0]){
@@ -133,6 +132,7 @@ export function createRapierBridge(world,R){
    b.x=p.x;b.y=p.y;b.z=p.z-b.h/2;
    if(Math.abs(b.z)<.035)b.z=0;
    b.support=supporting(world.scene,b);
+   if(ref.kcc)ref.fallVelocity=b.support?0:Math.max(-20,ref.fallVelocity-9.81*dt);
    if(b.support&&!prior&&id!=='boar')world.events.push({type:'land',id,on:b.support,time:world.time});
   }
   if(world.events.length>80)world.events.splice(0,world.events.length-80);

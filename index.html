@@ -389,6 +389,22 @@ function plankBounds(p){
 }
 function constructionObstacles(w){return [...solids(w),...authoredPlanks(w).map(plankBounds),...(w.deck?[{...plankBounds(MAIN_RAMP),id:'historic-ramp'}]:[])];}
 
+// Until static authored walls have a true load-bearing body, require their
+// footprint to rest on one *flat* authored slab. No invisible ramp-mounted wall.
+function flatWallSupport(w,x,y,z){
+ const corners=[[x-.4,y-.4],[x-.4,y+.4],[x+.4,y-.4],[x+.4,y+.4]];
+ return (w.constructions||[]).some(def=>{
+  if(Math.abs(def.z0-def.z1)>.00001||Math.abs(def.z0-z)>.015)return false;
+  const plank=makeSlopedPlank(def);
+  return corners.every(([px,py])=>{const h=plankHeight(plank,px,py);return h!==null&&Math.abs(h-z)<.015;});
+ });
+}
+function authoredWallHasSupport(w,vol){
+ if(Math.abs(vol.minZ)<.015)return true;
+ const x=(vol.minX+vol.maxX)/2,y=(vol.minY+vol.maxY)/2,z=vol.minZ;
+ if(w.deck&&Math.abs(z-2.6)<.015&&inside(x,y,DECK))return true;
+ return flatWallSupport(w,x,y,z);
+}
 function placeObject(w,kind,x,y,{level='ground'}={}){
  if(!['crate','wall'].includes(kind)||!Number.isFinite(x)||!Number.isFinite(y))return {ok:false,reason:'bad-input'};
  // A named target surface must exist at the selected WORLD coordinate.
@@ -398,6 +414,7 @@ function placeObject(w,kind,x,y,{level='ground'}={}){
 
  if(x<1||y<1||x>SIZE.w-1||y>SIZE.h-1)return {ok:false,reason:'bounds'};
  if(w.bodies.length+w.authored.length>75)return {ok:false,reason:'edit-budget'};
+ if(kind==='wall'&&level!=='ground'&&level!=='bridge'&&!flatWallSupport(w,x,y,z))return {ok:false,reason:'needs-flat-support'};
  if(kind==='crate'){
   const id='made-crate-'+w.nextId;
   const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:level,vz:0};
@@ -439,6 +456,12 @@ function eraseConstruction(w,id){
  const index=(w.constructions||[]).findIndex(v=>v.id===id);
  if(index<0)return {ok:false,reason:'not-authored-construction'};
  w.constructions.splice(index,1);touchTopology(w);event(w,'erased-construction',{id});
+ // Static authored walls cannot remain suspended after their real support is gone.
+ // This is an explicit local editor cleanup, NOT a load-bearing collapse solver.
+ const lost=w.authored.filter(vol=>!authoredWallHasSupport(w,vol));
+ if(lost.length){const vanished=new Set(lost.map(vol=>vol.id));w.authored=w.authored.filter(vol=>!vanished.has(vol.id));
+  for(const vol of lost)event(w,'editor-part-lost',{id:vol.id,reason:'support-removed'});}
+
  for(const actorId of Object.keys(w.grips||{})){
   const a=getBody(w,actorId),b=getBody(w,w.grips[actorId]);
   if(a?.support===id||b?.support===id)clearGrip(w,actorId,'construction-removed');
@@ -622,7 +645,8 @@ function restore(json){const v=typeof json==='string'?JSON.parse(json):json;
  const ids=w.bodies.map(b=>b.id),essential=['player','scout','boar','crate','deck-crate'];
  if(new Set(ids).size!==ids.length||essential.some(id=>!ids.includes(id))||w.bodies.some(b=>!essential.includes(b.id)&&(!/^made-crate-\d+$/.test(b.id)||b.kind!=='crate')))throw new Error('Invalid body roster');
  if(!Array.isArray(w.authored)||w.authored.length>75||w.authored.some(o=>!/^made-wall-\d+$/.test(o.id)||!Number.isFinite(o.minX)||!Number.isFinite(o.minY)||!Number.isFinite(o.minZ)||!Number.isFinite(o.maxX)||!Number.isFinite(o.maxY)||!Number.isFinite(o.maxZ)||o.minX>=o.maxX||o.minY>=o.maxY||o.minZ>=o.maxZ||o.minX<0||o.minY<0||o.maxX>SIZE.w||o.maxY>SIZE.h))throw new Error('Invalid authored solids');
- if(w.authored.some(o=>o.minZ!==0&&!(w.deck&&Math.abs(o.minZ-2.6)<.01&&inside((o.minX+o.maxX)/2,(o.minY+o.maxY)/2,DECK))))throw new Error('Unsupported authored volume');
+ // Validate elevated authoring *after* construction data has been validated.
+ // A flat authored support permits a local elevated wall, never a fake ramp-mounted block.
  const shapes=w.constructions||[];if(!Array.isArray(shapes)||shapes.length>20)throw new Error('Invalid construction list');
  const names=new Set([...ids,...w.authored.map(a=>a.id)]);
  for(const def of shapes){if(!/^made-(ramp|platform)-\d+$/.test(def.id)||names.has(def.id))throw new Error('Invalid construction identity');names.add(def.id);
@@ -638,6 +662,7 @@ function restore(json){const v=typeof json==='string'?JSON.parse(json):json;
  for(const b of constructedBoxes){if(staticBoxes.some(o=>boxIntersects(b,o)))throw new Error('Invalid construction overlap '+b.id);}
  for(let i=0;i<constructedBoxes.length;i++)for(let j=i+1;j<constructedBoxes.length;j++)
   if(boxIntersects(constructedBoxes[i],constructedBoxes[j]))throw new Error('Invalid construction overlap '+constructedBoxes[i].id);
+ if(w.authored.some(o=>!authoredWallHasSupport(w,o)))throw new Error('Unsupported authored volume');
  if(w.authored.some(a=>ids.includes(a.id))||new Set(w.authored.map(x=>x.id)).size!==w.authored.length)throw new Error('Repeated authored ids');
  const numericIds=[...ids,...w.authored.map(x=>x.id),...shapes.map(x=>x.id)].filter(x=>/^made-(crate|wall|ramp|platform)-\d+$/.test(x)).map(x=>Number(x.split('-').at(-1)));
  if(!Number.isSafeInteger(w.nextId)||w.nextId<=Math.max(0,...numericIds))throw new Error('Invalid authoring sequence');

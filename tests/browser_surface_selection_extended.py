@@ -56,4 +56,19 @@ with sync_playwright() as pw:
  p.mouse.click(point['x'],point['y'])
  assert p.evaluate('__forge.world.constructions.length')==3,'Second erase deletes now-empty platform'
  print('authored platform PASS object-first erasure')
+ # A newly supported elevated wall must remain importable and individually editable.
+ p.evaluate("()=>{__forge.scenario('warsztat');__forge.pause()}")
+ p.wait_for_timeout(330)
+ p.locator('.panel [data-tool="wall"]').click()
+ point=p.evaluate('''()=>{const d=__forge.world.constructions[1],x=(d.ax+d.bx)/2,y=(d.ay+d.by)/2,z=d.z0,r=document.getElementById('world').getBoundingClientRect();return {x:r.left+viewW*.51+(x-cam.x)*scale,y:r.top+viewH*.57+(y-cam.y)*scale*.67-z*scale*.53};}''')
+ p.mouse.click(point['x'],point['y'])
+ assert p.evaluate('__forge.world.authored.length')==1,'new elevated wall not placed'
+ saved=p.evaluate('__forge.state()')
+ p.locator('#import-world').set_input_files({'name':'splot-elevated-wall.json','mimeType':'application/json','buffer':saved.encode('utf-8')})
+ p.wait_for_timeout(100)
+ assert p.evaluate('__forge.state()')==saved,'elevated wall lost across UI save/import'
+ p.locator('.panel [data-tool="erase"]').click();p.mouse.click(point['x'],point['y'])
+ assert p.evaluate('__forge.world.constructions.length')==4,'removing wall must retain support'
+ assert p.evaluate('__forge.world.authored.length')==0,'elevated wall not erased'
+ print('authored platform PASS elevated-wall import / erase / support preserved')
  cx.close();browser.close()

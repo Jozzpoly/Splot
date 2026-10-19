@@ -66,3 +66,19 @@ test('eraser on authored elevated surface can remove a placed crate without dele
  assert.equal(w.constructions.length,before);
  assert.equal(W.getBody(w,placed.id),undefined);
 });
+test('an authored wall placed on a new elevated platform remains restorable, without destroying authoring history',()=>{
+ const w=W.createWorld();assert.equal(W.placeScaffold(w,17,15).ok,true);
+ const p=w.constructions[1],x=(p.ax+p.bx)/2,y=(p.ay+p.by)/2;
+ const result=W.placeObject(w,'wall',x,y,{level:p.id});
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal(W.restore(W.snapshot(w)).authored.length,1,'same authored wall survives save/import');
+ assert.equal(W.eraseConstruction(w,p.id).ok,true);
+ assert.equal(W.restore(W.snapshot(w)).authored.length,0,'wall no longer hangs on deleted support');
+});
+test('reject wall on sloped surface when no coherent rigid support volume exists, with no side effects',()=>{
+ const w=W.createWorld();assert.equal(W.placeScaffold(w,17,15).ok,true);
+ const r=w.constructions[0],x=(r.ax+r.bx)/2,y=(r.ay+r.by)/2,before=W.snapshot(w);
+ const result=W.placeObject(w,'wall',x,y,{level:r.id});
+ assert.equal(result.ok,false,JSON.stringify(result));
+ assert.equal(W.snapshot(w),before);
+});

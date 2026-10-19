@@ -47,6 +47,9 @@ try{
  // Kinematic character traverses the SAME inclined rigid ramp using a proper
  // capsule and engine contact controller; still not the final human feel.
  try{
+  // Independent scenario reset: an earlier crate test intentionally removed the deck.
+  // The player route must NOT be tested against that already-destroyed structure.
+  const deckForCharacter=fixed(23,13,2.25,5,2,.15);
   const player=world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(12,13,.78));
   const capsule=world.createCollider(R.ColliderDesc.capsule(.5,.28).setRotation({x:Math.SQRT1_2,y:0,z:0,w:Math.SQRT1_2}),player);
   const controller=world.createCharacterController(.02);

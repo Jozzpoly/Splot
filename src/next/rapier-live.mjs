@@ -80,7 +80,7 @@ export function createRapierBridge(world,R){
    let found=null;
    outer:for(let r=.35;r<=3.6;r+=.25)for(let i=0;i<24;i++){
     const th=i*Math.PI/12,x=actor.x+r*Math.cos(th),y=actor.y+r*Math.sin(th);
-    const surface=supportCandidates(world.scene,x,y,{maxZ:31}).find(s=>s.z<=actor.z+.26&&s.z>=actor.z-.5);
+    const surface=supportCandidates(world.scene,x,y,{maxZ:31}).filter(s=>s.z<=actor.z+.15&&s.z>=actor.z-.3).sort((a,b)=>Math.abs(a.z-actor.z)-Math.abs(b.z-actor.z))[0];
     const z=surface?.z??actor.z;
     if(clearanceAt(world.scene,{x,y,z,r:actor.r,h:actor.h,supportId:surface?.id}).free){
      found={x,y,z,support:surface?.id??null};break outer;

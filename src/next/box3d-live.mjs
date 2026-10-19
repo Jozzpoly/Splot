@@ -10,7 +10,8 @@ import {splotToBox3D,box3DToSplot,panelQuaternionInBox3D} from './box3d-basis.mj
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-export function createBox3DBridge(w,b3){
+export function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
+ if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
   throw Error('Box3D 0.1.1 mover API unavailable');
  const wd=b3.b3DefaultWorldDef();
@@ -124,8 +125,23 @@ export function createBox3DBridge(w,b3){
      b3.b3Body_GetLinearVelocity(velocity,ref.rb);
      const k=clamp((d-1)*24,0,45)*dt*ref.b.mass;
      const drag=clamp(4.5*dt,0,1)*ref.b.mass;
-     const impulseS=[dx/d*k-velocity[0]*drag,
+     let impulseS=[dx/d*k-velocity[0]*drag,
       dy/d*k+velocity[2]*drag,0];
+     if(gripLaw==='intent-force'){
+      // Alternative E17-inspired input grammar: desired anchor velocity,
+      // bounded physical execution and reciprocal player reaction. Still
+      // centre-point and translation-only; deliberately NOT the E17 executor.
+      const playerV=human.controller.velocity;
+      const dirX=dx/d,dirY=dy/d;
+      const desiredRel=clamp((d-1.0)*10,0,8);
+      const desiredVX=playerV[0]+dirX*desiredRel;
+      const desiredVY=-playerV[2]+dirY*desiredRel;
+      const jx=(desiredVX-velocity[0])*ref.b.mass;
+      const jy=(desiredVY+velocity[2])*ref.b.mass;
+      const magnitude=Math.hypot(jx,jy),maxJ=750*dt;
+      const scale=magnitude>maxJ?maxJ/magnitude:1;
+      impulseS=[jx*scale,jy*scale,0];
+     }
      b3.b3Body_GetPosition(position,ref.rb);
      b3.b3Body_ApplyLinearImpulse(ref.rb,splotToBox3D(impulseS),[...position],true);
      // Deliberately limited reciprocal reaction on Donor velocity.
@@ -158,6 +174,6 @@ export function createBox3DBridge(w,b3){
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
   get warning(){return state.warning},
-  get status(){return {parts:statics.size,bodies:refs.size,
+  get status(){return {parts:statics.size,bodies:refs.size,gripLaw,
    donor:'A-triple-prime derived; research only',events:w.events.slice(-4)}}};
 }

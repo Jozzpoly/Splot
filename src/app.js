@@ -1,5 +1,6 @@
 import {SIZE,DECK,rampTriangles,DT,createWorld,getBody,solids,surfaces,terrain,imprintAt,raycast,canReach,removeBridge,tickWorld,bodyConflicts,snapshot,restore,walk,placeObject,eraseNear,toggleGrip,placeScaffold,eraseConstruction,pickSurfacesAtProjection,constructionMeshes} from './world.mjs';
-const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),ctx=canvas.getContext('2d'),mctx=mini.getContext('2d');
+const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),mctx=mini.getContext('2d');
+let ctx=canvas.getContext('2d');
 const visibilityCanvas=document.createElement('canvas'),visibilityCtx=visibilityCanvas.getContext('2d');
 let visibilityPreview=false; // opt-in Canvas research comparator, NOT an approved renderer
 const $=id=>document.getElementById(id), keys=new Set();

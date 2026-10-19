@@ -388,11 +388,11 @@ function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){
  const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
 setScenario(new URLSearchParams(location.search).get('scene')==='warsztat'?'warsztat':'przeciaganie');
 const visibilityProbe=new URLSearchParams(location.search).get('probe');
-if(visibilityProbe==='feet'||visibilityProbe==='side'){
+if(['feet','side','edge'].includes(visibilityProbe)){
  // Research-only positions, not a new game mode. Side case tests a partial
  // foreground slab while the old whole-object sorter paints the actor last.
  setScenario('warsztat');const b=getBody(w,'player');
- Object.assign(b,{x:visibilityProbe==='side'?18.17:18.55,y:visibilityProbe==='side'?18.3:14.55,z:0,support:'ground'});
+ Object.assign(b,{x:visibilityProbe==='edge'?20:visibilityProbe==='side'?18.17:18.55,y:visibilityProbe==='edge'?22.8:visibilityProbe==='side'?18.3:14.55,z:0,support:'ground'});
  cam={x:b.x,y:b.y};running=false;ai=false;syncButtons();
 }
 requestAnimationFrame(loop);

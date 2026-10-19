@@ -6,12 +6,15 @@
 import {createConstraintVelocityCharacter} from './box3d-donor/constraint-velocity-character.js';
 import {supportCandidates,clearanceAt} from './spatial-core.mjs';
 import {splotToBox3D,box3DToSplot,panelQuaternionInBox3D} from './box3d-basis.mjs';
+import {compliantActorImpulse} from './actor-contact.mjs';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-export function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
+export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost'}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
+ if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
+ let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
   throw Error('Box3D 0.1.1 mover API unavailable');
  const wd=b3.b3DefaultWorldDef();
@@ -127,6 +130,30 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
    const dx=d>.8?(w.food.x-boar.b.x)/d:0,dy=d>.8?(w.food.y-boar.b.y)/d:0;
    boar.controller.preStep(dt,intentFor(dx,dy));
   }
+  // Optional bilateral compliance, using current controller velocities.
+  // This is a physical-intent approximation, not true Box3D rigid-body
+  // collision; the Donor remains authoritative on static/dynamic world casts.
+  if(human&&boar&&contactMode==='compliant'){
+   const v=a=>[a.controller.velocity[0],-a.controller.velocity[2]];
+   const hit=compliantActorImpulse(human.b,boar.b,v(human),v(boar),dt);
+   lastContactImpulse=hit.impulse;
+   if(hit.active){
+    human.controller.velocity[0]+=hit.ax;
+    human.controller.velocity[2]-=hit.ay;
+    boar.controller.velocity[0]+=hit.bx;
+    boar.controller.velocity[2]-=hit.by;
+   }
+   // Hysteresis prevents log spam when the two actors touch.
+   const near=hit.gap!==null&&hit.gap<.03;
+   if(near&&!contactNear){
+    contactStarts++;
+    w.events.push({type:'actor-soft-contact-start',id:'human',with:'boar',gap:hit.gap,impulse:hit.impulse,time:w.time});
+   }else if(contactNear&&(hit.gap===null||hit.gap>.16)){
+    w.events.push({type:'actor-soft-contact-end',id:'human',with:'boar',gap:hit.gap,time:w.time});
+   }
+   if(near)contactNear=true;
+   else if(hit.gap===null||hit.gap>.16)contactNear=false;
+  }else{lastContactImpulse=0;contactNear=false;}
   // Limited first contact/parity grip. This is NOT imported E17 or E19.
   if(w.grip&&human){
    const ref=refs.get(w.grip);
@@ -187,7 +214,14 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
   if(!state.disposed){b3.b3DestroyWorld(engine);state.disposed=true;}
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
+  setActorContactMode(mode){
+   if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
+   contactMode=mode;contactNear=false;lastContactImpulse=0;
+   w.events.push({type:'actor-contact-mode',mode,time:w.time});
+  },
+  get actorContactMode(){return contactMode},
   get warning(){return state.warning},
   get status(){return {parts:statics.size,bodies:refs.size,gripLaw,
+   actorContact:contactMode,contactStarts,lastContactImpulse,
    donor:'A-triple-prime derived; research only',events:w.events.slice(-4)}}};
 }

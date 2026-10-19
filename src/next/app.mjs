@@ -11,7 +11,7 @@ let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physi
 const researchArgs=new URLSearchParams(location.search);
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline'};
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();
@@ -20,6 +20,23 @@ for(const name of ['pointerdown','keydown','wheel']){
   if(e.isTrusted)playtest.interact(name==='keydown'?'keyboard':name==='wheel'?'wheel':'pointer');
  },{capture:true,passive:true});
 }
+function refreshActorContactUI(){
+ const btn=$('#actor-contact'),supported=physicsState==='box3d'&&Boolean(bridge?.setActorContactMode);
+ btn.disabled=!supported;
+ const mode=supported?bridge.actorContactMode:box3dOptions.actorContact;
+ btn.textContent=supported?(mode==='compliant'?'Kontakt: miękki':'Kontakt: swobodny'):'Kontakt: Box3D';
+ btn.classList.toggle('active',supported&&mode==='compliant');
+}
+$('#actor-contact').onclick=()=>{
+ if(physicsState!=='box3d'||!bridge?.setActorContactMode)return;
+ const next=bridge.actorContactMode==='ghost'?'compliant':'ghost';
+ bridge.setActorContactMode(next);box3dOptions.actorContact=next;
+ playtest.event('actor-contact-mode',{mode:next});
+ actionText(next==='compliant'?
+  'Próba miękkiego obustronnego kontaktu. Nie jest to twarda kolizja.':
+  'Swobodne mijanie aktorów — kontrola.');
+ refreshActorContactUI();
+};
 function updatePlaytestStatus(){
  $('#test-status').textContent=playtest.status({visible:!document.hidden,focused:document.hasFocus()}).label;
 }
@@ -57,7 +74,7 @@ $('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.d
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
- camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -207,6 +224,7 @@ async function startPhysicsChallenger(){
    bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
   }
   physicsState=choice;
+  refreshActorContactUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
@@ -249,10 +267,10 @@ async function startPhysicsChallenger(){
    physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
  }catch(err){
-  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();
   physicsMessage=String(err?.stack||err);
   actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
  }
 }
-requestAnimationFrame(frame);void startPhysicsChallenger();
+refreshActorContactUI();requestAnimationFrame(frame);void startPhysicsChallenger();
 window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

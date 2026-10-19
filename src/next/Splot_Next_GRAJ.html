@@ -3,7 +3,7 @@
 :root{color-scheme:dark;font-family:system-ui,sans-serif;color:#e5e7cd;background:#0c1d23}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}button{font:600 12px system-ui;color:#ecedde;background:#193b3e;border:1px solid #54726a;border-radius:10px;min-height:36px;padding:8px 12px;cursor:pointer}button.active{background:#a57248;color:#fff4d8;border-color:#e6b978}button:disabled{opacity:.45;cursor:not-allowed}.session-state{font:10px/1.45 ui-monospace,monospace;color:#acbfb6;white-space:normal;padding:3px 2px}button:focus-visible{outline:2px solid #f5d092}#world{width:100%;height:100%;display:block;touch-action:none;image-rendering:pixelated}#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.viewport{position:relative;width:100vw;height:100dvh;overflow:hidden}.header{position:absolute;top:14px;left:17px;z-index:4;pointer-events:none;filter:drop-shadow(0 2px 6px #000)}.header strong{font-size:17px;letter-spacing:.02em;color:#f3e0bf}.header small{display:block;color:#a7cebd;font-size:11px;margin-top:4px}#hud{margin-top:8px;color:#bbd2c1;font:11px ui-monospace,monospace}.rail{position:absolute;right:14px;top:16px;width:201px;z-index:8;display:flex;flex-direction:column;gap:7px;background:#122d30d8;border:1px solid #526f6766;border-radius:14px;padding:11px;max-height:calc(100dvh - 26px);overflow-y:auto;overscroll-behavior:contain}.rail .row{display:flex;gap:5px;flex-wrap:wrap}.rail button{flex:1;min-width:64px}.rail .section{font-size:10px;color:#caac83;letter-spacing:.18em;margin:4px 2px 1px;text-transform:uppercase}.rail p{font-size:11px;line-height:1.5;color:#b7c9bc;margin:0}.bar{position:absolute;bottom:14px;left:16px;right:229px;z-index:2;display:flex;gap:10px;align-items:center;justify-content:space-between;pointer-events:none}#notice,#target{background:#11292bda;padding:8px 11px;max-width:48%;border:1px solid #516f684d;border-radius:10px;font-size:11px;color:#eed9b1;transition:opacity .3s}#target{color:#afcdbb}#notice:not(.show){opacity:.55}#mobile-menu,#active-mode{display:none}.mobile{display:none}a{color:#c9e7c7}@media(max-width:760px), (max-height:500px) and (pointer:coarse){.header{top:calc(8px + env(safe-area-inset-top));left:12px}.header strong{font-size:15px}.header small{font-size:10px;max-width:190px}.rail{top:calc(60px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:min(300px,78vw);max-height:calc(100dvh - 190px);gap:7px;padding:11px;transform:translateX(calc(100% + 22px));transition:transform .16s ease;pointer-events:none}.menu-open .rail{transform:translateX(0);pointer-events:auto;background:#122b30f5}#mobile-menu{display:block;position:absolute;top:calc(9px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:12;width:46px;height:44px;font-size:21px;background:#153238e9}#active-mode{display:block;position:absolute;top:calc(61px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:5;max-width:140px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:11px;background:#153238d9}.rail button{font-size:10px;padding:5px 6px;min-height:32px;min-width:54px}.rail .section,.rail p,.rail #save{display:none}.rail .row{gap:3px}.bar{bottom:calc(137px + env(safe-area-inset-bottom));left:10px;right:10px;justify-content:center}.bar #notice{max-width:80%;font-size:10px}.bar #target{display:none}.mobile{display:flex;position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:calc(12px + env(safe-area-inset-left));right:calc(12px + env(safe-area-inset-right));height:118px;justify-content:space-between;pointer-events:none;z-index:6}.joystick{position:relative;flex:0 0 116px;width:116px;height:116px;border-radius:100%;border:1px solid #91baa67a;background:#153a3baf;box-shadow:inset 0 0 22px #0b1a16;pointer-events:auto;touch-action:none;display:grid;place-items:center}.joystick:before{content:'';width:82px;height:82px;border-radius:100%;border:1px dashed #9db6a68a}.knob{position:absolute;width:50px;height:50px;border-radius:50%;background:linear-gradient(#5b9082,#26504e);border:2px solid #bdd5b6;box-shadow:0 3px 14px #0a201b;pointer-events:none}.touch-action{align-self:flex-end;display:flex;flex-direction:column;gap:8px;pointer-events:auto}.touch-action button{min-width:93px;height:47px;font-size:13px;background:#665039eb;border-color:#ddbd8b}.touch-action button:last-child{background:#173b41ec;border-color:#84b5af}}
 </style></head><body><main class="viewport"><canvas id="world" aria-label="Trójwymiarowy świat Splot Next"></canvas><canvas id="overlay" aria-hidden="true"></canvas>
 <header class="header"><strong>SPLOT / NOWY ROZDZIAŁ</strong><small>Świat XYZ · wspólna geometria · realna głębia</small><div id="hud">Uruchamianie…</div></header>
-<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button></div><div class="section">Sesja badawcza</div><div class="row"><button id="test-toggle" aria-label="Rozpocznij lub zakończ lokalną sesję testową">Zacznij test</button><button id="test-export" disabled aria-label="Pobierz lokalny raport testu">Raport</button></div><div id="test-status" class="session-state" aria-live="off" aria-label="Stan lokalnej sesji Splot">Bez aktywnej rejestracji</div>
+<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="row"><button id="actor-contact" type="button" disabled title="Tryb badawczy Box3D: swobodne mijanie lub miękki impuls">Kontakt: swobodny</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button></div><div class="section">Sesja badawcza</div><div class="row"><button id="test-toggle" aria-label="Rozpocznij lub zakończ lokalną sesję testową">Zacznij test</button><button id="test-export" disabled aria-label="Pobierz lokalny raport testu">Raport</button></div><div id="test-status" class="session-state" aria-live="off" aria-label="Stan lokalnej sesji Splot">Bez aktywnej rejestracji</div>
 <p>WASD — ruch względem kamery. E — chwyt. Z/X — obrót kamery. Kółko — zoom. Tryb „Płyta”: wskaż dwa punkty, niezależnie zmieniaj części. Q — kolejne trafione powierzchnie. To badawczy rozdział, nie ukończona gra ani silnik.</p></aside>
 <div class="bar"><span id="notice" class="show">Wczytywanie świata…</span><span id="target">Wybierz powierzchnię</span></div>
 <div class="mobile"><div id="joystick" class="joystick"><div id="knob" class="knob"></div></div><div class="touch-action"><button onclick="document.querySelector('#grip').click()">Chwyt</button><button onclick="document.querySelector('#layer').click()">Warstwa</button></div></div></main>
@@ -1125,6 +1125,47 @@ return {splotToBox3D,box3DToSplot,qmul,panelQuaternionInBox3D};
 })();
 const {splotToBox3D,box3DToSplot,qmul,panelQuaternionInBox3D}=BoxBasis;
 
+const ActorContact=(()=>{
+// Splot R&D: OPTIONAL compliant contact between two controller-owned actors.
+// This is a symmetric finite impulse on two mover velocities, not a Box3D
+// rigid-body collision, a hard no-overlap constraint, or a finished NPC AI.
+// It preserves the existing ghost/pass-through mode as the default.
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+function compliantActorImpulse(a,b,velocityA,velocityB,dt,{
+ shell=.14,recoveryRate=3.5,maxForce=1250,
+}={}){
+ const none=(gap=null)=>({active:false,impulse:0,ax:0,ay:0,bx:0,by:0,gap,normal:null});
+ if(!a||!b||!(dt>0&&dt<=.05))return none();
+ if(!(a.r>0&&b.r>0&&a.mass>0&&b.mass>0))return none();
+ if(a.z>=b.z+b.h-.001||b.z>=a.z+a.h-.001)return none();
+ const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+ const clearance=a.r+b.r;
+ const gap=d-clearance;
+ if(gap>=shell)return none(gap);
+ // Coincident centers need a deterministic normal. Relative motion takes
+ // priority over an arbitrary global direction.
+ const vx=velocityA[0]-velocityB[0],vy=velocityA[1]-velocityB[1];
+ const rel=Math.hypot(vx,vy);
+ const nx=d>1e-8?dx/d:rel>1e-8?vx/rel:1;
+ const ny=d>1e-8?dy/d:rel>1e-8?vy/rel:0;
+ // World-space velocities, not (X,Y,Z)-engine-dependent vectors.
+ const separationSpeed=(velocityB[0]-velocityA[0])*nx+
+                       (velocityB[1]-velocityA[1])*ny;
+ const penetration=Math.max(0,-gap);
+ const desiredSeparation=penetration*recoveryRate;
+ const effectiveMass=a.mass*b.mass/(a.mass+b.mass);
+ const preContactGain=gap>0?clamp((shell-gap)/shell,0,1):1;
+ const requested=Math.max(0,desiredSeparation-separationSpeed)*effectiveMass*preContactGain;
+ const J=Math.min(maxForce*dt,requested);
+ if(!(J>1e-8))return none(gap);
+ return {active:true,impulse:J,gap,normal:[nx,ny],
+  ax:-J*nx/a.mass,ay:-J*ny/a.mass,bx:J*nx/b.mass,by:J*ny/b.mass};
+}
+
+return {compliantActorImpulse};
+})();
+const {compliantActorImpulse}=ActorContact;
+
 const Box3DBridge=(()=>{
 // RESEARCH CHALLENGER. Frozen Box3D Character Controller Donor v1 mathematics,
 // not a claim that Splot has adopted the Donor's accepted gameplay feel.
@@ -1134,8 +1175,10 @@ const Box3DBridge=(()=>{
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
+function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost'}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
+ if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
+ let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
   throw Error('Box3D 0.1.1 mover API unavailable');
  const wd=b3.b3DefaultWorldDef();
@@ -1251,6 +1294,30 @@ function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
    const dx=d>.8?(w.food.x-boar.b.x)/d:0,dy=d>.8?(w.food.y-boar.b.y)/d:0;
    boar.controller.preStep(dt,intentFor(dx,dy));
   }
+  // Optional bilateral compliance, using current controller velocities.
+  // This is a physical-intent approximation, not true Box3D rigid-body
+  // collision; the Donor remains authoritative on static/dynamic world casts.
+  if(human&&boar&&contactMode==='compliant'){
+   const v=a=>[a.controller.velocity[0],-a.controller.velocity[2]];
+   const hit=compliantActorImpulse(human.b,boar.b,v(human),v(boar),dt);
+   lastContactImpulse=hit.impulse;
+   if(hit.active){
+    human.controller.velocity[0]+=hit.ax;
+    human.controller.velocity[2]-=hit.ay;
+    boar.controller.velocity[0]+=hit.bx;
+    boar.controller.velocity[2]-=hit.by;
+   }
+   // Hysteresis prevents log spam when the two actors touch.
+   const near=hit.gap!==null&&hit.gap<.03;
+   if(near&&!contactNear){
+    contactStarts++;
+    w.events.push({type:'actor-soft-contact-start',id:'human',with:'boar',gap:hit.gap,impulse:hit.impulse,time:w.time});
+   }else if(contactNear&&(hit.gap===null||hit.gap>.16)){
+    w.events.push({type:'actor-soft-contact-end',id:'human',with:'boar',gap:hit.gap,time:w.time});
+   }
+   if(near)contactNear=true;
+   else if(hit.gap===null||hit.gap>.16)contactNear=false;
+  }else{lastContactImpulse=0;contactNear=false;}
   // Limited first contact/parity grip. This is NOT imported E17 or E19.
   if(w.grip&&human){
    const ref=refs.get(w.grip);
@@ -1311,8 +1378,15 @@ function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
   if(!state.disposed){b3.b3DestroyWorld(engine);state.disposed=true;}
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
+  setActorContactMode(mode){
+   if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
+   contactMode=mode;contactNear=false;lastContactImpulse=0;
+   w.events.push({type:'actor-contact-mode',mode,time:w.time});
+  },
+  get actorContactMode(){return contactMode},
   get warning(){return state.warning},
   get status(){return {parts:statics.size,bodies:refs.size,gripLaw,
+   actorContact:contactMode,contactStarts,lastContactImpulse,
    donor:'A-triple-prime derived; research only',events:w.events.slice(-4)}}};
 }
 
@@ -1374,7 +1448,8 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
   }
   for(const e of events.slice(first)){
    append('world-event',{kind:String(e.type||'unknown'),id:e.id??null,
-    reason:e.reason??null,on:e.on??null});
+    reason:e.reason??null,on:e.on??null,with:e.with??null,mode:e.mode??null,
+    gap:num(e.gap),impulse:num(e.impulse)});
   }
   if(events.length)lastWorldEvent=events.at(-1);
   if(clock()-lastSample<500)return;
@@ -1697,7 +1772,7 @@ let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physi
 const researchArgs=new URLSearchParams(location.search);
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline'};
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();
@@ -1706,6 +1781,23 @@ for(const name of ['pointerdown','keydown','wheel']){
   if(e.isTrusted)playtest.interact(name==='keydown'?'keyboard':name==='wheel'?'wheel':'pointer');
  },{capture:true,passive:true});
 }
+function refreshActorContactUI(){
+ const btn=$('#actor-contact'),supported=physicsState==='box3d'&&Boolean(bridge?.setActorContactMode);
+ btn.disabled=!supported;
+ const mode=supported?bridge.actorContactMode:box3dOptions.actorContact;
+ btn.textContent=supported?(mode==='compliant'?'Kontakt: miękki':'Kontakt: swobodny'):'Kontakt: Box3D';
+ btn.classList.toggle('active',supported&&mode==='compliant');
+}
+$('#actor-contact').onclick=()=>{
+ if(physicsState!=='box3d'||!bridge?.setActorContactMode)return;
+ const next=bridge.actorContactMode==='ghost'?'compliant':'ghost';
+ bridge.setActorContactMode(next);box3dOptions.actorContact=next;
+ playtest.event('actor-contact-mode',{mode:next});
+ actionText(next==='compliant'?
+  'Próba miękkiego obustronnego kontaktu. Nie jest to twarda kolizja.':
+  'Swobodne mijanie aktorów — kontrola.');
+ refreshActorContactUI();
+};
 function updatePlaytestStatus(){
  $('#test-status').textContent=playtest.status({visible:!document.hidden,focused:document.hasFocus()}).label;
 }
@@ -1743,7 +1835,7 @@ $('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.d
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
- camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -1893,6 +1985,7 @@ async function startPhysicsChallenger(){
    bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
   }
   physicsState=choice;
+  refreshActorContactUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
@@ -1935,12 +2028,12 @@ async function startPhysicsChallenger(){
    physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
  }catch(err){
-  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();
   physicsMessage=String(err?.stack||err);
   actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
  }
 }
-requestAnimationFrame(frame);void startPhysicsChallenger();
+refreshActorContactUI();requestAnimationFrame(frame);void startPhysicsChallenger();
 window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
 
 </script></body></html>

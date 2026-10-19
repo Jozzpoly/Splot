@@ -121,7 +121,8 @@ canvas.addEventListener('pointerdown',e=>{
  if(!h){msg('EDYTOR: poza obszarem dostępnych powierzchni.');syncLayerDisplay();return;}
  const result=tool==='scaffold'?(h.id==='ground'?placeScaffold(w,h.x,h.y,{turns:scaffoldTurns,height:scaffoldHeight}):{ok:false,reason:'requires-ground'}):
    tool==='erase'?eraseAtSurface(h):placeObject(w,tool,h.x,h.y,{level:h.id});
- msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${result.id}. Cel: ${targetName(h.id)} (${h.z.toFixed(1)} m).`:
+ const itemLabel=result.id??(Array.isArray(result.ids)?result.ids.map(targetName).join(' + '):'element');
+ msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${itemLabel}. Cel: ${targetName(h.id)} (${h.z.toFixed(1)} m).`:
   `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}) na ${targetName(h.id)}. Świat nie został zmieniony.`);
  pickResult=surfaceAtScreen(choice.sx,choice.sy);syncLayerDisplay();updateUI();
 });

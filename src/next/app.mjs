@@ -1,9 +1,12 @@
 import {makeCamera,projectPoint,sceneTriangles,trianglesFor,pickPixel,insertElement,removeElement,supportCandidates,clearanceAt} from './spatial-core.mjs';
 import {createLiveWorld,getBody,stepLive,toggleGrip,addCrate} from './spatial-sim.mjs';
 import {createRenderer} from './render.mjs';
+import {createRapierBridge} from './rapier-live.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
+let bridge=null,rapierLibrary=null,physicsState='legacy',physicsMessage='';
+const researchArgs=new URLSearchParams(location.search);
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
@@ -19,7 +22,9 @@ $('#grip').onclick=()=>{const r=toggleGrip(world);actionText(r.ok?(r.gripped?'Tr
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
 $('#layer').onclick=()=>{selection++;refreshSelection();};
-$('#reset').onclick=()=>{world=createLiveWorld();camTarget=[14.5,14,0];setMode('move');actionText('Świat odtworzony — bez utraty obecnego rdzenia eksperymentu.')};
+$('#reset').onclick=()=>{if(bridge?.engine?.free)bridge.engine.free();world=createLiveWorld();
+ if(rapierLibrary&&physicsState==='rapier'){try{bridge=createRapierBridge(world,rapierLibrary);}catch(e){bridge=null;physicsState='legacy';physicsMessage='Rapier reset failed: '+e.message;}}
+ camTarget=[14.5,14,0];setMode('move');actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -141,13 +146,36 @@ function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  const info=viewport(),p=getBody(world,'human');
  camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;
  cam=makeCamera({target:camTarget,azimuth:rot,elevation:1.03,...info});
- if(!paused){let iter=0;while(acc>=1/60&&iter<4){stepLive(world,1/60,keyDirection());acc-=1/60;iter++;}}
- else acc=0;
+ if(!paused){let iter=0;while(acc>=1/60&&iter<4){
+  if(bridge)bridge.advance(1/60,keyDirection());else stepLive(world,1/60,keyDirection());
+  acc-=1/60;iter++;}}
+ else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
  const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
  renderer.render(tris,cam);renderOverlay(cam);
- if(t-lastHud>260){const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms`;
-  if(t-lastNotice>2900)message.classList.remove('show');lastHud=t;}
+ if(t-lastHud>260){const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
+  if(t-lastNotice>2900&&researchArgs.get('probe')!=='ascent')message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);
 }
-setMode('move');actionText('Splot Next: ruszaj, pchaj, chwytaj, konstruuj. Wszystko w tej samej przestrzeni XYZ.');requestAnimationFrame(frame);
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++)stepLive(world,1/60,dir)},build:(element)=>insertElement(world.scene,element)};
+setMode('move');actionText('Splot Next: ruszaj, pchaj, chwytaj, konstruuj. Wszystko w tej samej przestrzeni XYZ.');
+async function startPhysicsChallenger(){
+ if(researchArgs.get('physics')!=='rapier')return;
+ physicsState='loading-rapier';actionText('Ładowanie badawczej fizyki Rapier 0.21.0. Nadal możesz grać.');
+ try{
+  const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
+  const R=module.default||module;
+  if(typeof R.init==='function')await R.init();
+  rapierLibrary=R;bridge=createRapierBridge(world,R);physicsState='rapier';
+  actionText('Rapier aktywny · ta sama gra i grafika · zmieniona warstwa kontaktu (R&D).');
+  if(researchArgs.get('probe')==='ascent'){
+   const human=getBody(world,'human');human.x=12;human.y=13;human.z=0;human.support='ground';
+   if(bridge?.engine?.free)bridge.engine.free();bridge=createRapierBridge(world,R);world.paused=false;
+   for(let i=0;i<225;i++)bridge.advance(1/60,[1,0]);paused=true;world.paused=true;
+   const b=getBody(world,'human'),ok=b.x>19&&b.z>1.8;
+   physicsMessage=(ok?'PASS':'FAIL')+' / live ramp→deck / x='+b.x.toFixed(2)+' z='+b.z.toFixed(2);
+   actionText(physicsMessage);
+  }
+ }catch(err){bridge=null;physicsState='legacy-fallback';physicsMessage=String(err?.message||err);
+  actionText('Rapier niedostępny. Pozostaje stary solver. '+physicsMessage.slice(0,130));}
+}
+requestAnimationFrame(frame);void startPhysicsChallenger();
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

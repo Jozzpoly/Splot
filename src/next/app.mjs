@@ -2,10 +2,11 @@ import {makeCamera,projectPoint,sceneTriangles,trianglesFor,pickPixel,insertElem
 import {createLiveWorld,getBody,stepLive,toggleGrip,addCrate} from './spatial-sim.mjs';
 import {createRenderer} from './render.mjs';
 import {createRapierBridge} from './rapier-live.mjs';
+import {createBox3DBridge} from './box3d-live.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
-let bridge=null,rapierLibrary=null,physicsState='legacy',physicsMessage='';
+let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const researchArgs=new URLSearchParams(location.search);
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
@@ -22,8 +23,10 @@ $('#grip').onclick=()=>{const r=toggleGrip(world);actionText(r.ok?(r.gripped?'Tr
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
 $('#layer').onclick=()=>{selection++;refreshSelection();};
-$('#reset').onclick=()=>{if(bridge?.engine?.free)bridge.engine.free();world=createLiveWorld();
- if(rapierLibrary&&physicsState==='rapier'){try{bridge=createRapierBridge(world,rapierLibrary);}catch(e){bridge=null;physicsState='legacy';physicsMessage='Rapier reset failed: '+e.message;}}
+$('#reset').onclick=()=>{bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();
+ try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
+  if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary);
+ }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
  camTarget=[14.5,14,0];setMode('move');actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
@@ -158,32 +161,41 @@ function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
 }
 setMode('move');actionText('Splot Next: ruszaj, pchaj, chwytaj, konstruuj. Wszystko w tej samej przestrzeni XYZ.');
 async function startPhysicsChallenger(){
- if(researchArgs.get('physics')!=='rapier')return;
- physicsState='loading-rapier';actionText('Ładowanie badawczej fizyki Rapier 0.21.0. Nadal możesz grać.');
+ const choice=researchArgs.get('physics');
+ if(choice!=='rapier'&&choice!=='box3d')return;
+ physicsState='loading-'+choice;actionText('Ładowanie '+choice+' · badawcza fizyka, ta sama gra.');
  try{
-  const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
-  const R=module.default||module;
-  if(typeof R.init==='function')await R.init();
-  rapierLibrary=R;bridge=createRapierBridge(world,R);physicsState='rapier';
-  actionText('Rapier aktywny · ta sama gra i grafika · zmieniona warstwa kontaktu (R&D).');
+  if(choice==='rapier'){
+   const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
+   const R=module.default||module;if(typeof R.init==='function')await R.init();
+   rapierLibrary=R;bridge=createRapierBridge(world,R);
+  }else{
+   const module=await import('https://esm.sh/box3d.js@0.1.1/inline?bundle');
+   if(typeof module.default!=='function')throw Error('Box3D inline initializer unavailable');
+   box3dLibrary=await module.default();
+   bridge=createBox3DBridge(world,box3dLibrary);
+  }
+  physicsState=choice;
+  actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
    if(probe==='ascent')Object.assign(human,{x:12,y:13,z:0,support:'ground'});
    if(probe==='fall')Object.assign(human,{x:23,y:13,z:2.4,support:'footbridge-deck'});
    if(probe==='grip')Object.assign(human,{x:15.28,y:15.2,z:0,support:'ground'});
-   if(bridge?.engine?.free)bridge.engine.free();
-   bridge=createRapierBridge(world,R);world.paused=false;
+   bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
+   bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary);
+   world.paused=false;
    let ok=false,detail='';
    if(probe==='ascent'){
     for(let i=0;i<225;i++)bridge.advance(1/60,[1,0]);
     ok=human.x>19&&human.z>1.8;
-    detail='live ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2);
+    detail='ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2)+' support='+human.support;
    }else if(probe==='fall'){
     removeElement(world.scene,'footbridge-deck');
     for(let i=0;i<140;i++)bridge.advance(1/60,[0,0]);
     ok=human.z<.2&&human.support==='ground';
-    detail='support removal / z='+human.z.toFixed(2)+' on '+human.support;
+    detail='support removal / z='+human.z.toFixed(2)+' support='+human.support;
    }else if(probe==='edit'){
     const part={id:'probe-overlap',kind:'box',
      min:[human.x-.4,human.y-.4,0],max:[human.x+.4,human.y+.4,1.3],material:'stone'};
@@ -191,7 +203,7 @@ async function startPhysicsChallenger(){
     bridge.syncStatics();bridge.advance(1/60,[0,0]);
     const q=clearanceAt(world.scene,{x:human.x,y:human.y,z:human.z,r:human.r,h:human.h,supportId:human.support});
     ok=placed.ok&&q.free&&world.events.some(e=>e.type==='authoring-contact-resolved');
-    detail='live authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
+    detail='authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
    }else if(probe==='grip'){
     const grabbed=toggleGrip(world),before=crate.x;let maxGap=0;
     for(let i=0;i<100;i++){bridge.advance(1/60,[1,0]);
@@ -200,10 +212,13 @@ async function startPhysicsChallenger(){
     detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' max-gap='+maxGap.toFixed(2);
    }
    paused=true;world.paused=true;
-   physicsMessage=(ok?'PASS':'FAIL')+' / '+detail;actionText(physicsMessage);
+   physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
- }catch(err){bridge=null;physicsState='legacy-fallback';physicsMessage=String(err?.message||err);
-  actionText('Rapier niedostępny. Pozostaje stary solver. '+physicsMessage.slice(0,130));}
+ }catch(err){
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';
+  physicsMessage=String(err?.stack||err);
+  actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
+ }
 }
 requestAnimationFrame(frame);void startPhysicsChallenger();
 window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

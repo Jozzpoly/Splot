@@ -1,0 +1,50 @@
+--- a/src/world.mjs
++++ b/src/world.mjs
+@@ -38,7 +38,24 @@
+   box('pillar-sw',37,29.58,37.55,30.08,0,2.6),
+   box('pillar-se',46.45,29.58,47,30.08,0,2.6)];
+  if(w.deck){a.push(box('slab-center',37,24,47,26.15,2.28,2.6),box('slab-south',37,27.85,47,30,2.28,2.6),box('slab-middle',37.5,26.15,47,27.85,2.28,2.6));}
+- return a.concat(w.authored||[]);}
++ return a.concat(structuralMembers(w),w.authored||[]);}
++// A platform is not a free-floating drawing. This bounded prefab derives its
++// ground-to-slab posts from the authored platform geometry. Posts participate
++// in the SAME static collisions, ray queries, snapshots and obstacle changes.
++// This does NOT simulate stresses, fracture or dynamic structural equilibrium.
++export function platformMembers(def){
++ if(!def.id.startsWith('made-platform-')||Math.abs(def.z1-def.z0)>1e-5)return [];
++ const dx=def.bx-def.ax,dy=def.by-def.ay,len=Math.hypot(dx,dy);
++ if(len<.7||def.z1-def.thickness<.3)return [];
++ const fx=dx/len,fy=dy/len,px=-fy,py=fx;
++ const out=[],along=[.35,len-.35],spread=Math.max(.2,def.width/2-.32),r=.19;
++ for(let row=0;row<2;row++)for(const side of [-1,1]){
++  const x=def.ax+fx*along[row]+px*side*spread,y=def.ay+fy*along[row]+py*side*spread;
++  out.push({...box(def.id+':post:'+row+':'+(side<0?'L':'R'),x-r,y-r,x+r,y+r,0,def.z1-def.thickness),material:'stone',structuralParent:def.id});
++ }
++ return out;
++}
++export function structuralMembers(w){return (w.constructions||[]).flatMap(platformMembers);}
+ const authoredPlanks=w=>(w.constructions||[]).map(makeSlopedPlank);
+ const plankById=(w,id)=>authoredPlanks(w).find(s=>s.id===id);
+ export function constructionMeshes(w){return authoredPlanks(w).map(shape=>({id:shape.id,triangles:buildPlankTriangles(shape)}));}
+@@ -321,7 +338,12 @@
+  const obstacles=constructionObstacles(w);
+  // Existing static AABBs (and stage AABBs) must not be penetrated in volume.
+  for(const candidate of aabbs)for(const o of obstacles)if(boxIntersects(candidate,o))return {ok:false,reason:'occupied',hits:[o.id]};
+- for(const body of w.bodies)if(shapes.some(s=>plankCylinderContact(s,body,s.id)))return {ok:false,reason:'actor-contact',hits:[body.id]};
++ const newMembers=defs.flatMap(platformMembers);
++ for(const member of newMembers)for(const o of obstacles)if(boxIntersects(member,o))return {ok:false,reason:'post-occupied',hits:[o.id]};
++ for(const body of w.bodies){
++  if(shapes.some(s=>plankCylinderContact(s,body,s.id)))return {ok:false,reason:'actor-contact',hits:[body.id]};
++  if(newMembers.some(m=>circleRect(body,m)&&body.z<m.maxZ-EPS&&body.z+body.h>m.minZ+EPS))return {ok:false,reason:'post-actor-contact',hits:[body.id]};
++ }
+  w.constructions.push(...defs);w.nextId+=2;touchTopology(w);
+  for(const d of defs)event(w,'authored-construction',{id:d.id,kind:d.id.includes('ramp')?'ramp':'platform',x:d.ax,y:d.ay,z:d.z1});
+  return {ok:true,ids:defs.map(d=>d.id)};
+@@ -534,6 +556,7 @@
+  const staticBoxes=constructionObstacles({...w,constructions:[]});
+  const constructedBoxes=shapes.map(def=>plankBounds(makeSlopedPlank(def)));
+  for(const b of constructedBoxes){if(staticBoxes.some(o=>boxIntersects(b,o)))throw new Error('Invalid construction overlap '+b.id);}
++ for(const m of shapes.flatMap(platformMembers))if(staticBoxes.some(o=>boxIntersects(m,o)))throw new Error('Invalid structural-member overlap '+m.id);
+  for(let i=0;i<constructedBoxes.length;i++)for(let j=i+1;j<constructedBoxes.length;j++)
+   if(boxIntersects(constructedBoxes[i],constructedBoxes[j]))throw new Error('Invalid construction overlap '+constructedBoxes[i].id);
+  if(w.authored.some(o=>!authoredWallHasSupport(w,o)))throw new Error('Unsupported authored volume');

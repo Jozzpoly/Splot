@@ -5,7 +5,7 @@
 export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().toISOString()}={}){
  let recording=false,startedAt=null,endedAt=null,startedMs=0;
  let lastInput=-Infinity,lastInputEvent=-Infinity,lastSample=-Infinity;
- let previousWorld=null,eventOffset=0,wasNear=false,nearPasses=0;
+ let previousWorld=null,lastWorldEvent=null,wasNear=false,nearPasses=0;
  const entries=[];const cap=1500;
  const num=(x)=>Number.isFinite(x)?Math.round(x*100)/100:null;
  function append(type,data={}){
@@ -23,7 +23,7 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
   if(recording)return false;
   recording=true;startedAt=iso();endedAt=null;startedMs=clock();
   lastInputEvent=-Infinity;lastSample=-Infinity;
-  previousWorld=null;eventOffset=0;wasNear=false;nearPasses=0;entries.length=0;
+  previousWorld=null;lastWorldEvent=null;wasNear=false;nearPasses=0;entries.length=0;
   append('session-start',{engine,scenario});
   return true;
  }
@@ -39,16 +39,21 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
  function observe(world,{engine='unknown'}={}){
   if(!recording||!world)return;
   if(world!==previousWorld){
-   previousWorld=world;eventOffset=0;wasNear=false;
+   previousWorld=world;lastWorldEvent=null;wasNear=false;
    append('world-reset',{parts:world.scene?.elements?.length??0,engine});
   }
   const events=world.events||[];
-  if(eventOffset>events.length)eventOffset=0;
-  for(const e of events.slice(eventOffset)){
+  // The simulation retains only its latest ~80 events. Follow the actual
+  // event object identity, not array.length (which stops changing when full).
+  let first=lastWorldEvent===null?0:events.indexOf(lastWorldEvent)+1;
+  if(lastWorldEvent!==null&&first===0){
+   append('world-event-gap',{reason:'event-buffer-overflow'});first=0;
+  }
+  for(const e of events.slice(first)){
    append('world-event',{kind:String(e.type||'unknown'),id:e.id??null,
     reason:e.reason??null,on:e.on??null});
   }
-  eventOffset=events.length;
+  if(events.length)lastWorldEvent=events.at(-1);
   if(clock()-lastSample<500)return;
   lastSample=clock();
   const human=world.bodies?.find(b=>b.id==='human');

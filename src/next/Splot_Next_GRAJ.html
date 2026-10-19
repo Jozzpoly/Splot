@@ -311,6 +311,7 @@ function createRapierBridge(world,R){
  const ground=engine.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(world.scene.width/2,world.scene.height/2,-.35));
  engine.createCollider(R.ColliderDesc.cuboid(world.scene.width/2,world.scene.height/2,.35).setFriction(.85),ground);
  const statics=new Map(),refs=new Map();
+ let activeGrip=null;
  let revision=-1,warning='';
  const makeBody=b=>{
   const kinematic=b.kind!=='crate';
@@ -391,15 +392,21 @@ function createRapierBridge(world,R){
   const boar=refs.get('boar');
   if(boar){const b=boar.b,dx=world.food.x-b.x,dy=world.food.y-b.y,len=norm(dx,dy);
    moveActor(boar,len>.8?dx/len:0,len>.8?dy/len:0,dt,2.6);}
+  // Grip is a physical one-sided rope, not velocity teleportation.
+  // Its anchor follows the kinematic human and pulls a dynamic crate.
   if(world.grip){
    const c=refs.get(world.grip),h=refs.get('human');
-   if(!c||!h||Math.abs(c.b.z-h.b.z)>.65||norm(c.b.x-h.b.x,c.b.y-h.b.y)>2){
-    world.events.push({type:'release',id:world.grip,reason:'separation',time:world.time});world.grip=null;
-   }else{
-    const dx=h.b.x-c.b.x,dy=h.b.y-c.b.y,len=norm(dx,dy);
-    if(len>1){const v=c.rb.linvel(),strength=Math.min(45,(len-1)*27),mass=c.b.mass;
-     c.rb.applyImpulse({x:dx/len*strength*dt*mass-v.x*dt*mass*5,
-      y:dy/len*strength*dt*mass-v.y*dt*mass*5,z:0},true);}
+   if(!c||!h||Math.abs(c.b.z-h.b.z)>1.4){
+    world.events.push({type:'release',id:world.grip,reason:'separation',time:world.time});
+    world.grip=null;
+   }
+  }
+  if(activeGrip?.id!==world.grip){
+   if(activeGrip){engine.removeImpulseJoint(activeGrip.joint,true);activeGrip=null;}
+   if(world.grip){
+    const human=refs.get('human'),crate=refs.get(world.grip);
+    const data=R.JointData.rope(1.3,{x:0,y:0,z:-.12},{x:0,y:0,z:.18});
+    activeGrip={id:world.grip,joint:engine.createImpulseJoint(data,human.rb,crate.rb,true)};
    }
   }
   engine.step();world.time+=dt;

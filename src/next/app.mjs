@@ -8,6 +8,8 @@ let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selectio
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const researchArgs=new URLSearchParams(location.search);
+// Prevent all background stepping while an external WASM module is fetched.
+if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
 const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
@@ -180,11 +182,12 @@ async function startPhysicsChallenger(){
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
+   bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
+   world=createLiveWorld(); // identical deterministic setup for every backend
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
    if(probe==='ascent')Object.assign(human,{x:12,y:13,z:0,support:'ground'});
    if(probe==='fall')Object.assign(human,{x:23,y:13,z:2.4,support:'footbridge-deck'});
    if(probe==='grip')Object.assign(human,{x:15.28,y:15.2,z:0,support:'ground'});
-   bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
    bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary,box3dOptions);
    world.paused=false;
    let ok=false,detail='';
@@ -206,11 +209,13 @@ async function startPhysicsChallenger(){
     ok=placed.ok&&q.free&&world.events.some(e=>e.type==='authoring-contact-resolved');
     detail='authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
    }else if(probe==='grip'){
-    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0;
+    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0,releaseAt=-1;
     for(let i=0;i<100;i++){bridge.advance(1/60,[1,0]);
-     maxGap=Math.max(maxGap,Math.hypot(human.x-crate.x,human.y-crate.y));}
+     const gap=Math.hypot(human.x-crate.x,human.y-crate.y);
+     if(world.grip==='crate-1')maxGap=Math.max(maxGap,gap);
+     else if(releaseAt<0)releaseAt=i;}
     ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1'&&maxGap<1.9;
-    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' max-gap='+maxGap.toFixed(2);
+    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' held-max-gap='+maxGap.toFixed(2)+' released-at='+releaseAt;
    }
    paused=true;world.paused=true;
    physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);

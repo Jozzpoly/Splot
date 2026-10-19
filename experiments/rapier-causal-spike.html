@@ -43,7 +43,32 @@ try{
  log('kontakt po dodaniu bryły do dynamicznego ciała',separation>.08,'ruch='+separation.toFixed(3)+'m (nie dowodzi poprawnej polityki edycji)');
  const bodyCount=world.bodies.len();
  log('krótkie wykonanie WebAssembly',true,'bodies='+bodyCount+', '+(performance.now()-t0).toFixed(0)+'ms z pobraniem modułu');
- lines.push('\nNIE TESTOWANO: controller gracza na rampie, jointów, CCD, chwytu, edytora, mobile, fps ani feel.');
+
+ // Kinematic character traverses the SAME inclined rigid ramp using a proper
+ // capsule and engine contact controller; still not the final human feel.
+ try{
+  const player=world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(12,13,.78));
+  const capsule=world.createCollider(R.ColliderDesc.capsule(.5,.28),player);
+  const controller=world.createCharacterController(.02);
+  controller.setMaxSlopeClimbAngle(Math.PI/3);
+  controller.enableAutostep(.25,.06,true);
+  controller.enableSnapToGround(.24);
+  let blocked=0,peak=0;
+  for(let i=0;i<185;i++){
+   controller.computeColliderMovement(capsule,{x:.065,y:0,z:-.055});
+   const d=controller.computedMovement(),p=player.translation();
+   if(d.x<.005)blocked++;
+   player.setNextKinematicTranslation({x:p.x+d.x,y:p.y+d.y,z:p.z+d.z});
+   world.step();
+   peak=Math.max(peak,player.translation().z);
+  }
+  const final=player.translation();
+  log('kontroler kapsuły: ziemia → rampa',final.x>16&&peak>1.7,
+    'x='+final.x.toFixed(3)+', z='+final.z.toFixed(3)+', peak='+peak.toFixed(2)+', blocked='+blocked);
+  world.removeCharacterController(controller);
+ }catch(err){log('kontroler kapsuły — nieukończona próba',false,String(err?.message||err))}
+ lines.push('\nNIE TESTOWANO: joints, CCD, pełnego chwytu, edytora, mobile, fps ani feel.');
+
  output.textContent=lines.join('\n');output.dataset.state='done';
 }catch(err){log('ŁADOWANIE / PRÓBA',false,String(err?.stack||err));output.dataset.state='error';}
 </script></body></html>

@@ -1785,7 +1785,7 @@ function refreshActorContactUI(){
  const btn=$('#actor-contact'),supported=physicsState==='box3d'&&Boolean(bridge?.setActorContactMode);
  btn.disabled=!supported;
  const mode=supported?bridge.actorContactMode:box3dOptions.actorContact;
- btn.textContent=supported?(mode==='compliant'?'Kontakt: miękki':'Kontakt: swobodny'):'Kontakt: Box3D';
+ btn.textContent=supported?(mode==='compliant'?'Impuls R&D: ON':'Kontakt: swobodny'):'Kontakt: Box3D';
  btn.classList.toggle('active',supported&&mode==='compliant');
 }
 $('#actor-contact').onclick=()=>{
@@ -1794,7 +1794,7 @@ $('#actor-contact').onclick=()=>{
  bridge.setActorContactMode(next);box3dOptions.actorContact=next;
  playtest.event('actor-contact-mode',{mode:next});
  actionText(next==='compliant'?
-  'Próba miękkiego obustronnego kontaktu. Nie jest to twarda kolizja.':
+  'Próba impulsu R&D; w testach nadal występuje silne przenikanie. Nie jest to naprawa kolizji.':
   'Swobodne mijanie aktorów — kontrola.');
  refreshActorContactUI();
 };

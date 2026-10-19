@@ -28,6 +28,8 @@ with sync_playwright() as pw:
   if mobile:p.touchscreen.tap(target['x'],target['y'])
   else:p.mouse.click(target['x'],target['y'])
   assert p.evaluate('__forge.world.constructions.length')==6,(name,p.evaluate('document.querySelector("#status").textContent'))
+  feedback=p.locator('#status').inner_text()
+  assert 'undefined' not in feedback and 'made-ramp-' in feedback and 'made-platform-' in feedback,(name,feedback)
   assert p.evaluate('__forge.world.constructions[4].z1')>1
   p.evaluate('__forge.pause()')
   saved=p.evaluate('__forge.state()')

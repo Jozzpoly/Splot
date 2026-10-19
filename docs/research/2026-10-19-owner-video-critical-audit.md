@@ -62,3 +62,31 @@ No promotion to `main` until **an inexperienced observer can infer** who/what is
 
 ## Agency and provenance
 Splot remains autonomous, not a slave to Feniks/Jaskinia/Medium. Feniks provides counterexamples of desired spatial/physical consistency; Jaskinia provides easy immediate access; Studio/Medium may later consume bounded evidence or donors, but none sets Splot's runtime rules. K2 is playable control, PR#2 is rejected/candidate research, PR#3 is current unapproved spatial prototype. Do not publish the private video itself.
+
+## Continuation — 19 Oct: executable causal gate and corrected architecture choice
+
+A second independent audit recovered the K2→K3→PR#2→Next history and the 77-second Owner test. The crucial project goal is **construct → manipulate → run → observe causal consequences → rebuild**, not a geometry API or generalized Feniks engine. The old K2 remains a playable control; the PR#3 prototype is not accepted.
+
+### New live evidence
+`node --test tests/research/causal-pressure.test.mjs` — **9 cases: 6 PASS, 3 FAIL** on the locally recovered PR#3 code, deliberately outside the default suite. Executable source is committed to this PR.
+
+- **RED: fundamental ramp.** Starting grounded at (12,13,0), holding positive X for 180 steps leaves the human at x≈12.615, z=0. The reason is concrete: at the next step x≈12.683 a finite-radius collision already hits `footbridge-ramp` while `supportCandidates` still returns only ground. This is contradictory locomotion/contact, not a camera or artwork defect.
+- **RED: authoring transaction.** A part placed through the player's physical volume is accepted; after 120 steps the model still reports penetration and records no resolution. The permissive editor may allow absurd constructs, but a live world must *acknowledge and respond*; silent permanent invalid state is not permissiveness.
+- **RED: material lifecycle.** A panel freely authored at z=5 carries no anchored/kinematic/dynamic intent and stays static. A deliberate anchored floating slab could be acceptable; an *implicit* one cannot be called a working construction dynamics system.
+- **GREEN controls (scoped):** support removal/fall/ground landing, crate traverses edge/falls, independent part insert/remove updates support candidates, camera orbit does not mutate geometry, a limited cross-height body case, structural scene ID serialization. None proves broad game feel or correct continuous contacts.
+
+These results must accompany rather than overwrite the historical 18/18 Node PASS. The earlier baseline suite was too narrow to reveal the core ramp failure. The RED suite is a research instrument, not automatically an enforced release gate until the architecture resolves the cases.
+
+### Professional correction: do not swap solver and renderer simultaneously
+
+Previous plan `current Next` vs `Three.js + Rapier` vs `Babylon.js + Havok` as three complete parallel games is **not** the preferred first experiment. Such a comparison mixes physics, camera, content, interaction and integration cost, obscuring causality and risking another K3.
+
+**First challenger:** Rapier 3D as a replaceable contact/dynamics component, tested against these *same observable action→consequence contracts* using current visual presentation initially. Ramps, moving crates, support removal, collision authoring and bounded cost are priority. A new renderer (Three.js or other) is a separate decision, not mandatory just because Rapier is selected. Babylon/Havok remains a contingent second candidate, not a concurrent rewrite.
+
+Do not invent a final universal world schema here. Preserve only authoritatively named objects and revisions, declared physical lifecycle, and transactions whose consequences reconcile geometry, collision state, actor behavior and visual appearance. Distinct calibrated render meshes/collider proxies are legitimate; the literal same triangle mesh is not required.
+
+### Next acceptance experience, not just tests
+
+One *live, continuously playable* scene: human + movable crate + animal + ramp + platform + at least two independently editable structural parts. Without changing scenes or selecting debug avatars, player climbs, moves the crate, changes a part, sees reachable routes/support/contact change, and immediately resumes play. Observe physical correctness, composition/legibility, feel, touch, and mobile behavior separately. Material/art language is co-developed with mechanics; invisible physics correctness alone is not success.
+
+**Architecture and governance:** K2 main unmodified; PR#2 evidence only; PR#3 remains draft; no raw Owner footage/frames in repository. For Jaskinia/Medium, expose labeled, version-pinned playable candidates and evidence, not a universal Studio data model or an unapproved default game.

@@ -171,7 +171,7 @@ async function startPhysicsChallenger(){
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
    if(probe==='ascent')Object.assign(human,{x:12,y:13,z:0,support:'ground'});
    if(probe==='fall')Object.assign(human,{x:23,y:13,z:2.4,support:'footbridge-deck'});
-   if(probe==='grip')Object.assign(human,{x:13.1,y:15.2,z:0,support:'ground'});
+   if(probe==='grip')Object.assign(human,{x:15.28,y:15.2,z:0,support:'ground'});
    if(bridge?.engine?.free)bridge.engine.free();
    bridge=createRapierBridge(world,R);world.paused=false;
    let ok=false,detail='';
@@ -195,7 +195,7 @@ async function startPhysicsChallenger(){
    }else if(probe==='grip'){
     const grabbed=toggleGrip(world),before=crate.x;
     for(let i=0;i<100;i++)bridge.advance(1/60,[1,0]);
-    ok=grabbed.ok&&human.x>14.0&&crate.x>before+.2;
+    ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1';
     detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' start='+before.toFixed(2);
    }
    paused=true;world.paused=true;

@@ -28,6 +28,12 @@ test('opt-in captures world causality without claiming user identity',()=>{
  w.events.push({type:'land',id:'human',on:'ground'});
  advance(520);j.observe(w,{engine:'box3d'});
  assert.equal(j.report().events.filter(e=>e.type==='world-event').length,1);
+ w.events.push({type:'actor-soft-contact-start',id:'human',with:'boar',gap:-.02,impulse:12.5});
+ advance(520);j.observe(w,{engine:'box3d'});
+ const contact=j.report().events.find(e=>e.type==='world-event'&&e.data.kind==='actor-soft-contact-start');
+ assert.equal(contact.data.with,'boar');
+ assert.equal(contact.data.impulse,12.5);
+ assert.equal(contact.data.gap,-.02);
  w.bodies[1].x=1.3;w.bodies[1].y=1.2;
  advance(520);j.observe(w,{engine:'box3d'});
  assert.equal(j.report().summary.nearPasses,1);

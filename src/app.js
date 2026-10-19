@@ -386,5 +386,13 @@ function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){
  }}}}
  if(mobileToastAt&&t-mobileToastAt>2700){$('mobile-toast').classList.remove('shown');mobileToastAt=0;}
  const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
-setScenario(new URLSearchParams(location.search).get('scene')==='warsztat'?'warsztat':'przeciaganie');requestAnimationFrame(loop);
+setScenario(new URLSearchParams(location.search).get('scene')==='warsztat'?'warsztat':'przeciaganie');
+if(new URLSearchParams(location.search).get('probe')==='feet'){
+ // A deterministic, physically admissible occlusion counterexample from the
+ // research tests. URL-only camera fixture; never changes normal gameplay.
+ setScenario('warsztat');const b=getBody(w,'player');
+ Object.assign(b,{x:18.55,y:14.55,z:0,support:'ground'});
+ cam={x:b.x,y:b.y};running=false;ai=false;syncButtons();
+}
+requestAnimationFrame(loop);
 window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>kind==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):placeObject(w,kind,x,y,{level}),setScaffold:(turns,height=1.8)=>{scaffoldTurns=turns;scaffoldHeight=height;return {turns,height}},erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get pick(){return pickResult?{index:pickResult.index,hits:pickResult.hits.map(h=>({...h})),selected:pickResult.hit&&{...pickResult.hit}}:null},get viewMode(){return viewMode},get visibilityPreview(){return visibilityPreview},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};

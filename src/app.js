@@ -387,11 +387,12 @@ function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){
  if(mobileToastAt&&t-mobileToastAt>2700){$('mobile-toast').classList.remove('shown');mobileToastAt=0;}
  const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
 setScenario(new URLSearchParams(location.search).get('scene')==='warsztat'?'warsztat':'przeciaganie');
-if(new URLSearchParams(location.search).get('probe')==='feet'){
- // A deterministic, physically admissible occlusion counterexample from the
- // research tests. URL-only camera fixture; never changes normal gameplay.
+const visibilityProbe=new URLSearchParams(location.search).get('probe');
+if(visibilityProbe==='feet'||visibilityProbe==='side'){
+ // Research-only positions, not a new game mode. Side case tests a partial
+ // foreground slab while the old whole-object sorter paints the actor last.
  setScenario('warsztat');const b=getBody(w,'player');
- Object.assign(b,{x:18.55,y:14.55,z:0,support:'ground'});
+ Object.assign(b,{x:visibilityProbe==='side'?18.17:18.55,y:visibilityProbe==='side'?18.3:14.55,z:0,support:'ground'});
  cam={x:b.x,y:b.y};running=false;ai=false;syncButtons();
 }
 requestAnimationFrame(loop);

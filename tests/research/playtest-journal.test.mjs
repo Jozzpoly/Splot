@@ -1,0 +1,53 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createPlaytestJournal} from '../../src/next/playtest-journal.mjs';
+
+const mock=()=>{
+ let ms=1000;
+ const journal=createPlaytestJournal({clock:()=>ms,iso:()=>`test-clock-${ms}`});
+ return {journal,advance:n=>ms+=n};
+};
+const scene=()=>{
+ const w={time:0,scene:{elements:[{id:'ramp'}]},events:[],
+  bodies:[{id:'human',x:1,y:1,z:0,r:.32,h:1.6},
+   {id:'boar',x:3,y:3,z:0,r:.43,h:.75},
+   {id:'crate-1',x:2,y:1,z:0,r:.43,h:.86}]};
+ return w;
+};
+test('activity signal without opt-in never persists samples',()=>{
+ const {journal:j,advance}=mock();
+ j.interact('keyboard');advance(100);
+ assert.match(j.status().label,/interakcje/);
+ assert.equal(j.report().events.length,0);
+ assert.equal(j.report().startedAt,null);
+});
+test('opt-in captures world causality without claiming user identity',()=>{
+ const {journal:j,advance}=mock(),w=scene();
+ assert.equal(j.start({engine:'box3d'}),true);
+ j.interact('keyboard');j.observe(w,{engine:'box3d'});
+ w.events.push({type:'land',id:'human',on:'ground'});
+ advance(520);j.observe(w,{engine:'box3d'});
+ assert.equal(j.report().events.filter(e=>e.type==='world-event').length,1);
+ w.bodies[1].x=1.3;w.bodies[1].y=1.2;
+ advance(520);j.observe(w,{engine:'box3d'});
+ assert.equal(j.report().summary.nearPasses,1);
+ assert.ok(j.report().events.some(e=>e.type==='actor-proximity'));
+ assert.equal(j.report().format,'splot-playtest-local-v1');
+ assert.match(j.report().caveats.join(' '),/not proof of collision/);
+ j.stop();const count=j.report().events.length;advance(1000);j.observe(w);
+ assert.equal(j.report().events.length,count);
+});
+test('reset and data bound do not hide missing activity or record while off',()=>{
+ const {journal:j,advance}=mock();
+ j.start();let w=scene();
+ for(let i=0;i<2200;i++){
+  advance(510);w.time+=.51;j.observe(w,{engine:'box3d'});
+ }
+ assert.ok(j.report().events.length<=1500);
+ const replacement=scene();j.observe(replacement,{engine:'rapier'});
+ assert.ok(j.report().events.some(e=>e.type==='world-reset'&&e.data.engine==='rapier'));
+ assert.equal(j.status({visible:false,focused:false}).pageVisible,false);
+ j.stop();j.start({engine:'box3d'});
+ assert.equal(j.report().summary.nearPasses,0);
+ assert.ok(!j.report().events.some(e=>e.type==='sample'));
+});

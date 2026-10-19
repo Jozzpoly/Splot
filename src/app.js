@@ -2,9 +2,9 @@ import {SIZE,DECK,rampTriangles,DT,createWorld,getBody,solids,surfaces,terrain,i
 const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),mctx=mini.getContext('2d');
 let ctx=canvas.getContext('2d');
 const visibilityCanvas=document.createElement('canvas'),visibilityCtx=visibilityCanvas.getContext('2d');
-let visibilityPreview=false; // opt-in Canvas research comparator, NOT an approved renderer
+let visibilityPreview=new URLSearchParams(location.search).get('occlusion')==='fragments'; // opt-in, never a release default
 const $=id=>document.getElementById(id), keys=new Set();
-let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode='auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
+let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode=visibilityPreview?'solid':'auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
 let cam={x:42,y:27}, scale=45,tone='phys',tool='none',scaffoldTurns=0,scaffoldHeight=1.8,note='Użyj WASD. Sytuacja istnieje wewnątrz świata 84×54, nie w miniaturowym zamienniku.',pulse=[],lastFrame=performance.now(),accumulator=0,lastUi=0,frames=0;
 let pickLayer=0,pickPointer=null,pickResult=null; // UI-only editor target, never serialized
 let errors=[];window.addEventListener('error',e=>errors.push(e.message));
@@ -386,5 +386,5 @@ function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){
  }}}}
  if(mobileToastAt&&t-mobileToastAt>2700){$('mobile-toast').classList.remove('shown');mobileToastAt=0;}
  const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
-setScenario('przeciaganie');requestAnimationFrame(loop);
+setScenario(new URLSearchParams(location.search).get('scene')==='warsztat'?'warsztat':'przeciaganie');requestAnimationFrame(loop);
 window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>kind==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):placeObject(w,kind,x,y,{level}),setScaffold:(turns,height=1.8)=>{scaffoldTurns=turns;scaffoldHeight=height;return {turns,height}},erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get pick(){return pickResult?{index:pickResult.index,hits:pickResult.hits.map(h=>({...h})),selected:pickResult.hit&&{...pickResult.hit}}:null},get viewMode(){return viewMode},get visibilityPreview(){return visibilityPreview},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};

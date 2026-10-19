@@ -29,7 +29,7 @@ try{
  // mutation from the previous scenario.
  makeBox('deck2','static',[23,2.25,13],[5,.15,2]);
  const capsule={center1:[0,-.5,0],center2:[0,.5,0],radius:.28},filter=b3.b3DefaultQueryFilter();
- const scratch=b3.createPlaneResult(),position=[12,.78,13],target=[0,0,0];let vx=0,vy=0,maxY=position[1],blocked=0,trace=[];
+ const scratch=b3.createPlaneResult(),onRamp=new URLSearchParams(location.search).get('spawn')==='onramp',position=onRamp?[14,1.26,13]:[12,.78,13],target=[0,0,0];let vx=0,vy=0,maxY=position[1],blocked=0,trace=[];
  for(let i=0;i<280;i++){
   const intended=.065;const desiredX=position[0]+intended;
   vy=Math.max(-.23,vy-.009);
@@ -59,7 +59,7 @@ try{
   if(i%40===0)trace.push(i+':'+position[0].toFixed(2)+','+position[1].toFixed(2));
   b3.b3World_Step(world,dt,4);
  }
- log('Box3D capsule ramp-to-deck route',position[0]>22&&maxY>3.0&&position[1]>3,'x='+position[0].toFixed(3)+', y='+position[1].toFixed(3)+', maxY='+maxY.toFixed(3)+', blocked='+blocked);
+ log('Box3D capsule ramp-to-deck route '+(onRamp?'[on-ramp spawn]':'[ground spawn]'),(position[0]>22&&maxY>3.0&&position[1]>3)?'PASS':'FAIL','x='+position[0].toFixed(3)+', y='+position[1].toFixed(3)+', maxY='+maxY.toFixed(3)+', blocked='+blocked);
  log('trajectory evidence','INFO',trace.join(' | '));
  out.dataset.state='done';b3.b3DestroyWorld(world);
 }catch(e){log('Box3D feasibility','ERROR',String(e?.stack||e));out.dataset.state='error';}

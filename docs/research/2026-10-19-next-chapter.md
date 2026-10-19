@@ -42,3 +42,6 @@ Local tests establish geometry and small-scale movement invariants. Chromium emu
 - Scene geometry is regenerated each frame; spatial indexing and mesh caching must be added before large worlds.
 - Software raster depth fallback is CPU-heavy and is not a replacement for robust GPU/device testing.
 - The aesthetic is an intentionally provisional proof surface. The real next challenge is finding a material and motion language worthy of Feniks-adjacent ambitions while keeping Splot autonomous.
+
+## Subsequent live browser observation
+The GitHub-hosted standalone candidate was opened in the user's connected Opera browser after the first draft PR was created. Its accessibility state reported **`webgl-depth`** and the real scene was visible in a screenshot with perspective-independent projection, upper deck, access ramp, characters, and authored solids. This establishes that the GPU backend starts and renders in that browser, **not** that depth/picking are pixel-perfect across edge cases, not that hardware mobile performance is acceptable, and not that visual quality is Owner-approved. The graphics still resemble an early flat geometry lab; new architecture earns advancement only if the live experience improves substantially.

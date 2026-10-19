@@ -565,8 +565,15 @@ function route(w,from,to,grid=.42){
  }
  return [];
 }
+// Food is a world-space target, not a 2D trigger. This deliberately narrow
+// contact rule prevents false interactions across stacked support surfaces.
+// It does NOT solve how a boar perceives a target or navigates between floors.
+function boarCanReachFood(b,goal){
+ return Math.hypot(goal.x-b.x,goal.y-b.y)<.65 &&
+        Math.abs((goal.z??0)-b.z)<.45;
+}
 function updateBoar(w,dt=DT){const b=getBody(w,'boar'),t=w.goal;if(!b||b.support===null||t.eaten)return;
- if(Math.hypot(t.x-b.x,t.y-b.y)<.65){event(w,'food-reached',{by:b.id});w.goal.eaten=true;w.revision++;return;}
+ if(boarCanReachFood(b,t)){event(w,'food-reached',{by:b.id});w.goal.eaten=true;w.revision++;return;}
  const targetKey=`${t.x},${t.y},${t.z||0}`;
  // No-route is a legitimate result, not an instruction to run A* every tick.
  // Replan on a topology edit, goal change or a bounded periodic retry.

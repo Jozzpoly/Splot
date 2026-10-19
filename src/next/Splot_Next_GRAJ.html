@@ -388,7 +388,21 @@ function createRapierBridge(world,R){
   if(world.paused)return;
   if(!Number.isFinite(dt)||dt<=0||dt>.05)throw Error('invalid-dt');
   syncStatics();syncBodies();engine.timestep=dt;
-  const human=refs.get('human');if(human)moveActor(human,input[0],input[1],dt,4.1);
+  const human=refs.get('human');
+  let control=[input[0],input[1]];
+  if(world.grip&&human){
+   const c=refs.get(world.grip);
+   if(c){
+    const dx=human.b.x-c.b.x,dy=human.b.y-c.b.y,d=norm(dx,dy);
+    if(d>.001){
+     const outward=(control[0]*dx+control[1]*dy)/d;
+     if(outward>0){const ratio=Math.max(0,Math.min(1,(1.55-d)/.35));
+      control=[control[0]-dx/d*outward*(1-ratio),control[1]-dy/d*outward*(1-ratio)];
+     }
+    }
+   }
+  }
+  if(human)moveActor(human,control[0],control[1],dt,4.1);
   const boar=refs.get('boar');
   if(boar){const b=boar.b,dx=world.food.x-b.x,dy=world.food.y-b.y,len=norm(dx,dy);
    moveActor(boar,len>.8?dx/len:0,len>.8?dy/len:0,dt,2.6);}
@@ -719,10 +733,11 @@ async function startPhysicsChallenger(){
     ok=placed.ok&&q.free&&world.events.some(e=>e.type==='authoring-contact-resolved');
     detail='live authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
    }else if(probe==='grip'){
-    const grabbed=toggleGrip(world),before=crate.x;
-    for(let i=0;i<100;i++)bridge.advance(1/60,[1,0]);
-    ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1';
-    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' start='+before.toFixed(2);
+    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0;
+    for(let i=0;i<100;i++){bridge.advance(1/60,[1,0]);
+     maxGap=Math.max(maxGap,Math.hypot(human.x-crate.x,human.y-crate.y));}
+    ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1'&&maxGap<1.9;
+    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' max-gap='+maxGap.toFixed(2);
    }
    paused=true;world.paused=true;
    physicsMessage=(ok?'PASS':'FAIL')+' / '+detail;actionText(physicsMessage);

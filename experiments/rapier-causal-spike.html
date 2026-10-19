@@ -48,7 +48,7 @@ try{
  // capsule and engine contact controller; still not the final human feel.
  try{
   const player=world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(12,13,.78));
-  const capsule=world.createCollider(R.ColliderDesc.capsule(.5,.28),player);
+  const capsule=world.createCollider(R.ColliderDesc.capsule(.5,.28).setRotation({x:Math.SQRT1_2,y:0,z:0,w:Math.SQRT1_2}),player);
   const controller=world.createCharacterController(.02);
   controller.setMaxSlopeClimbAngle(Math.PI/3);
   controller.enableAutostep(.25,.06,true);

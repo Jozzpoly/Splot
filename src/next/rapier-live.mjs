@@ -100,7 +100,7 @@ export function createRapierBridge(world,R){
  syncStatics();syncBodies();
  function moveActor(ref,dx,dy,dt,speed){
   const len=norm(dx,dy),power=Math.min(1,len),scale=len?power/len:0;
-  const stepZ=Math.max(-.4,ref.fallVelocity*dt-.06);
+  const stepZ=-.055; // diagnostic: reproduce proven isolated KCC target exactly
   ref.kcc.computeColliderMovement(ref.c,{x:dx*scale*speed*dt,y:dy*scale*speed*dt,z:stepZ});
   const d=ref.kcc.computedMovement(),p=ref.rb.translation();
   ref.rb.setNextKinematicTranslation({x:p.x+d.x,y:p.y+d.y,z:p.z+d.z});

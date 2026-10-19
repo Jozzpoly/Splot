@@ -8,6 +8,7 @@ let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selectio
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const researchArgs=new URLSearchParams(location.search);
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
@@ -25,7 +26,7 @@ $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#wi
 $('#layer').onclick=()=>{selection++;refreshSelection();};
 $('#reset').onclick=()=>{bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
-  if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary);
+  if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
  camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
@@ -173,7 +174,7 @@ async function startPhysicsChallenger(){
    const module=await import('https://esm.sh/box3d.js@0.1.1/inline?bundle');
    if(typeof module.default!=='function')throw Error('Box3D inline initializer unavailable');
    box3dLibrary=await module.default();
-   bridge=createBox3DBridge(world,box3dLibrary);
+   bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
   }
   physicsState=choice;
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
@@ -184,7 +185,7 @@ async function startPhysicsChallenger(){
    if(probe==='fall')Object.assign(human,{x:23,y:13,z:2.4,support:'footbridge-deck'});
    if(probe==='grip')Object.assign(human,{x:15.28,y:15.2,z:0,support:'ground'});
    bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
-   bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary);
+   bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary,box3dOptions);
    world.paused=false;
    let ok=false,detail='';
    if(probe==='ascent'){

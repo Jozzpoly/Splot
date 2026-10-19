@@ -51,3 +51,16 @@ test('reset and data bound do not hide missing activity or record while off',()=
  assert.equal(j.report().summary.nearPasses,0);
  assert.ok(!j.report().events.some(e=>e.type==='sample'));
 });
+
+test('rolling 80-event world buffer remains observable after saturation',()=>{
+ const {journal:j,advance}=mock(),w=scene();
+ j.start();
+ for(let i=0;i<102;i++){
+  w.events.push({type:'tick-'+i,id:'test-body'});
+  if(w.events.length>80)w.events=w.events.slice(-80);
+  advance(25);j.observe(w);
+ }
+ const kinds=j.report().events.filter(e=>e.type==='world-event').map(e=>e.data.kind);
+ assert.equal(kinds.length,102,'do not lose world events when buffer length stays 80');
+ assert.equal(kinds[101],'tick-101');
+});

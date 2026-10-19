@@ -53,18 +53,19 @@ try{
   controller.setMaxSlopeClimbAngle(Math.PI/3);
   controller.enableAutostep(.25,.06,true);
   controller.enableSnapToGround(.24);
-  let blocked=0,peak=0;
-  for(let i=0;i<185;i++){
+  let blocked=0,peak=0,deckSamples=[],trace=[];
+  for(let i=0;i<280;i++){
    controller.computeColliderMovement(capsule,{x:.065,y:0,z:-.055});
    const d=controller.computedMovement(),p=player.translation();
    if(d.x<.005)blocked++;
    player.setNextKinematicTranslation({x:p.x+d.x,y:p.y+d.y,z:p.z+d.z});
    world.step();
-   peak=Math.max(peak,player.translation().z);
+   peak=Math.max(peak,player.translation().z);const at=player.translation();if(at.x>=19&&at.x<=27)deckSamples.push(at.z);if(i%40===0)trace.push([i,at.x.toFixed(2),at.z.toFixed(2)]);
   }
   const final=player.translation();
   log('kontroler kapsuły: ziemia → rampa',final.x>16&&peak>1.7,
     'x='+final.x.toFixed(3)+', z='+final.z.toFixed(3)+', peak='+peak.toFixed(2)+', blocked='+blocked);
+  log('kontroler: ciągłe przejście z rampy na podest',deckSamples.some(z=>z>3.0),'max-centre-on-deck='+Math.max(-1,...deckSamples).toFixed(2)+', samples='+trace.map(a=>a.join(':')).join(' | '));
   world.removeCharacterController(controller);
  }catch(err){log('kontroler kapsuły — nieukończona próba',false,String(err?.message||err))}
  lines.push('\nNIE TESTOWANO: joints, CCD, pełnego chwytu, edytora, mobile, fps ani feel.');

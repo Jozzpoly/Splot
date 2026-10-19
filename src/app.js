@@ -1,8 +1,9 @@
-import {SIZE,DECK,rampTriangles,DT,createWorld,getBody,solids,surfaces,terrain,imprintAt,raycast,canReach,removeBridge,tickWorld,bodyConflicts,snapshot,restore,walk,placeObject,eraseNear,toggleGrip,placeScaffold,eraseConstruction,pickConstructionAtProjection,constructionMeshes} from './world.mjs';
+import {SIZE,DECK,rampTriangles,DT,createWorld,getBody,solids,surfaces,terrain,imprintAt,raycast,canReach,removeBridge,tickWorld,bodyConflicts,snapshot,restore,walk,placeObject,eraseNear,toggleGrip,placeScaffold,eraseConstruction,pickSurfacesAtProjection,constructionMeshes} from './world.mjs';
 const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),ctx=canvas.getContext('2d'),mctx=mini.getContext('2d');
 const $=id=>document.getElementById(id), keys=new Set();
 let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode='auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
 let cam={x:42,y:27}, scale=45,tone='phys',tool='none',scaffoldTurns=0,scaffoldHeight=1.8,note='Użyj WASD. Sytuacja istnieje wewnątrz świata 84×54, nie w miniaturowym zamienniku.',pulse=[],lastFrame=performance.now(),accumulator=0,lastUi=0,frames=0;
+let pickLayer=0,pickPointer=null,pickResult=null; // UI-only editor target, never serialized
 let errors=[];window.addEventListener('error',e=>errors.push(e.message));
 let mobileStick={x:0,y:0,id:null},mobileToastAt=0;
 function closeMobileMenu(){document.body.classList.remove('mobile-menu-open');$('mobile-options').setAttribute('aria-expanded','false');resetMobileStick();}
@@ -33,11 +34,25 @@ function bindMobileAction(id,desktopId){const el=$(id);let lastTouch=-1e9;
 bindMobileAction('mobile-view','viewmode');
 bindMobileAction('mobile-grip','grip');
 bindMobileAction('mobile-touch-info','actor');
+bindMobileAction('mobile-pick-layer','pick-layer');
 
+function targetName(id){return id==='ground'?'grunt':id==='bridge'?'most':id==='ramp'?'rampa':id.includes('platform')?'podest':id.includes('ramp')?'rampa':id;}
+function surfaceAtScreen(sx,sy){
+ const x=cam.x+(sx-viewW*.51)/scale,groundY=cam.y+(sy-viewH*.57)/(scale*.67);
+ const hits=pickSurfacesAtProjection(w,x,groundY), index=hits.length?pickLayer%hits.length:0;
+ return {sx,sy,hits,index,hit:hits[index]||null};
+}
+function setPickPointer(sx,sy){pickPointer={sx,sy};pickResult=surfaceAtScreen(sx,sy);return pickResult;}
+function layerIndicator(){const d=pickResult,h=d?.hit;return !h?(pickLayer?'Warstwa: niższa (wskaż miejsce)':'Warstwa: górna (wskaż miejsce)'):`Warstwa: ${targetName(h.id)} ${h.z.toFixed(1)} m (${d.index+1}/${d.hits.length})`;}
+function syncLayerDisplay(){
+ $('pick-layer').textContent=layerIndicator()+' (Q)';
+ $('mobile-pick-layer').hidden=tool==='none';
+ if(tool!=='none')$('mobile-level').textContent=layerIndicator().replace('Warstwa: ','CEL: ');
+}
 const color={player:'#79dbc3',scout:'#e5b878',boar:'#cf8670',crate:'#bd9473','deck-crate':'#bd9473'};
-function syncButtons(){ $('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+(getBody(w,selected)?.z??0).toFixed(1)+' m';$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt'; $('play').textContent=running?'Pauza':'Uruchom'; $('actor').textContent=selected==='player'?'Postać: dół':'Postać: góra'; $('debug').textContent=showDebug?'Debug: tak':'Debug: nie';$('ai').textContent=ai?'Dzik: działa':'Dzik: stop'; $('remove').disabled=!w.deck; $('viewmode').textContent='Widok: '+(viewMode==='auto'?'automatyczny':viewMode==='cut'?'przekrój':'pełna bryła')+' (C)'; }
+function syncButtons(){ $('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+(getBody(w,selected)?.z??0).toFixed(1)+' m';$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt'; $('play').textContent=running?'Pauza':'Uruchom'; $('actor').textContent=selected==='player'?'Postać: dół':'Postać: góra'; $('debug').textContent=showDebug?'Debug: tak':'Debug: nie';$('ai').textContent=ai?'Dzik: działa':'Dzik: stop'; $('remove').disabled=!w.deck; $('viewmode').textContent='Widok: '+(viewMode==='auto'?'automatyczny':viewMode==='cut'?'przekrój':'pełna bryła')+' (C)';syncLayerDisplay(); }
 function msg(t){note=t;$('status').textContent=t;const el=$('mobile-toast');el.textContent=t;el.classList.add('shown');mobileToastAt=performance.now();}
-function setScenario(type){closeMobileMenu();w=createWorld();selected='player';scenario=type;running=true;ai=true;
+function setScenario(type){closeMobileMenu();pickLayer=0;pickPointer=null;pickResult=null;w=createWorld();selected='player';scenario=type;running=true;ai=true;
  if(type==='warsztat'){
   const one=placeScaffold(w,20,23,{turns:3,height:1.8}),two=placeScaffold(w,16,13,{turns:0,height:2.2});
   Object.assign(getBody(w,'player'),{x:20,y:24.25,z:0,support:'ground'});
@@ -81,17 +96,34 @@ function setScenario(type){closeMobileMenu();w=createWorld();selected='player';s
  cam=type==='warsztat'?{x:20,y:22}:type==='zagroda'?{x:43.4,y:37.2}:type==='skrot'?{x:47,y:27.93}:type==='zrzut'?{x:45.4,y:27.8}:{x:42,y:27};pulse=[];setTool('none');syncButtons();}
 // Authoring mode is an explicit debug/editor privilege, NOT an in-world hand/grab.
 // Pointer positions are mapped through the same CSS-pixel projection as drawScene.
-function setTool(k){tool=k;for(const b of document.querySelectorAll('[data-tool]')){b.setAttribute('aria-pressed',String(b.dataset.tool===k));b.style.borderColor=b.dataset.tool===k?'#e8b97f':'';} }
+function setTool(k){tool=k;pickLayer=0;pickResult=pickPointer?surfaceAtScreen(pickPointer.sx,pickPointer.sy):null;for(const b of document.querySelectorAll('[data-tool]')){b.setAttribute('aria-pressed',String(b.dataset.tool===k));b.style.borderColor=b.dataset.tool===k?'#e8b97f':'';}syncLayerDisplay(); }
 for(const b of document.querySelectorAll('[data-tool]'))b.addEventListener('click',()=>{setTool(b.dataset.tool);closeMobileMenu();});
+// Pointer has a single world-space target. The actor being controlled is NOT
+// a hidden editor-layer switch. A deliberate Q/button cycle chooses overlap.
+canvas.addEventListener('pointermove',e=>{if(tool==='none')return;
+ const r=canvas.getBoundingClientRect();setPickPointer(e.clientX-r.left,e.clientY-r.top);syncLayerDisplay();});
+canvas.addEventListener('pointerleave',()=>{pickPointer=null;pickResult=null;syncLayerDisplay();});
+$('pick-layer').addEventListener('click',()=>{pickLayer=(pickLayer+1)%Math.max(2,pickResult?.hits.length||2);
+ if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);
+ syncLayerDisplay();});
+function eraseAtSurface(h){
+ // The surface determines WHICH layer, not WHICH object is destroyed.
+ // Respect an authored object on the surface before removing its support.
+ const object=eraseNear(w,h.x,h.y,{level:h.id,skipConstructions:true});
+ if(object.ok||object.reason!=='no-edit-nearby')return object;
+ if((w.constructions||[]).some(d=>d.id===h.id))return eraseConstruction(w,h.id);
+ return object;
+}
 canvas.addEventListener('pointerdown',e=>{
  if(tool==='none')return;
- e.preventDefault();const r=canvas.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
- const b=getBody(w,selected),level=b?.support==='bridge'?'bridge':'ground',z=tool==='scaffold'||tool==='erase'?0:level==='bridge'?2.6:0;
- const x=cam.x+(sx-viewW*.51)/scale,y=cam.y+(sy-viewH*.57+z*scale*.53)/(scale*.67);
- const projected=tool==='erase'?pickConstructionAtProjection(w,x,y):[];
- const result=tool==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):tool==='erase'&&projected.length?eraseConstruction(w,projected[0].id):tool==='erase'?eraseNear(w,x,y,{level}):placeObject(w,tool,x,y,{level});
- msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${result.id}. Obiekt uczestniczy w kolizji, promieniach, nawigacji i zapisie.`:
-  `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}). Świat nie został zmieniony.`);updateUI();
+ e.preventDefault();const r=canvas.getBoundingClientRect();
+ const choice=setPickPointer(e.clientX-r.left,e.clientY-r.top),h=choice.hit;
+ if(!h){msg('EDYTOR: poza obszarem dostępnych powierzchni.');syncLayerDisplay();return;}
+ const result=tool==='scaffold'?(h.id==='ground'?placeScaffold(w,h.x,h.y,{turns:scaffoldTurns,height:scaffoldHeight}):{ok:false,reason:'requires-ground'}):
+   tool==='erase'?eraseAtSurface(h):placeObject(w,tool,h.x,h.y,{level:h.id});
+ msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${result.id}. Cel: ${targetName(h.id)} (${h.z.toFixed(1)} m).`:
+  `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}) na ${targetName(h.id)}. Świat nie został zmieniony.`);
+ pickResult=surfaceAtScreen(choice.sx,choice.sy);syncLayerDisplay();updateUI();
 });
 $('export-world').onclick=()=>{const data=new Blob([snapshot(w)],{type:'application/json'}),url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download='Splot_Forge_Authored_World.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1200);msg('Wyeksportowano świat. To zapis badawczy Forge, nie save produkcyjny.');};
 $('import-world').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const replacement=restore(await file.text());w=replacement;selected='player';cam={x:getBody(w,selected).x,y:getBody(w,selected).y};syncButtons();updateUI();msg('Import przyjęty — geometria zapisu przeszła walidację.');}catch(err){msg('Import odrzucony: '+err.message);}finally{e.target.value='';}});
@@ -105,8 +137,8 @@ $('grip').onclick=()=>{const r=toggleGrip(w,selected);msg(r.ok?(w.grips?.[select
 $('reach').onclick=()=>{const a=getBody(w,selected),objs=w.bodies.filter(x=>x.kind==='crate').sort((a,b)=>Math.hypot(a.x-getBody(w,selected).x,a.y-getBody(w,selected).y)-Math.hypot(b.x-getBody(w,selected).x,b.y-getBody(w,selected).y));const r=canReach(w,selected,objs[0].id);msg('Próba zasięgu do '+objs[0].id+': '+(r.ok?'kontakt możliwy':'brak kontaktu — '+r.reason));};
 for(const n of document.querySelectorAll('[data-scenario]'))n.onclick=()=>setScenario(n.dataset.scenario);
 function down(k){keys.add(k);}function up(k){keys.delete(k);}
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k))e.preventDefault();if(e.repeat&&['tab',' ','x','r','t','h','e','1','2','3','4','5','0'].includes(k))return;
- if(k==='tab'){$('actor').click();return;}if(k===' ') {$('play').click();return;}if(k==='x'){$('remove').click();return;}if(k==='r'){$('reset').click();return;}if(k==='t'){$('scaffold-turn').click();return;}if(k==='h'){$('debug').click();return;}if(k==='e'){$('grip').click();return;}if(k==='c'){$('viewmode').click();return;}if(k==='3'){setTool('crate');return;}if(k==='4'){setTool('wall');return;}if(k==='5'){setTool('erase');return;}if(k==='6'){setTool('scaffold');return;}if(k==='0'){setTool('none');return;}if(k==='1'||k==='2'){selected=k==='1'?'player':'scout';syncButtons();return;}down(k);
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k))e.preventDefault();if(e.repeat&&['tab',' ','x','r','t','h','e','q','1','2','3','4','5','0'].includes(k))return;
+ if(k==='tab'){$('actor').click();return;}if(k===' ') {$('play').click();return;}if(k==='x'){$('remove').click();return;}if(k==='r'){$('reset').click();return;}if(k==='t'){$('scaffold-turn').click();return;}if(k==='h'){$('debug').click();return;}if(k==='q'){$('pick-layer').click();return;}if(k==='e'){$('grip').click();return;}if(k==='c'){$('viewmode').click();return;}if(k==='3'){setTool('crate');return;}if(k==='4'){setTool('wall');return;}if(k==='5'){setTool('erase');return;}if(k==='6'){setTool('scaffold');return;}if(k==='0'){setTool('none');return;}if(k==='1'||k==='2'){selected=k==='1'?'player':'scout';syncButtons();return;}down(k);
 });addEventListener('keyup',e=>up(e.key.toLowerCase()));addEventListener('blur',()=>keys.clear());
 for(const el of document.querySelectorAll('[data-dir]')){const k=el.dataset.dir;el.addEventListener('pointerdown',e=>{e.preventDefault();down(k);el.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,()=>up(k));}
 function resize(){dpr=Math.min(2.5,devicePixelRatio||1);let r=canvas.getBoundingClientRect();viewW=r.width;viewH=r.height;canvas.width=Math.max(1,Math.round(viewW*dpr));canvas.height=Math.max(1,Math.round(viewH*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);}
@@ -252,8 +284,10 @@ function drawScene(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,viewW,v
  if(w.deck)layers.push({order:DECK.maxZ+DEPTH*27,y:27,render:bridge});
  layers.sort((a,b)=>a.order-b.order||a.y-b.y);
  for(const layer of layers)layer.render();
- drawPulses();
- if(showDebug){if(w.nav.path.length){ctx.strokeStyle='#ffd19a';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();w.nav.path.forEach((v,i)=>{const p=XY(v.x,v.y,0);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.stroke();ctx.setLineDash([])}
+  drawPulses();
+  if(tool!=='none'&&pickResult?.hit){const d=pickResult,h=d.hit;ctx.save();ctx.strokeStyle='#ffe4a9';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();ctx.ellipse(d.sx,d.sy,13,7,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+   const label=targetName(h.id)+' · '+h.z.toFixed(1)+'m · '+(d.index+1)+'/'+d.hits.length;ctx.font='600 12px system-ui';const bw=Math.min(viewW-12,ctx.measureText(label).width+16),tx=Math.max(5,Math.min(viewW-bw-5,d.sx+12)),ty=Math.max(16,Math.min(viewH-20,d.sy-11));ctx.fillStyle='#10282de8';ctx.fillRect(tx,ty-16,bw,20);ctx.fillStyle='#ffdfa6';ctx.fillText(label,tx+8,ty-2);ctx.restore();}
+  if(showDebug){if(w.nav.path.length){ctx.strokeStyle='#ffd19a';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();w.nav.path.forEach((v,i)=>{const p=XY(v.x,v.y,0);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.stroke();ctx.setLineDash([])}
  const p=getBody(w,selected);ctx.fillStyle='#f3dcaa';ctx.font='12px monospace';ctx.fillText(`KANON XYZ x:${p.x.toFixed(2)} y:${p.y.toFixed(2)} z:${p.z.toFixed(2)}`,18,22);}
 }
 function drawMini(){let width=mini.width,height=mini.height;mctx.fillStyle='#223c3b';mctx.fillRect(0,0,width,height);const ox=3,oy=3,sx=(width-6)/SIZE.w,sy=(height-6)/SIZE.h;for(let j=0;j<SIZE.h;j+=2)for(let i=0;i<SIZE.w;i+=2){mctx.fillStyle=terrain(i,j,w.seed)==='grass'?'#355b4c':'#4d5449';mctx.fillRect(ox+i*sx,oy+j*sy,sx*2+1,sy*2+1)}
@@ -264,7 +298,7 @@ function drawMini(){let width=mini.width,height=mini.height;mctx.fillStyle='#223
 function updateUI(){let b=getBody(w,selected);$('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+b.z.toFixed(1)+' m'+(tool!=='none'?' · '+({crate:'SKRZYNIA',wall:'MUR',erase:'USUŃ',scaffold:'KONSTRUKCJA'}[tool]||tool):'');$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt';$('clock').textContent=w.time.toFixed(1)+' s';$('height').textContent=b.z.toFixed(2)+' m';$('support').textContent=b.support||'w powietrzu';$('stats').textContent=`Ruchy skrzyń: ${w.stats.pushes}  ·  Odmowy: ${w.stats.blocked}  ·  Lądowania: ${w.stats.lands}  ·  Planowania: ${w.stats.routes}  ·  Przeciąganie: ${w.stats.drags||0}`;
  $('grip').textContent=w.grips?.[selected]?'Puść skrzynię (E)':'Chwyć skrzynię (E)';
  $('builder-info').textContent=`Mury: ${w.authored.length} · dodatkowe skrzynie: ${w.bodies.filter(b=>b.id.startsWith('made-crate-')).length} · konstrukcje: ${(w.constructions||[]).length} · obrót: ${scaffoldTurns*90}° · wys.: ${scaffoldHeight.toFixed(2)} m · rewizja: ${w.revision}`;
- $('events').replaceChildren(...w.history.slice(-5).reverse().map(e=>{let d=document.createElement('div');d.className='event';d.textContent=`${(e.tick/60).toFixed(1)}s  ${e.type} ${e.id||e.actor||e.by||''}`;return d}));}
+ $('events').replaceChildren(...w.history.slice(-5).reverse().map(e=>{let d=document.createElement('div');d.className='event';d.textContent=`${(e.tick/60).toFixed(1)}s  ${e.type} ${e.id||e.actor||e.by||''}`;return d}));syncLayerDisplay();}
 function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){accumulator+=dt;for(let i=0;accumulator>=DT&&i<6;i++,accumulator-=DT){let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);if(!dx&&!dy){dx=mobileStick.x;dy=mobileStick.y;}let ev=tickWorld(w,{selected,move:[dx,dy],precision:keys.has('shift'),ai});for(const e of ev){
   if(e.type==='grip-released'&&e.reason==='edge-lost-support')
    msg('KRAWĘDŹ: skrzynia straciła podparcie; chwyt nie utrzymał jej ciężaru.');
@@ -277,6 +311,6 @@ function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){
  else pulse.push({id,type:e.type,x:b.x,y:b.y,z:b.z,count:1,last:w.time});
  }}}}
  if(mobileToastAt&&t-mobileToastAt>2700){$('mobile-toast').classList.remove('shown');mobileToastAt=0;}
- const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
+ const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
 setScenario('przeciaganie');requestAnimationFrame(loop);
-window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>kind==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):placeObject(w,kind,x,y,{level}),setScaffold:(turns,height=1.8)=>{scaffoldTurns=turns;scaffoldHeight=height;return {turns,height}},erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get viewMode(){return viewMode},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};
+window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>kind==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):placeObject(w,kind,x,y,{level}),setScaffold:(turns,height=1.8)=>{scaffoldTurns=turns;scaffoldHeight=height;return {turns,height}},erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get pick(){return pickResult?{index:pickResult.index,hits:pickResult.hits.map(h=>({...h})),selected:pickResult.hit&&{...pickResult.hit}}:null},get viewMode(){return viewMode},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};

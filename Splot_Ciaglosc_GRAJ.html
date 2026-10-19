@@ -25,7 +25,7 @@
  .panel button{min-height:48px;touch-action:manipulation}
  .panel .small{font-size:12px;line-height:1.5}
  .mobile-top{display:flex;position:absolute;left:calc(env(safe-area-inset-left) + 10px);right:calc(env(safe-area-inset-right) + 10px);top:calc(env(safe-area-inset-top) + 9px);height:48px;z-index:12;pointer-events:none;align-items:center;justify-content:space-between;gap:9px}
- .mobile-top>span{background:#10252ac9;border:1px solid #5e817d80;padding:9px 12px;border-radius:12px;font-size:12px;font-weight:650;white-space:nowrap;max-width:52vw;overflow:hidden;text-overflow:ellipsis}
+ .mobile-top:has(#mobile-pick-layer:not([hidden]))>span{max-width:36vw}.mobile-top>span{background:#10252ac9;border:1px solid #5e817d80;padding:9px 12px;border-radius:12px;font-size:12px;font-weight:650;white-space:nowrap;max-width:52vw;overflow:hidden;text-overflow:ellipsis}
  .mobile-top-actions{display:flex;gap:8px;pointer-events:auto}
  .mobile-top-actions button{min-width:48px;width:48px;height:48px;padding:0;font-size:24px;background:#10282be8;border-color:#7089859c;touch-action:none}
  #mobile-close-menu{display:none;position:fixed;right:calc(env(safe-area-inset-right) + 16px);top:calc(env(safe-area-inset-top) + 12px);min-height:48px;z-index:25;background:#344b4f;touch-action:manipulation}
@@ -52,12 +52,12 @@
  #mobile-toast{top:calc(env(safe-area-inset-top) + 57px)}
 }
 </style></head><body><main class="shell"><header class="top"><span class="eyebrow">SPLOT / KAMPANIA CIĄGŁOŚCI</span><span class="headline">Splot — ręce, materia i przestrzeń</span><span class="pill">wersja badawcza; zachowuje grywalność K2</span><span class="sub">84 × 54 · przestrzeń XYZ · kontakt · autorskie przeszkody</span></header><div class="workspace"><div class="stage"><canvas id="world" aria-label="Interaktywna scena Splot Forge"></canvas><span class="corner">PRZĘSŁO / STAN AUTORYTATYWNY</span><button id="cycle" class="cycle-scenario">Scena ↻</button>
-<div class="editor-floating"><button data-tool="none">Ruch</button><button data-tool="crate">Skrzynia</button><button data-tool="wall">Mur</button><button data-tool="erase">Usuń</button><button data-tool="scaffold">Kładka</button><button onclick="document.getElementById('viewmode').click()">Przekrój (C)</button></div><div class="mobile-top"><span id="mobile-level" aria-live="off">DÓŁ · 0,0 m</span><div class="mobile-top-actions"><button id="mobile-view" aria-label="Przełącz widok poziomów" title="Przełącz widok">◧</button><button id="mobile-options" aria-expanded="false" aria-label="Otwórz narzędzia i scenariusze">☰</button></div></div>
+<div class="editor-floating"><button data-tool="none">Ruch</button><button data-tool="crate">Skrzynia</button><button data-tool="wall">Mur</button><button data-tool="erase">Usuń</button><button data-tool="scaffold">Kładka</button><button onclick="document.getElementById('pick-layer').click()">Warstwa (Q)</button><button onclick="document.getElementById('viewmode').click()">Przekrój (C)</button></div><div class="mobile-top"><span id="mobile-level" aria-live="off">DÓŁ · 0,0 m</span><div class="mobile-top-actions"><button id="mobile-view" aria-label="Przełącz widok poziomów" title="Przełącz widok">◧</button><button id="mobile-pick-layer" hidden aria-label="Wybierz kolejną powierzchnię" title="Zmień warstwę">↕</button><button id="mobile-options" aria-expanded="false" aria-label="Otwórz narzędzia i scenariusze">☰</button></div></div>
 <div id="mobile-toast" aria-live="polite" aria-atomic="true"></div>
 <div class="mobile-controls"><div class="joystick" id="mobile-joystick" role="group" aria-label="Wirtualny joystick kierunku ruchu"><div class="joystick-ring"><div id="joystick-knob" class="joystick-knob"></div></div></div><div class="mobile-actions"><button id="mobile-grip" aria-label="Chwyć lub puść skrzynię">Chwyt</button><button id="mobile-touch-info" aria-label="Zmień sterowaną postać">Poziom ↕</button></div></div>
 <button id="mobile-close-menu" aria-label="Zamknij panel narzędzi">Zamknij ×</button><div class="bottom"><span id="status">Wczytywanie...</span><span>WASD • E: chwyt • C: przekrój • 3/4/5: edytor</span></div></div><aside class="panel"><div class="section wide"><div class="label">Scenariusze falsyfikacyjne</div><div class="buttons"><button data-scenario="warsztat">Warsztat wysokości</button><button data-scenario="skrot">Skrót dzika</button><button data-scenario="przeciaganie">Chwyt</button><button data-scenario="zrzut">Zrzut z mostu</button><button data-scenario="przeslo">Przęsło</button><button data-scenario="kontakt">Kontakt</button><button data-scenario="upadek">Upadek</button><button data-scenario="obchodzenie">Obejście</button><button data-scenario="blokada">Zatarasowanie</button><button data-scenario="zagroda">Zagroda</button></div><div class="small">To ten sam kernel i jedna mapa. Każda scena atakuje inne założenie modelu.</div></div><div class="section"><div class="label">Sterowanie / próba</div><div class="buttons"><button id="actor">Postać: dół</button><button id="remove">Usuń most</button><button id="grip">Chwyć skrzynię (E)</button><button id="reach">Sprawdź zasięg</button><button id="play">Pauza</button><button id="reset">Reset</button><button id="ai">Dzik: działa</button><button id="debug">Debug: nie</button><button id="viewmode">Widok: automatyczny (C)</button></div></div><div class="section wide"><div class="label">Warsztat przestrzeni — tryb autora</div>
-<div class="buttons"><button data-tool="none">Ruch (0)</button><button data-tool="crate">Skrzynia (3)</button><button data-tool="wall">Mur (4)</button><button data-tool="erase">Usuń (5)</button><button data-tool="scaffold">Konstrukcja (6)</button><button id="scaffold-turn">Obróć 90° (T)</button><button id="scaffold-height">Zmień wysokość</button></div>
-<div class="small">Wybierz narzędzie i wskaż miejsce w świecie. Przyciski są uprawnieniem edytora. Chwyt E przeciąga skrzynię po podparciu; ciężar przekraczający krawędź wyrywa się z chwytu i spada. To nadal uproszczona kinematyka, nie symulacja rąk. Zmiany wpływają na fizyczne kolizje i trasę dzika. Dojście i podest można postawić wielokrotnie w różnych miejscach i orientacjach. Ich bryła, powierzchnia, promienie i zapis korzystają z tej samej geometrii. Wybór poziomu dla dawnych skrzyń nadal zależy od wybranej postaci.</div><div id="builder-info" class="small"></div>
+<div class="buttons"><button data-tool="none">Ruch (0)</button><button data-tool="crate">Skrzynia (3)</button><button data-tool="wall">Mur (4)</button><button data-tool="erase">Usuń (5)</button><button data-tool="scaffold">Konstrukcja (6)</button><button id="scaffold-turn">Obróć 90° (T)</button><button id="scaffold-height">Zmień wysokość</button><button id="pick-layer" title="Jawny wybór powierzchni pod kursorem">Warstwa: najbliższa (Q)</button></div>
+<div class="small">Wybierz narzędzie i wskaż miejsce w świecie. Przyciski są uprawnieniem edytora. Chwyt E przeciąga skrzynię po podparciu; ciężar przekraczający krawędź wyrywa się z chwytu i spada. To nadal uproszczona kinematyka, nie symulacja rąk. Zmiany wpływają na fizyczne kolizje i trasę dzika. Dojście i podest można postawić wielokrotnie w różnych miejscach i orientacjach. Ich bryła, powierzchnia, promienie i zapis korzystają z tej samej geometrii. Narzędzia wskazują powierzchnie promieniem ekranu; Warstwa (Q/↕) przełącza trafione poziomy. Sam wybór nie zmienia świata.</div><div id="builder-info" class="small"></div>
 <div class="buttons"><button id="export-world">Eksport świata</button><label class="small">Import JSON <input id="import-world" type="file" accept="application/json,.json" style="width:115px"></label></div>
 </div><div class="section"><div class="label">Mierzony stan</div><div class="facts"><div class="fact"><strong id="clock">0</strong><span>czas symulacji</span></div><div class="fact"><strong id="height">0</strong><span>wysokość stóp</span></div></div><div class="small">Podpora: <strong id="support" style="color:#eed2a4">ground</strong></div><div id="stats" class="small"></div></div><div class="section"><div class="label">Świat 84 × 54 / minimapa</div><canvas id="minimap" width="264" height="158"></canvas></div><div class="section wide"><div class="label">Dziennik zatwierdzonych zdarzeń</div><div id="events"></div></div><div class="section wide explainer"><div class="label">Granica dowodów</div><div class="small">Edytor nie jest symulacją budowania. To NIE jest kompletny silnik fizyczny. Postacie mogą po zawaleniu mostu stanąć na sobie; dzik korzysta z mapy A*, a nie autentycznej percepcji. Chwyt jest kinematycznym więzem, bez momentów obrotowych i dynamiki. Renderer jest diagnostyczny, nie wybranym art direction.</div></div></aside></div><div class="footer"><strong>Cel:</strong> ten sam kontakt powinien dawać spójne następstwo: zamiar → rozwiązanie → zatwierdzony ruch → widoczne zdarzenie. Nie sugerujemy prawdziwych impulsów tam, gdzie kod operuje tylko geometrycznymi ograniczeniami. Źródła, testy i kontrprzykłady dołączono do osobnej paczki.</div></main><script>
 'use strict';
@@ -174,6 +174,25 @@ function pickConstructionAtProjection(w,x,groundY){
  const k=.53/.67,high={x,y:groundY+8*k,z:8},low={x,y:groundY-.5*k,z:-.5};
  return authoredPlanks(w).flatMap(s=>plankRayHits(s,high,low).filter(hit=>hit.kind==='top'))
  .sort((a,b)=>a.t-b.t).filter((h,i,list)=>!list.slice(0,i).some(prev=>prev.id===h.id&&Math.abs(prev.t-h.t)<1e-7));
+}
+
+
+// A projected pixel is a WORLD RAY, not the selected actor's elevation.
+// Exposes surface candidates rather than inventing a single target.
+function pickSurfacesAtProjection(w,x,groundY){
+ if(!Number.isFinite(x)||!Number.isFinite(groundY))return [];
+ const k=.53/.67, high={x,y:groundY+8*k,z:8}, low={x,y:groundY-.5*k,z:-.5}, hits=[];
+ const point=z=>({x,y:groundY+z*k,z});
+ const add=(id,z,y)=>{if(z<0||z>8||!Number.isFinite(y))return;
+  if(hits.some(h=>h.id===id&&Math.abs(h.z-z)<1e-6))return;
+  hits.push({id,x,y,z,kind:'surface'});};
+ // The historically authored bridge is a planar top; the ramp is a real slab.
+ if(w.deck){const p=point(DECK.maxZ);if(inside(x,p.y,DECK))add('bridge',p.z,p.y);
+  for(const hit of plankRayHits(MAIN_RAMP,high,low).filter(h=>h.kind==='top'))add('ramp',hit.at.z,hit.at.y);}
+ for(const slab of authoredPlanks(w))for(const hit of plankRayHits(slab,high,low).filter(h=>h.kind==='top'))add(slab.id,hit.at.z,hit.at.y);
+ if(x>=0&&x<=SIZE.w&&groundY>=0&&groundY<=SIZE.h)add('ground',0,groundY);
+ // Nearer to camera first. Distinct stacked heights must not be collapsed.
+ return hits.sort((a,b)=>b.z-a.z||a.id.localeCompare(b.id));
 }
 
 function constructionSupport(s,x,y,r=0){
@@ -372,13 +391,16 @@ function constructionObstacles(w){return [...solids(w),...authoredPlanks(w).map(
 
 function placeObject(w,kind,x,y,{level='ground'}={}){
  if(!['crate','wall'].includes(kind)||!Number.isFinite(x)||!Number.isFinite(y))return {ok:false,reason:'bad-input'};
- const z=level==='bridge'&&w.deck&&inside(x,y,DECK)?2.6:0;
- if(level==='bridge'&&z!==2.6)return {ok:false,reason:'no-deck'};
+ // A named target surface must exist at the selected WORLD coordinate.
+ const requested=surfaces(w,x,y).find(s=>s.id===level);
+ if(!requested)return {ok:false,reason:level==='bridge'?'no-deck':'no-surface'};
+ const z=requested.z;
+
  if(x<1||y<1||x>SIZE.w-1||y>SIZE.h-1)return {ok:false,reason:'bounds'};
  if(w.bodies.length+w.authored.length>75)return {ok:false,reason:'edit-budget'};
  if(kind==='crate'){
   const id='made-crate-'+w.nextId;
-  const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:z>0?'bridge':'ground',vz:0};
+  const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:level,vz:0};
   const hit=bodyConflicts(w,b);if(hit.length)return {ok:false,reason:'occupied',hits:hit};
   w.bodies.push(b);w.nextId++;touchTopology(w);event(w,'authored',{id,kind,x,y,z});return {ok:true,id,kind};
  }
@@ -433,11 +455,11 @@ function eraseObject(w,id){
  if(idx>=0){w.bodies.splice(idx,1);if(w.nav.motionAnchors)delete w.nav.motionAnchors[id];touchTopology(w);event(w,'erased',{id});return {ok:true,id};}
  return {ok:false,reason:'not-authored'};
 }
-function eraseNear(w,x,y,{level='ground',radius=.75}={}){
- const construction=authoredPlanks(w).filter(s=>plankCircleContact(s,{x,y,r:radius}))
+function eraseNear(w,x,y,{level='ground',radius=.75,skipConstructions=false}={}){
+ const construction=(skipConstructions?[]:authoredPlanks(w)).filter(s=>plankCircleContact(s,{x,y,r:radius}))
   .sort((a,b)=>Math.hypot((a.ax+a.bx)/2-x,(a.ay+a.by)/2-y)-Math.hypot((b.ax+b.bx)/2-x,(b.ay+b.by)/2-y))[0];
  if(construction)return eraseConstruction(w,construction.id);
- const z=level==='bridge'?2.6:0;
+ const z=surfaces(w,x,y).find(s=>s.id===level)?.z??-100;
  const candidates=[...w.authored.map(s=>({id:s.id,x:(s.minX+s.maxX)/2,y:(s.minY+s.maxY)/2,z:s.minZ})),...w.bodies.filter(b=>b.id.startsWith('made-crate-'))];
  const hit=candidates.filter(a=>Math.abs(a.z-z)<.12&&Math.hypot(a.x-x,a.y-y)<=radius).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];
  return hit?eraseObject(w,hit.id):{ok:false,reason:'no-edit-nearby'};
@@ -654,6 +676,7 @@ const canvas=document.getElementById('world'),mini=document.getElementById('mini
 const $=id=>document.getElementById(id), keys=new Set();
 let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode='auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
 let cam={x:42,y:27}, scale=45,tone='phys',tool='none',scaffoldTurns=0,scaffoldHeight=1.8,note='Użyj WASD. Sytuacja istnieje wewnątrz świata 84×54, nie w miniaturowym zamienniku.',pulse=[],lastFrame=performance.now(),accumulator=0,lastUi=0,frames=0;
+let pickLayer=0,pickPointer=null,pickResult=null; // UI-only editor target, never serialized
 let errors=[];window.addEventListener('error',e=>errors.push(e.message));
 let mobileStick={x:0,y:0,id:null},mobileToastAt=0;
 function closeMobileMenu(){document.body.classList.remove('mobile-menu-open');$('mobile-options').setAttribute('aria-expanded','false');resetMobileStick();}
@@ -684,11 +707,25 @@ function bindMobileAction(id,desktopId){const el=$(id);let lastTouch=-1e9;
 bindMobileAction('mobile-view','viewmode');
 bindMobileAction('mobile-grip','grip');
 bindMobileAction('mobile-touch-info','actor');
+bindMobileAction('mobile-pick-layer','pick-layer');
 
+function targetName(id){return id==='ground'?'grunt':id==='bridge'?'most':id==='ramp'?'rampa':id.includes('platform')?'podest':id.includes('ramp')?'rampa':id;}
+function surfaceAtScreen(sx,sy){
+ const x=cam.x+(sx-viewW*.51)/scale,groundY=cam.y+(sy-viewH*.57)/(scale*.67);
+ const hits=pickSurfacesAtProjection(w,x,groundY), index=hits.length?pickLayer%hits.length:0;
+ return {sx,sy,hits,index,hit:hits[index]||null};
+}
+function setPickPointer(sx,sy){pickPointer={sx,sy};pickResult=surfaceAtScreen(sx,sy);return pickResult;}
+function layerIndicator(){const d=pickResult,h=d?.hit;return !h?(pickLayer?'Warstwa: niższa (wskaż miejsce)':'Warstwa: górna (wskaż miejsce)'):`Warstwa: ${targetName(h.id)} ${h.z.toFixed(1)} m (${d.index+1}/${d.hits.length})`;}
+function syncLayerDisplay(){
+ $('pick-layer').textContent=layerIndicator()+' (Q)';
+ $('mobile-pick-layer').hidden=tool==='none';
+ if(tool!=='none')$('mobile-level').textContent=layerIndicator().replace('Warstwa: ','CEL: ');
+}
 const color={player:'#79dbc3',scout:'#e5b878',boar:'#cf8670',crate:'#bd9473','deck-crate':'#bd9473'};
-function syncButtons(){ $('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+(getBody(w,selected)?.z??0).toFixed(1)+' m';$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt'; $('play').textContent=running?'Pauza':'Uruchom'; $('actor').textContent=selected==='player'?'Postać: dół':'Postać: góra'; $('debug').textContent=showDebug?'Debug: tak':'Debug: nie';$('ai').textContent=ai?'Dzik: działa':'Dzik: stop'; $('remove').disabled=!w.deck; $('viewmode').textContent='Widok: '+(viewMode==='auto'?'automatyczny':viewMode==='cut'?'przekrój':'pełna bryła')+' (C)'; }
+function syncButtons(){ $('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+(getBody(w,selected)?.z??0).toFixed(1)+' m';$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt'; $('play').textContent=running?'Pauza':'Uruchom'; $('actor').textContent=selected==='player'?'Postać: dół':'Postać: góra'; $('debug').textContent=showDebug?'Debug: tak':'Debug: nie';$('ai').textContent=ai?'Dzik: działa':'Dzik: stop'; $('remove').disabled=!w.deck; $('viewmode').textContent='Widok: '+(viewMode==='auto'?'automatyczny':viewMode==='cut'?'przekrój':'pełna bryła')+' (C)';syncLayerDisplay(); }
 function msg(t){note=t;$('status').textContent=t;const el=$('mobile-toast');el.textContent=t;el.classList.add('shown');mobileToastAt=performance.now();}
-function setScenario(type){closeMobileMenu();w=createWorld();selected='player';scenario=type;running=true;ai=true;
+function setScenario(type){closeMobileMenu();pickLayer=0;pickPointer=null;pickResult=null;w=createWorld();selected='player';scenario=type;running=true;ai=true;
  if(type==='warsztat'){
   const one=placeScaffold(w,20,23,{turns:3,height:1.8}),two=placeScaffold(w,16,13,{turns:0,height:2.2});
   Object.assign(getBody(w,'player'),{x:20,y:24.25,z:0,support:'ground'});
@@ -732,17 +769,34 @@ function setScenario(type){closeMobileMenu();w=createWorld();selected='player';s
  cam=type==='warsztat'?{x:20,y:22}:type==='zagroda'?{x:43.4,y:37.2}:type==='skrot'?{x:47,y:27.93}:type==='zrzut'?{x:45.4,y:27.8}:{x:42,y:27};pulse=[];setTool('none');syncButtons();}
 // Authoring mode is an explicit debug/editor privilege, NOT an in-world hand/grab.
 // Pointer positions are mapped through the same CSS-pixel projection as drawScene.
-function setTool(k){tool=k;for(const b of document.querySelectorAll('[data-tool]')){b.setAttribute('aria-pressed',String(b.dataset.tool===k));b.style.borderColor=b.dataset.tool===k?'#e8b97f':'';} }
+function setTool(k){tool=k;pickLayer=0;pickResult=pickPointer?surfaceAtScreen(pickPointer.sx,pickPointer.sy):null;for(const b of document.querySelectorAll('[data-tool]')){b.setAttribute('aria-pressed',String(b.dataset.tool===k));b.style.borderColor=b.dataset.tool===k?'#e8b97f':'';}syncLayerDisplay(); }
 for(const b of document.querySelectorAll('[data-tool]'))b.addEventListener('click',()=>{setTool(b.dataset.tool);closeMobileMenu();});
+// Pointer has a single world-space target. The actor being controlled is NOT
+// a hidden editor-layer switch. A deliberate Q/button cycle chooses overlap.
+canvas.addEventListener('pointermove',e=>{if(tool==='none')return;
+ const r=canvas.getBoundingClientRect();setPickPointer(e.clientX-r.left,e.clientY-r.top);syncLayerDisplay();});
+canvas.addEventListener('pointerleave',()=>{pickPointer=null;pickResult=null;syncLayerDisplay();});
+$('pick-layer').addEventListener('click',()=>{pickLayer=(pickLayer+1)%Math.max(2,pickResult?.hits.length||2);
+ if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);
+ syncLayerDisplay();});
+function eraseAtSurface(h){
+ // The surface determines WHICH layer, not WHICH object is destroyed.
+ // Respect an authored object on the surface before removing its support.
+ const object=eraseNear(w,h.x,h.y,{level:h.id,skipConstructions:true});
+ if(object.ok||object.reason!=='no-edit-nearby')return object;
+ if((w.constructions||[]).some(d=>d.id===h.id))return eraseConstruction(w,h.id);
+ return object;
+}
 canvas.addEventListener('pointerdown',e=>{
  if(tool==='none')return;
- e.preventDefault();const r=canvas.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
- const b=getBody(w,selected),level=b?.support==='bridge'?'bridge':'ground',z=tool==='scaffold'||tool==='erase'?0:level==='bridge'?2.6:0;
- const x=cam.x+(sx-viewW*.51)/scale,y=cam.y+(sy-viewH*.57+z*scale*.53)/(scale*.67);
- const projected=tool==='erase'?pickConstructionAtProjection(w,x,y):[];
- const result=tool==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):tool==='erase'&&projected.length?eraseConstruction(w,projected[0].id):tool==='erase'?eraseNear(w,x,y,{level}):placeObject(w,tool,x,y,{level});
- msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${result.id}. Obiekt uczestniczy w kolizji, promieniach, nawigacji i zapisie.`:
-  `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}). Świat nie został zmieniony.`);updateUI();
+ e.preventDefault();const r=canvas.getBoundingClientRect();
+ const choice=setPickPointer(e.clientX-r.left,e.clientY-r.top),h=choice.hit;
+ if(!h){msg('EDYTOR: poza obszarem dostępnych powierzchni.');syncLayerDisplay();return;}
+ const result=tool==='scaffold'?(h.id==='ground'?placeScaffold(w,h.x,h.y,{turns:scaffoldTurns,height:scaffoldHeight}):{ok:false,reason:'requires-ground'}):
+   tool==='erase'?eraseAtSurface(h):placeObject(w,tool,h.x,h.y,{level:h.id});
+ msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${result.id}. Cel: ${targetName(h.id)} (${h.z.toFixed(1)} m).`:
+  `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}) na ${targetName(h.id)}. Świat nie został zmieniony.`);
+ pickResult=surfaceAtScreen(choice.sx,choice.sy);syncLayerDisplay();updateUI();
 });
 $('export-world').onclick=()=>{const data=new Blob([snapshot(w)],{type:'application/json'}),url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download='Splot_Forge_Authored_World.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1200);msg('Wyeksportowano świat. To zapis badawczy Forge, nie save produkcyjny.');};
 $('import-world').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const replacement=restore(await file.text());w=replacement;selected='player';cam={x:getBody(w,selected).x,y:getBody(w,selected).y};syncButtons();updateUI();msg('Import przyjęty — geometria zapisu przeszła walidację.');}catch(err){msg('Import odrzucony: '+err.message);}finally{e.target.value='';}});
@@ -756,8 +810,8 @@ $('grip').onclick=()=>{const r=toggleGrip(w,selected);msg(r.ok?(w.grips?.[select
 $('reach').onclick=()=>{const a=getBody(w,selected),objs=w.bodies.filter(x=>x.kind==='crate').sort((a,b)=>Math.hypot(a.x-getBody(w,selected).x,a.y-getBody(w,selected).y)-Math.hypot(b.x-getBody(w,selected).x,b.y-getBody(w,selected).y));const r=canReach(w,selected,objs[0].id);msg('Próba zasięgu do '+objs[0].id+': '+(r.ok?'kontakt możliwy':'brak kontaktu — '+r.reason));};
 for(const n of document.querySelectorAll('[data-scenario]'))n.onclick=()=>setScenario(n.dataset.scenario);
 function down(k){keys.add(k);}function up(k){keys.delete(k);}
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k))e.preventDefault();if(e.repeat&&['tab',' ','x','r','t','h','e','1','2','3','4','5','0'].includes(k))return;
- if(k==='tab'){$('actor').click();return;}if(k===' ') {$('play').click();return;}if(k==='x'){$('remove').click();return;}if(k==='r'){$('reset').click();return;}if(k==='t'){$('scaffold-turn').click();return;}if(k==='h'){$('debug').click();return;}if(k==='e'){$('grip').click();return;}if(k==='c'){$('viewmode').click();return;}if(k==='3'){setTool('crate');return;}if(k==='4'){setTool('wall');return;}if(k==='5'){setTool('erase');return;}if(k==='6'){setTool('scaffold');return;}if(k==='0'){setTool('none');return;}if(k==='1'||k==='2'){selected=k==='1'?'player':'scout';syncButtons();return;}down(k);
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k))e.preventDefault();if(e.repeat&&['tab',' ','x','r','t','h','e','q','1','2','3','4','5','0'].includes(k))return;
+ if(k==='tab'){$('actor').click();return;}if(k===' ') {$('play').click();return;}if(k==='x'){$('remove').click();return;}if(k==='r'){$('reset').click();return;}if(k==='t'){$('scaffold-turn').click();return;}if(k==='h'){$('debug').click();return;}if(k==='q'){$('pick-layer').click();return;}if(k==='e'){$('grip').click();return;}if(k==='c'){$('viewmode').click();return;}if(k==='3'){setTool('crate');return;}if(k==='4'){setTool('wall');return;}if(k==='5'){setTool('erase');return;}if(k==='6'){setTool('scaffold');return;}if(k==='0'){setTool('none');return;}if(k==='1'||k==='2'){selected=k==='1'?'player':'scout';syncButtons();return;}down(k);
 });addEventListener('keyup',e=>up(e.key.toLowerCase()));addEventListener('blur',()=>keys.clear());
 for(const el of document.querySelectorAll('[data-dir]')){const k=el.dataset.dir;el.addEventListener('pointerdown',e=>{e.preventDefault();down(k);el.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,()=>up(k));}
 function resize(){dpr=Math.min(2.5,devicePixelRatio||1);let r=canvas.getBoundingClientRect();viewW=r.width;viewH=r.height;canvas.width=Math.max(1,Math.round(viewW*dpr));canvas.height=Math.max(1,Math.round(viewH*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);}
@@ -903,8 +957,10 @@ function drawScene(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,viewW,v
  if(w.deck)layers.push({order:DECK.maxZ+DEPTH*27,y:27,render:bridge});
  layers.sort((a,b)=>a.order-b.order||a.y-b.y);
  for(const layer of layers)layer.render();
- drawPulses();
- if(showDebug){if(w.nav.path.length){ctx.strokeStyle='#ffd19a';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();w.nav.path.forEach((v,i)=>{const p=XY(v.x,v.y,0);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.stroke();ctx.setLineDash([])}
+  drawPulses();
+  if(tool!=='none'&&pickResult?.hit){const d=pickResult,h=d.hit;ctx.save();ctx.strokeStyle='#ffe4a9';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();ctx.ellipse(d.sx,d.sy,13,7,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+   const label=targetName(h.id)+' · '+h.z.toFixed(1)+'m · '+(d.index+1)+'/'+d.hits.length;ctx.font='600 12px system-ui';const bw=Math.min(viewW-12,ctx.measureText(label).width+16),tx=Math.max(5,Math.min(viewW-bw-5,d.sx+12)),ty=Math.max(16,Math.min(viewH-20,d.sy-11));ctx.fillStyle='#10282de8';ctx.fillRect(tx,ty-16,bw,20);ctx.fillStyle='#ffdfa6';ctx.fillText(label,tx+8,ty-2);ctx.restore();}
+  if(showDebug){if(w.nav.path.length){ctx.strokeStyle='#ffd19a';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();w.nav.path.forEach((v,i)=>{const p=XY(v.x,v.y,0);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.stroke();ctx.setLineDash([])}
  const p=getBody(w,selected);ctx.fillStyle='#f3dcaa';ctx.font='12px monospace';ctx.fillText(`KANON XYZ x:${p.x.toFixed(2)} y:${p.y.toFixed(2)} z:${p.z.toFixed(2)}`,18,22);}
 }
 function drawMini(){let width=mini.width,height=mini.height;mctx.fillStyle='#223c3b';mctx.fillRect(0,0,width,height);const ox=3,oy=3,sx=(width-6)/SIZE.w,sy=(height-6)/SIZE.h;for(let j=0;j<SIZE.h;j+=2)for(let i=0;i<SIZE.w;i+=2){mctx.fillStyle=terrain(i,j,w.seed)==='grass'?'#355b4c':'#4d5449';mctx.fillRect(ox+i*sx,oy+j*sy,sx*2+1,sy*2+1)}
@@ -915,7 +971,7 @@ function drawMini(){let width=mini.width,height=mini.height;mctx.fillStyle='#223
 function updateUI(){let b=getBody(w,selected);$('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+b.z.toFixed(1)+' m'+(tool!=='none'?' · '+({crate:'SKRZYNIA',wall:'MUR',erase:'USUŃ',scaffold:'KONSTRUKCJA'}[tool]||tool):'');$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt';$('clock').textContent=w.time.toFixed(1)+' s';$('height').textContent=b.z.toFixed(2)+' m';$('support').textContent=b.support||'w powietrzu';$('stats').textContent=`Ruchy skrzyń: ${w.stats.pushes}  ·  Odmowy: ${w.stats.blocked}  ·  Lądowania: ${w.stats.lands}  ·  Planowania: ${w.stats.routes}  ·  Przeciąganie: ${w.stats.drags||0}`;
  $('grip').textContent=w.grips?.[selected]?'Puść skrzynię (E)':'Chwyć skrzynię (E)';
  $('builder-info').textContent=`Mury: ${w.authored.length} · dodatkowe skrzynie: ${w.bodies.filter(b=>b.id.startsWith('made-crate-')).length} · konstrukcje: ${(w.constructions||[]).length} · obrót: ${scaffoldTurns*90}° · wys.: ${scaffoldHeight.toFixed(2)} m · rewizja: ${w.revision}`;
- $('events').replaceChildren(...w.history.slice(-5).reverse().map(e=>{let d=document.createElement('div');d.className='event';d.textContent=`${(e.tick/60).toFixed(1)}s  ${e.type} ${e.id||e.actor||e.by||''}`;return d}));}
+ $('events').replaceChildren(...w.history.slice(-5).reverse().map(e=>{let d=document.createElement('div');d.className='event';d.textContent=`${(e.tick/60).toFixed(1)}s  ${e.type} ${e.id||e.actor||e.by||''}`;return d}));syncLayerDisplay();}
 function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){accumulator+=dt;for(let i=0;accumulator>=DT&&i<6;i++,accumulator-=DT){let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);if(!dx&&!dy){dx=mobileStick.x;dy=mobileStick.y;}let ev=tickWorld(w,{selected,move:[dx,dy],precision:keys.has('shift'),ai});for(const e of ev){
   if(e.type==='grip-released'&&e.reason==='edge-lost-support')
    msg('KRAWĘDŹ: skrzynia straciła podparcie; chwyt nie utrzymał jej ciężaru.');
@@ -928,8 +984,8 @@ function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){
  else pulse.push({id,type:e.type,x:b.x,y:b.y,z:b.z,count:1,last:w.time});
  }}}}
  if(mobileToastAt&&t-mobileToastAt>2700){$('mobile-toast').classList.remove('shown');mobileToastAt=0;}
- const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
+ const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
 setScenario('przeciaganie');requestAnimationFrame(loop);
-window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>kind==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):placeObject(w,kind,x,y,{level}),setScaffold:(turns,height=1.8)=>{scaffoldTurns=turns;scaffoldHeight=height;return {turns,height}},erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get viewMode(){return viewMode},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};
+window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>kind==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):placeObject(w,kind,x,y,{level}),setScaffold:(turns,height=1.8)=>{scaffoldTurns=turns;scaffoldHeight=height;return {turns,height}},erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get pick(){return pickResult?{index:pickResult.index,hits:pickResult.hits.map(h=>({...h})),selected:pickResult.hit&&{...pickResult.hit}}:null},get viewMode(){return viewMode},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};
 
 </script></body></html>

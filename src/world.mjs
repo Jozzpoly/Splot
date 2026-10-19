@@ -50,6 +50,25 @@ export function pickConstructionAtProjection(w,x,groundY){
  .sort((a,b)=>a.t-b.t).filter((h,i,list)=>!list.slice(0,i).some(prev=>prev.id===h.id&&Math.abs(prev.t-h.t)<1e-7));
 }
 
+
+// A projected pixel is a WORLD RAY, not the selected actor's elevation.
+// Exposes surface candidates rather than inventing a single target.
+export function pickSurfacesAtProjection(w,x,groundY){
+ if(!Number.isFinite(x)||!Number.isFinite(groundY))return [];
+ const k=.53/.67, high={x,y:groundY+8*k,z:8}, low={x,y:groundY-.5*k,z:-.5}, hits=[];
+ const point=z=>({x,y:groundY+z*k,z});
+ const add=(id,z,y)=>{if(z<0||z>8||!Number.isFinite(y))return;
+  if(hits.some(h=>h.id===id&&Math.abs(h.z-z)<1e-6))return;
+  hits.push({id,x,y,z,kind:'surface'});};
+ // The historically authored bridge is a planar top; the ramp is a real slab.
+ if(w.deck){const p=point(DECK.maxZ);if(inside(x,p.y,DECK))add('bridge',p.z,p.y);
+  for(const hit of plankRayHits(MAIN_RAMP,high,low).filter(h=>h.kind==='top'))add('ramp',hit.at.z,hit.at.y);}
+ for(const slab of authoredPlanks(w))for(const hit of plankRayHits(slab,high,low).filter(h=>h.kind==='top'))add(slab.id,hit.at.z,hit.at.y);
+ if(x>=0&&x<=SIZE.w&&groundY>=0&&groundY<=SIZE.h)add('ground',0,groundY);
+ // Nearer to camera first. Distinct stacked heights must not be collapsed.
+ return hits.sort((a,b)=>b.z-a.z||a.id.localeCompare(b.id));
+}
+
 function constructionSupport(s,x,y,r=0){
  if(r>0&&!plankCircleContact(s,{x,y,r}))return null;
  const height=plankHeight(s,x,y);
@@ -246,13 +265,16 @@ function constructionObstacles(w){return [...solids(w),...authoredPlanks(w).map(
 
 export function placeObject(w,kind,x,y,{level='ground'}={}){
  if(!['crate','wall'].includes(kind)||!Number.isFinite(x)||!Number.isFinite(y))return {ok:false,reason:'bad-input'};
- const z=level==='bridge'&&w.deck&&inside(x,y,DECK)?2.6:0;
- if(level==='bridge'&&z!==2.6)return {ok:false,reason:'no-deck'};
+ // A named target surface must exist at the selected WORLD coordinate.
+ const requested=surfaces(w,x,y).find(s=>s.id===level);
+ if(!requested)return {ok:false,reason:level==='bridge'?'no-deck':'no-surface'};
+ const z=requested.z;
+
  if(x<1||y<1||x>SIZE.w-1||y>SIZE.h-1)return {ok:false,reason:'bounds'};
  if(w.bodies.length+w.authored.length>75)return {ok:false,reason:'edit-budget'};
  if(kind==='crate'){
   const id='made-crate-'+w.nextId;
-  const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:z>0?'bridge':'ground',vz:0};
+  const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:level,vz:0};
   const hit=bodyConflicts(w,b);if(hit.length)return {ok:false,reason:'occupied',hits:hit};
   w.bodies.push(b);w.nextId++;touchTopology(w);event(w,'authored',{id,kind,x,y,z});return {ok:true,id,kind};
  }
@@ -307,11 +329,11 @@ export function eraseObject(w,id){
  if(idx>=0){w.bodies.splice(idx,1);if(w.nav.motionAnchors)delete w.nav.motionAnchors[id];touchTopology(w);event(w,'erased',{id});return {ok:true,id};}
  return {ok:false,reason:'not-authored'};
 }
-export function eraseNear(w,x,y,{level='ground',radius=.75}={}){
- const construction=authoredPlanks(w).filter(s=>plankCircleContact(s,{x,y,r:radius}))
+export function eraseNear(w,x,y,{level='ground',radius=.75,skipConstructions=false}={}){
+ const construction=(skipConstructions?[]:authoredPlanks(w)).filter(s=>plankCircleContact(s,{x,y,r:radius}))
   .sort((a,b)=>Math.hypot((a.ax+a.bx)/2-x,(a.ay+a.by)/2-y)-Math.hypot((b.ax+b.bx)/2-x,(b.ay+b.by)/2-y))[0];
  if(construction)return eraseConstruction(w,construction.id);
- const z=level==='bridge'?2.6:0;
+ const z=surfaces(w,x,y).find(s=>s.id===level)?.z??-100;
  const candidates=[...w.authored.map(s=>({id:s.id,x:(s.minX+s.maxX)/2,y:(s.minY+s.maxY)/2,z:s.minZ})),...w.bodies.filter(b=>b.id.startsWith('made-crate-'))];
  const hit=candidates.filter(a=>Math.abs(a.z-z)<.12&&Math.hypot(a.x-x,a.y-y)<=radius).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];
  return hit?eraseObject(w,hit.id):{ok:false,reason:'no-edit-nearby'};

@@ -90,3 +90,21 @@ Do not invent a final universal world schema here. Preserve only authoritatively
 One *live, continuously playable* scene: human + movable crate + animal + ramp + platform + at least two independently editable structural parts. Without changing scenes or selecting debug avatars, player climbs, moves the crate, changes a part, sees reachable routes/support/contact change, and immediately resumes play. Observe physical correctness, composition/legibility, feel, touch, and mobile behavior separately. Material/art language is co-developed with mechanics; invisible physics correctness alone is not success.
 
 **Architecture and governance:** K2 main unmodified; PR#2 evidence only; PR#3 remains draft; no raw Owner footage/frames in repository. For Jaskinia/Medium, expose labeled, version-pinned playable candidates and evidence, not a universal Studio data model or an unapproved default game.
+
+
+### Narrow browser challenger actually executed — Rapier 3D 0.21.0
+
+The **separate, non-playable physics-only** spike at `experiments/rapier-causal-spike.html` was executed using the connected Opera browser, loading a pinned browser module of Rapier 0.21.0 via a remote ESM CDN. No Splot gameplay code was replaced and no binary dependency was checked into the repo.
+
+After correcting **two real experimental confounders** — (1) default Rapier capsule axis is Y while Splot uses Z-up, so the capsule collider must be rotated, and (2) an earlier test removed the platform and the later controller test must restore it — the final independent narrow smoke reported:
+
+| Rapier 3D proof | Observed result | Scope |
+| --- | --- | --- |
+| Dynamic crate settles on raised static platform | PASS, centre z≈2.830 | One cuboid, one platform |
+| After removing the platform the crate falls | PASS, centre z≈0.430 | Grounded drop, not arbitrary rotating beams |
+| New fixed box overlaps dynamic body | PASS, body responds/displaces ≈0.880 m | Not authoring transaction policy or kinematic player |
+| Capsule moves from x=12 to x≈24.848 up ramp onto upper deck | PASS, centre z≈3.200, no reported zero-horizontal-movement step in final route | Z-up capsule, a tuned KCC, exact simple ramp+deck geometry |
+
+**Critical discipline:** an earlier run incorrectly reported route FAIL because its platform had been removed by the previous scenario; a second distortion came from using an unrotated Y-axis capsule in a Z-up world. Neither was proof of a Rapier failure. The corrected final result is the only candidate we should cite. This is a strong *feasibility* signal for a mature solver compared to Next's known ramp block; it is NOT an apples-to-apples frame-time benchmark or a verdict on material/feel, geometry authoring, joint chains, mobile performance, arbitrary slopes, device support, cutaway or player agency.
+
+Do not promote this spike to a separate playable K3. The next step is one bounded **integration of the solver behind a live Splot gameplay scene**, with unchanged content and rendering where possible; confirm the same action→consequence criteria and gather actual Owner feedback. The Rapier version is research-pinned; production packaging/offline play and binary provenance need separate review. A Three.js renderer change is not assumed.

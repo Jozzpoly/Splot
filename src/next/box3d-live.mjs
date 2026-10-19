@@ -106,7 +106,21 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline'}={}){
   if(!Number.isFinite(dt)||dt<=0||dt>.05)throw Error('invalid-dt');
   syncStatics();syncBodies();
   const human=refs.get('human'),boar=refs.get('boar');
-  human?.controller.preStep(dt,intentFor(input[0],input[1]));
+  let humanInput=input;
+  if(gripLaw==='intent-force'&&w.grip&&human){
+   const crate=refs.get(w.grip);
+   if(crate?.kind==='crate'){
+    const dx=human.b.x-crate.b.x,dy=human.b.y-crate.b.y,d=norm(dx,dy);
+    const outward=d>.001?(dx*input[0]+dy*input[1])/d:0;
+    if(outward>0&&d>1.35){
+     // Finite kinematic agency: the player cannot outrun a held body
+     // indefinitely. The physical crate still has to follow by impulse.
+     const fraction=clamp((2.08-d)/.73,0,1);
+     humanInput=[input[0]*fraction,input[1]*fraction];
+    }
+   }
+  }
+  human?.controller.preStep(dt,intentFor(humanInput[0],humanInput[1]));
   if(norm(...input)>.001&&human)human.b.yaw=Math.atan2(input[1],input[0]);
   if(boar){
    const d=norm(w.food.x-boar.b.x,w.food.y-boar.b.y);

@@ -4,6 +4,7 @@ root=Path(__file__).parent/'src'/'next'
 modules=[
  ('SpatialCore','spatial-core.mjs',['WORLD_FORMAT','createSpatialWorld','insertElement','replaceElement','removeElement','exportWorld','importWorld','trianglesFor','sceneTriangles','castRay','supportCandidates','clearanceAt','makeCamera','projectPoint','rayFromPixel','pickPixel','occlusionToPoint']),
  ('SpatialSim','spatial-sim.mjs',['createLiveWorld','getBody','moveBody','toggleGrip','stepLive','addCrate']),
+ ('RapierBridge','rapier-live.mjs',['createRapierBridge']),
  ('RenderAdapters','render.mjs',['SoftwareDepthRenderer','WebGLDepthRenderer','createRenderer','colorFor'])
 ]
 chunks=[]

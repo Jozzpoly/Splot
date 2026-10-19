@@ -51,7 +51,8 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
   }
   for(const e of events.slice(first)){
    append('world-event',{kind:String(e.type||'unknown'),id:e.id??null,
-    reason:e.reason??null,on:e.on??null});
+    reason:e.reason??null,on:e.on??null,with:e.with??null,mode:e.mode??null,
+    gap:num(e.gap),impulse:num(e.impulse)});
   }
   if(events.length)lastWorldEvent=events.at(-1);
   if(clock()-lastSample<500)return;

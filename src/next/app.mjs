@@ -193,10 +193,11 @@ async function startPhysicsChallenger(){
     ok=placed.ok&&q.free&&world.events.some(e=>e.type==='authoring-contact-resolved');
     detail='live authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
    }else if(probe==='grip'){
-    const grabbed=toggleGrip(world),before=crate.x;
-    for(let i=0;i<100;i++)bridge.advance(1/60,[1,0]);
-    ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1';
-    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' start='+before.toFixed(2);
+    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0;
+    for(let i=0;i<100;i++){bridge.advance(1/60,[1,0]);
+     maxGap=Math.max(maxGap,Math.hypot(human.x-crate.x,human.y-crate.y));}
+    ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1'&&maxGap<1.9;
+    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' max-gap='+maxGap.toFixed(2);
    }
    paused=true;world.paused=true;
    physicsMessage=(ok?'PASS':'FAIL')+' / '+detail;actionText(physicsMessage);

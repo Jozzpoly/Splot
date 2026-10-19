@@ -5,22 +5,8 @@
 // No renderer or editor ownership. DO NOT promote before a real browser run.
 import {createConstraintVelocityCharacter} from './box3d-donor/constraint-velocity-character.js';
 import {supportCandidates,clearanceAt} from './spatial-core.mjs';
+import {splotToBox3D,box3DToSplot,panelQuaternionInBox3D} from './box3d-basis.mjs';
 
-export const splotToBox3D=([x,y,z])=>[x,z,-y];
-export const box3DToSplot=([x,y,z])=>[x,-z,y];
-const C=[-Math.SQRT1_2,0,0,Math.SQRT1_2]; // -90deg about X
-const invC=[Math.SQRT1_2,0,0,Math.SQRT1_2];
-const qmul=(a,b)=>[
- a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1],
- a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0],
- a[3]*b[2]+a[0]*b[1]-a[1]*b[0]+a[2]*b[3],
- a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2]];
-export function panelQuaternionInBox3D(e){
- const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],dz=e.b[2]-e.a[2];
- const yaw=Math.atan2(dy,dx),pitch=-Math.atan2(dz,Math.hypot(dx,dy));
- const sy=Math.sin(yaw/2),cy=Math.cos(yaw/2),sp=Math.sin(pitch/2),cp=Math.cos(pitch/2);
- return qmul(qmul(C,[-sy*sp,cy*sp,sy*cp,cy*cp]),invC);
-}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}

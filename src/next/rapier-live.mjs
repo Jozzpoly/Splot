@@ -99,6 +99,9 @@ export function createRapierBridge(world,R){
   }
  }
  syncStatics();syncBodies();
+ // Prime the broadphase/contacts before the first KCC query. An unprimed
+ // query can let the capsule take one invalid downward step into the ground.
+ engine.step();
  function moveActor(ref,dx,dy,dt,speed){
   const len=norm(dx,dy),power=Math.min(1,len),scale=len?power/len:0;
   const stepZ=ref.b.support===null?Math.max(-.4,-.055+ref.fallVelocity*dt):-.055;

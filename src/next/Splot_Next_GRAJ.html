@@ -176,7 +176,6 @@ function occlusionToPoint(world,cam,point,{ignoreId=null}={}){
 
 return {WORLD_FORMAT,createSpatialWorld,insertElement,replaceElement,removeElement,exportWorld,importWorld,trianglesFor,sceneTriangles,castRay,supportCandidates,clearanceAt,makeCamera,projectPoint,rayFromPixel,pickPixel,occlusionToPoint};
 })();
-
 const {WORLD_FORMAT,createSpatialWorld,insertElement,replaceElement,removeElement,exportWorld,importWorld,trianglesFor,sceneTriangles,castRay,supportCandidates,clearanceAt,makeCamera,projectPoint,rayFromPixel,pickPixel,occlusionToPoint}=SpatialCore;
 
 const SpatialSim=(()=>{
@@ -272,7 +271,6 @@ function addCrate(w,x,y,z=0){const i=w.bodies.filter(b=>b.kind==='crate').length
 
 return {createLiveWorld,getBody,moveBody,toggleGrip,stepLive,addCrate};
 })();
-
 const {createLiveWorld,getBody,moveBody,toggleGrip,stepLive,addCrate}=SpatialSim;
 
 const RapierBridge=(()=>{
@@ -378,7 +376,7 @@ function createRapierBridge(world,R){
  syncStatics();syncBodies();
  function moveActor(ref,dx,dy,dt,speed){
   const len=norm(dx,dy),power=Math.min(1,len),scale=len?power/len:0;
-  const stepZ=Math.max(-.4,ref.fallVelocity*dt-.06);
+  const stepZ=-.055; // diagnostic: reproduce proven isolated KCC target exactly
   ref.kcc.computeColliderMovement(ref.c,{x:dx*scale*speed*dt,y:dy*scale*speed*dt,z:stepZ});
   const d=ref.kcc.computedMovement(),p=ref.rb.translation();
   ref.rb.setNextKinematicTranslation({x:p.x+d.x,y:p.y+d.y,z:p.z+d.z});
@@ -419,7 +417,6 @@ function createRapierBridge(world,R){
 }
 return {createRapierBridge};
 })();
-
 const {createRapierBridge}=RapierBridge;
 
 const RenderAdapters=(()=>{
@@ -518,7 +515,6 @@ function createRenderer(canvas){try{return new WebGLDepthRenderer(canvas);}catch
 
 return {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor};
 })();
-
 const {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor}=RenderAdapters;
 
 

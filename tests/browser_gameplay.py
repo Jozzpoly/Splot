@@ -28,7 +28,8 @@ with sync_playwright() as pw:
    cdp=ctx.new_cdp_session(p)
    cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':touchx,'y':touchy,'id':1}]})
    cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':touchx+rect['width']*.35,'y':touchy,'id':1}]})
-  p.wait_for_timeout(590)
+  # Wait for the world event, not a guessed 590 ms frame budget.
+  p.wait_for_function("window.__forge.world.grips.scout===undefined",timeout=7000)
   if name=='desktop':p.keyboard.up('d')
   else:cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
   p.wait_for_timeout(65)

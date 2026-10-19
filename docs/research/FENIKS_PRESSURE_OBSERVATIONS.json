@@ -1,0 +1,223 @@
+{
+  "kind": "research-diagnostic-not-product-pass",
+  "note": "World physical queries and flat AI navigation have different capabilities. These are controlled configurations, not Owner gameplay measurements.",
+  "stacked": [
+    {
+      "height": 1.2,
+      "xy": {
+        "x": 22.700000000000003,
+        "y": 15
+      },
+      "surfaces": [
+        {
+          "id": "ground",
+          "z": 0
+        },
+        {
+          "id": "made-platform-2",
+          "z": 1.2
+        }
+      ],
+      "lowerUpperBodyOverlap": false,
+      "ray": "made-platform-2",
+      "after": {
+        "boarSupport": "ground",
+        "boarHeight": 0,
+        "boarPosition": [
+          22.734363125094198,
+          14.983722730218538
+        ],
+        "goalEaten": false,
+        "flatPlannerExecutions": 4,
+        "remainingFlatWaypoints": 0
+      }
+    },
+    {
+      "height": 1.8,
+      "xy": {
+        "x": 22.700000000000003,
+        "y": 15
+      },
+      "surfaces": [
+        {
+          "id": "ground",
+          "z": 0
+        },
+        {
+          "id": "made-platform-2",
+          "z": 1.8
+        }
+      ],
+      "lowerUpperBodyOverlap": false,
+      "ray": "made-platform-2",
+      "after": {
+        "boarSupport": "ground",
+        "boarHeight": 0,
+        "boarPosition": [
+          22.734363125094198,
+          14.983722730218538
+        ],
+        "goalEaten": false,
+        "flatPlannerExecutions": 4,
+        "remainingFlatWaypoints": 0
+      }
+    },
+    {
+      "height": 2.6,
+      "xy": {
+        "x": 22.700000000000003,
+        "y": 15
+      },
+      "surfaces": [
+        {
+          "id": "ground",
+          "z": 0
+        },
+        {
+          "id": "made-platform-2",
+          "z": 2.6
+        }
+      ],
+      "lowerUpperBodyOverlap": false,
+      "ray": "made-platform-2",
+      "after": {
+        "boarSupport": "ground",
+        "boarHeight": 0,
+        "boarPosition": [
+          22.734363125094198,
+          14.983722730218538
+        ],
+        "goalEaten": false,
+        "flatPlannerExecutions": 4,
+        "remainingFlatWaypoints": 0
+      }
+    }
+  ],
+  "locomotion": [
+    {
+      "kind": "player",
+      "height": 1.2,
+      "platformReached": true,
+      "position": {
+        "x": 23.350000000000257,
+        "z": 1.2,
+        "support": "made-platform-2"
+      },
+      "firstBlock": null
+    },
+    {
+      "kind": "player",
+      "height": 1.8,
+      "platformReached": true,
+      "position": {
+        "x": 23.350000000000257,
+        "z": 1.8,
+        "support": "made-platform-2"
+      },
+      "firstBlock": null
+    },
+    {
+      "kind": "player",
+      "height": 2.2,
+      "platformReached": true,
+      "position": {
+        "x": 23.350000000000257,
+        "z": 2.2,
+        "support": "made-platform-2"
+      },
+      "firstBlock": null
+    },
+    {
+      "kind": "player",
+      "height": 2.6,
+      "platformReached": true,
+      "position": {
+        "x": 23.350000000000257,
+        "z": 2.6,
+        "support": "made-platform-2"
+      },
+      "firstBlock": null
+    },
+    {
+      "kind": "player",
+      "height": 3,
+      "platformReached": false,
+      "position": {
+        "x": 20.27500000000014,
+        "z": 2.729166666666783,
+        "support": "made-ramp-1"
+      },
+      "firstBlock": {
+        "step": 49,
+        "x": 20.27500000000014,
+        "z": 2.729166666666783,
+        "support": "made-ramp-1"
+      }
+    },
+    {
+      "kind": "boar",
+      "height": 1.2,
+      "platformReached": true,
+      "position": {
+        "x": 23.350000000000257,
+        "z": 1.2,
+        "support": "made-platform-2"
+      },
+      "firstBlock": null
+    },
+    {
+      "kind": "boar",
+      "height": 1.8,
+      "platformReached": true,
+      "position": {
+        "x": 23.350000000000257,
+        "z": 1.8,
+        "support": "made-platform-2"
+      },
+      "firstBlock": null
+    },
+    {
+      "kind": "boar",
+      "height": 2.2,
+      "platformReached": true,
+      "position": {
+        "x": 23.350000000000257,
+        "z": 2.2,
+        "support": "made-platform-2"
+      },
+      "firstBlock": null
+    },
+    {
+      "kind": "boar",
+      "height": 2.6,
+      "platformReached": false,
+      "position": {
+        "x": 20.200000000000138,
+        "z": 2.31111111111121,
+        "support": "made-ramp-1"
+      },
+      "firstBlock": {
+        "step": 48,
+        "x": 20.200000000000138,
+        "z": 2.31111111111121,
+        "support": "made-ramp-1"
+      }
+    },
+    {
+      "kind": "boar",
+      "height": 3,
+      "platformReached": false,
+      "position": {
+        "x": 20.200000000000138,
+        "z": 2.6666666666667806,
+        "support": "made-ramp-1"
+      },
+      "firstBlock": {
+        "step": 48,
+        "x": 20.200000000000138,
+        "z": 2.6666666666667806,
+        "support": "made-ramp-1"
+      }
+    }
+  ]
+}

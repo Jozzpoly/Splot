@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-19",
+  "branch_checked": "Jozzpoly/Splot research/spatial-truth-2026-10-19",
+  "starting_commit": "e3e9d157e082edcb0f9db2fb15136703006ca61f",
+  "status": "Owner FAIL remains open; researcher trials not promoted",
+  "input_recording": {"name": "20261019-1833-14.7374695.mp4", "duration_seconds": 11.8, "width": 942, "height": 688, "fps": 30, "public_git_uploaded": false},
+  "legacy_structural_posts": 4,
+  "authored_platform_posts_baseline": 0,
+  "authored_platform_posts_research_donor": 4,
+  "physically_admissible_visibility_counterexamples": [
+    {"actor": [18.55, 14.55, 0], "collision_conflicts": [], "foot_occluder": "made-platform-2", "head_occluder": null},
+    {"actor": [16.3, 12.3, 0], "collision_conflicts": [], "foot_occluder": "made-ramp-3", "head_occluder": null}
+  ],
+  "local_research_candidate_tests": {"pass": 114, "todo": 2, "fail": 0},
+  "structural_donor_tests": {"pass": 5, "fail": 0},
+  "stability_gates": {"stress_ticks": 18000, "body_checks": 90000, "stress_failures": 0, "authoring_chaos": "passed", "browser_scaffold": "passed desktop portrait landscape under emulated Chromium", "browser_gameplay": "passed", "mobile_owner_contract": "passed in emulator only", "surface_selection_extended": "passed"},
+  "renderer_trials": [
+    {"kind": "WebGL2 depth candidate", "status": "not verified; GPU context unavailable in provided Chromium"},
+    {"kind": "Canvas three-band ray occlusion", "status": "visually failed / rejected due to cut-off silhouette"},
+    {"kind": "current whole-object painter", "status": "still playable, but structurally insufficient for partial occlusion"}
+  ],
+  "product_renderer_modified": false,
+  "production_physics_modified": false,
+  "owner_device_pass": false
+}

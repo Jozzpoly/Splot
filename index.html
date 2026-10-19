@@ -25,7 +25,7 @@
  .panel button{min-height:48px;touch-action:manipulation}
  .panel .small{font-size:12px;line-height:1.5}
  .mobile-top{display:flex;position:absolute;left:calc(env(safe-area-inset-left) + 10px);right:calc(env(safe-area-inset-right) + 10px);top:calc(env(safe-area-inset-top) + 9px);height:48px;z-index:12;pointer-events:none;align-items:center;justify-content:space-between;gap:9px}
- .mobile-top>span{background:#10252ac9;border:1px solid #5e817d80;padding:9px 12px;border-radius:12px;font-size:12px;font-weight:650;white-space:nowrap;max-width:52vw;overflow:hidden;text-overflow:ellipsis}
+ .mobile-top:has(#mobile-pick-layer:not([hidden]))>span{max-width:36vw}.mobile-top>span{background:#10252ac9;border:1px solid #5e817d80;padding:9px 12px;border-radius:12px;font-size:12px;font-weight:650;white-space:nowrap;max-width:52vw;overflow:hidden;text-overflow:ellipsis}
  .mobile-top-actions{display:flex;gap:8px;pointer-events:auto}
  .mobile-top-actions button{min-width:48px;width:48px;height:48px;padding:0;font-size:24px;background:#10282be8;border-color:#7089859c;touch-action:none}
  #mobile-close-menu{display:none;position:fixed;right:calc(env(safe-area-inset-right) + 16px);top:calc(env(safe-area-inset-top) + 12px);min-height:48px;z-index:25;background:#344b4f;touch-action:manipulation}
@@ -52,39 +52,98 @@
  #mobile-toast{top:calc(env(safe-area-inset-top) + 57px)}
 }
 </style></head><body><main class="shell"><header class="top"><span class="eyebrow">SPLOT / KAMPANIA CIĄGŁOŚCI</span><span class="headline">Splot — ręce, materia i przestrzeń</span><span class="pill">wersja badawcza; zachowuje grywalność K2</span><span class="sub">84 × 54 · przestrzeń XYZ · kontakt · autorskie przeszkody</span></header><div class="workspace"><div class="stage"><canvas id="world" aria-label="Interaktywna scena Splot Forge"></canvas><span class="corner">PRZĘSŁO / STAN AUTORYTATYWNY</span><button id="cycle" class="cycle-scenario">Scena ↻</button>
-<div class="editor-floating"><button data-tool="none">Ruch</button><button data-tool="crate">Skrzynia</button><button data-tool="wall">Mur</button><button data-tool="erase">Usuń</button><button onclick="document.getElementById('viewmode').click()">Przekrój (C)</button></div><div class="mobile-top"><span id="mobile-level" aria-live="off">DÓŁ · 0,0 m</span><div class="mobile-top-actions"><button id="mobile-view" aria-label="Przełącz widok poziomów" title="Przełącz widok">◧</button><button id="mobile-options" aria-expanded="false" aria-label="Otwórz narzędzia i scenariusze">☰</button></div></div>
+<div class="editor-floating"><button data-tool="none">Ruch</button><button data-tool="crate">Skrzynia</button><button data-tool="wall">Mur</button><button data-tool="erase">Usuń</button><button data-tool="scaffold">Kładka</button><button onclick="document.getElementById('pick-layer').click()">Warstwa (Q)</button><button onclick="document.getElementById('viewmode').click()">Przekrój (C)</button></div><div class="mobile-top"><span id="mobile-level" aria-live="off">DÓŁ · 0,0 m</span><div class="mobile-top-actions"><button id="mobile-view" aria-label="Przełącz widok poziomów" title="Przełącz widok">◧</button><button id="mobile-pick-layer" hidden aria-label="Wybierz kolejną powierzchnię" title="Zmień warstwę">↕</button><button id="mobile-options" aria-expanded="false" aria-label="Otwórz narzędzia i scenariusze">☰</button></div></div>
 <div id="mobile-toast" aria-live="polite" aria-atomic="true"></div>
 <div class="mobile-controls"><div class="joystick" id="mobile-joystick" role="group" aria-label="Wirtualny joystick kierunku ruchu"><div class="joystick-ring"><div id="joystick-knob" class="joystick-knob"></div></div></div><div class="mobile-actions"><button id="mobile-grip" aria-label="Chwyć lub puść skrzynię">Chwyt</button><button id="mobile-touch-info" aria-label="Zmień sterowaną postać">Poziom ↕</button></div></div>
-<button id="mobile-close-menu" aria-label="Zamknij panel narzędzi">Zamknij ×</button><div class="bottom"><span id="status">Wczytywanie...</span><span>WASD • E: chwyt • C: przekrój • 3/4/5: edytor</span></div></div><aside class="panel"><div class="section wide"><div class="label">Scenariusze falsyfikacyjne</div><div class="buttons"><button data-scenario="skrot">Skrót dzika</button><button data-scenario="przeciaganie">Chwyt</button><button data-scenario="zrzut">Zrzut z mostu</button><button data-scenario="przeslo">Przęsło</button><button data-scenario="kontakt">Kontakt</button><button data-scenario="upadek">Upadek</button><button data-scenario="obchodzenie">Obejście</button><button data-scenario="blokada">Zatarasowanie</button><button data-scenario="zagroda">Zagroda</button></div><div class="small">To ten sam kernel i jedna mapa. Każda scena atakuje inne założenie modelu.</div></div><div class="section"><div class="label">Sterowanie / próba</div><div class="buttons"><button id="actor">Postać: dół</button><button id="remove">Usuń most</button><button id="grip">Chwyć skrzynię (E)</button><button id="reach">Sprawdź zasięg</button><button id="play">Pauza</button><button id="reset">Reset</button><button id="ai">Dzik: działa</button><button id="debug">Debug: nie</button><button id="viewmode">Widok: automatyczny (C)</button></div></div><div class="section wide"><div class="label">Warsztat przestrzeni — tryb autora</div>
-<div class="buttons"><button data-tool="none">Ruch (0)</button><button data-tool="crate">Skrzynia (3)</button><button data-tool="wall">Mur (4)</button><button data-tool="erase">Usuń (5)</button></div>
-<div class="small">Wybierz narzędzie i wskaż miejsce w świecie. Przyciski są uprawnieniem edytora. Chwyt E przeciąga skrzynię po podparciu; ciężar przekraczający krawędź wyrywa się z chwytu i spada. To nadal uproszczona kinematyka, nie symulacja rąk. Zmiany wpływają na fizyczne kolizje i trasę dzika. Wybór poziomu wynika z wybranej postaci.</div><div id="builder-info" class="small"></div>
+<button id="mobile-close-menu" aria-label="Zamknij panel narzędzi">Zamknij ×</button><div class="bottom"><span id="status">Wczytywanie...</span><span>WASD • E: chwyt • C: przekrój • 3/4/5: edytor</span></div></div><aside class="panel"><div class="section wide"><div class="label">Scenariusze falsyfikacyjne</div><div class="buttons"><button data-scenario="warsztat">Warsztat wysokości</button><button data-scenario="skrot">Skrót dzika</button><button data-scenario="przeciaganie">Chwyt</button><button data-scenario="zrzut">Zrzut z mostu</button><button data-scenario="przeslo">Przęsło</button><button data-scenario="kontakt">Kontakt</button><button data-scenario="upadek">Upadek</button><button data-scenario="obchodzenie">Obejście</button><button data-scenario="blokada">Zatarasowanie</button><button data-scenario="zagroda">Zagroda</button></div><div class="small">To ten sam kernel i jedna mapa. Każda scena atakuje inne założenie modelu.</div></div><div class="section"><div class="label">Sterowanie / próba</div><div class="buttons"><button id="actor">Postać: dół</button><button id="remove">Usuń most</button><button id="grip">Chwyć skrzynię (E)</button><button id="reach">Sprawdź zasięg</button><button id="play">Pauza</button><button id="reset">Reset</button><button id="ai">Dzik: działa</button><button id="debug">Debug: nie</button><button id="viewmode">Widok: automatyczny (C)</button><button id="visibility-preview" title="Badawczy Canvas: porównaj painter z maskowaniem aktorów przez bryły">Widoczność A/B: painter (V)</button></div></div><div class="section wide"><div class="label">Warsztat przestrzeni — tryb autora</div>
+<div class="buttons"><button data-tool="none">Ruch (0)</button><button data-tool="crate">Skrzynia (3)</button><button data-tool="wall">Mur (4)</button><button data-tool="erase">Usuń (5)</button><button data-tool="scaffold">Konstrukcja (6)</button><button id="scaffold-turn">Obróć 90° (T)</button><button id="scaffold-height">Zmień wysokość</button><button id="pick-layer" title="Jawny wybór powierzchni pod kursorem">Warstwa: najbliższa (Q)</button></div>
+<div class="small">Wybierz narzędzie i wskaż miejsce w świecie. Przyciski są uprawnieniem edytora. Chwyt E przeciąga skrzynię po podparciu; ciężar przekraczający krawędź wyrywa się z chwytu i spada. To nadal uproszczona kinematyka, nie symulacja rąk. Zmiany wpływają na fizyczne kolizje i trasę dzika. Dojście i podest można postawić wielokrotnie w różnych miejscach i orientacjach. Ich bryła, powierzchnia, promienie i zapis korzystają z tej samej geometrii. Narzędzia wskazują powierzchnie promieniem ekranu; Warstwa (Q/↕) przełącza trafione poziomy. Sam wybór nie zmienia świata.</div><div id="builder-info" class="small"></div>
 <div class="buttons"><button id="export-world">Eksport świata</button><label class="small">Import JSON <input id="import-world" type="file" accept="application/json,.json" style="width:115px"></label></div>
 </div><div class="section"><div class="label">Mierzony stan</div><div class="facts"><div class="fact"><strong id="clock">0</strong><span>czas symulacji</span></div><div class="fact"><strong id="height">0</strong><span>wysokość stóp</span></div></div><div class="small">Podpora: <strong id="support" style="color:#eed2a4">ground</strong></div><div id="stats" class="small"></div></div><div class="section"><div class="label">Świat 84 × 54 / minimapa</div><canvas id="minimap" width="264" height="158"></canvas></div><div class="section wide"><div class="label">Dziennik zatwierdzonych zdarzeń</div><div id="events"></div></div><div class="section wide explainer"><div class="label">Granica dowodów</div><div class="small">Edytor nie jest symulacją budowania. To NIE jest kompletny silnik fizyczny. Postacie mogą po zawaleniu mostu stanąć na sobie; dzik korzysta z mapy A*, a nie autentycznej percepcji. Chwyt jest kinematycznym więzem, bez momentów obrotowych i dynamiki. Renderer jest diagnostyczny, nie wybranym art direction.</div></div></aside></div><div class="footer"><strong>Cel:</strong> ten sam kontakt powinien dawać spójne następstwo: zamiar → rozwiązanie → zatwierdzony ruch → widoczne zdarzenie. Nie sugerujemy prawdziwych impulsów tam, gdzie kod operuje tylko geometrycznymi ograniczeniami. Źródła, testy i kontrprzykłady dołączono do osobnej paczki.</div></main><script>
 'use strict';
+const {makeSlopedPlank,plankHeight,plankAxisHeight,buildPlankTriangles,plankCylinderContact,plankCircleContact,plankRayHits} = (()=>{
+// A deliberately narrow geometry primitive for Splot's experimental 2.5D.
+// One authored, finite-thickness sloped plank (XY ground, Z up) produces
+// contact footprint, top-support height, occupied volume approximation,
+// full triangles and ray hits. It is NOT a physics solver or a map format.
+const EPS=1e-7;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z});
+const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+const cross=(a,b)=>({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x});
+const faceIndices=[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];
+function makeSlopedPlank({id,ax,ay,bx,by,width,z0,z1,thickness}){
+ const nums=[ax,ay,bx,by,width,z0,z1,thickness];
+ if(typeof id!=='string'||!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(id)||nums.some(n=>!Number.isFinite(n))||width<=0||thickness<=0)
+  throw new TypeError('invalid sloped plank');
+ const length=Math.hypot(bx-ax,by-ay);
+ if(length<.001||length>1000||width>1000||Math.abs(z1-z0)>1000||thickness>100)throw new RangeError('sloped plank out of range');
+ const tx=(bx-ax)/length,ty=(by-ay)/length;
+ return Object.freeze({id,ax,ay,bx,by,width,z0,z1,thickness,length,tx,ty,nx:-ty,ny:tx});
+}
+function coords(s,x,y){const dx=x-s.ax,dy=y-s.ay;return {u:dx*s.tx+dy*s.ty,v:dx*s.nx+dy*s.ny};}
+function plankAxisHeight(s,x,y){const {u}=coords(s,x,y);return s.z0+(s.z1-s.z0)*clamp(u/s.length,0,1);}
+function plankHeight(s,x,y){const {u,v}=coords(s,x,y);if(u < -EPS||u>s.length+EPS||Math.abs(v)>s.width/2+EPS)return null;
+ return plankAxisHeight(s,x,y);
+}
+function plankCircleContact(s,b){const {u,v}=coords(s,b.x,b.y);const nearU=clamp(u,0,s.length),nearV=clamp(v,-s.width/2,s.width/2);
+ return (u-nearU)**2+(v-nearV)**2 <= b.r*b.r+EPS;
+}
+function xyz(s,u,v,z){return {x:s.ax+s.tx*u+s.nx*v,y:s.ay+s.ty*u+s.ny*v,z};}
+function plankTriangles(s){const half=s.width/2;
+ const b0=xyz(s,0,-half,s.z0-s.thickness),b1=xyz(s,s.length,-half,s.z1-s.thickness),b2=xyz(s,s.length,half,s.z1-s.thickness),b3=xyz(s,0,half,s.z0-s.thickness);
+ const t0=xyz(s,0,-half,s.z0),t1=xyz(s,s.length,-half,s.z1),t2=xyz(s,s.length,half,s.z1),t3=xyz(s,0,half,s.z0);
+ const verts=[b0,b1,b2,b3,t0,t1,t2,t3];return faceIndices.map(indices=>indices.map(i=>verts[i]));
+}
+function plankCylinderContact(s,b,supportId=s.id,{lowStep=.32}={}){
+ if(!plankCircleContact(s,b))return false;
+ const {u}=coords(s,b.x,b.y),left=clamp(u-b.r,0,s.length),right=clamp(u+b.r,0,s.length);
+ const a=s.z0+(s.z1-s.z0)*(left/s.length),c=s.z0+(s.z1-s.z0)*(right/s.length);
+ const low=Math.min(a,c)-s.thickness,high=Math.max(a,c);
+ // A low accessible entry edge is a step-up, not a full-height wall.
+ if(b.support==='ground'&&high<=lowStep)return false;
+ // No duplicate collision between a foot and its own support plane.
+ // Legacy K2 support is centre-based; at a side boundary the body's foot
+ // may still overlap the plank even when its centre left its footprint.
+ // Preserve that contact policy during migration rather than silently changing
+ // how actors exit the ramp. A stronger contact solver remains an open issue.
+ const centreAxisZ=plankAxisHeight(s,b.x,b.y);
+ if(b.support===supportId&&Math.abs(b.z-centreAxisZ)<.05)return false;
+ return b.z<high-EPS&&b.z+b.h>low+EPS;
+}
+function triT(start,end,tri){const v=sub(end,start),e1=sub(tri[1],tri[0]),e2=sub(tri[2],tri[0]),h=cross(v,e2),det=dot(e1,h);
+ if(Math.abs(det)<1e-10)return null;const inv=1/det,delta=sub(start,tri[0]),u=inv*dot(delta,h);if(u<-EPS||u>1+EPS)return null;
+ const q=cross(delta,e1),w=inv*dot(v,q);if(w<-EPS||u+w>1+EPS)return null;
+ const t=inv*dot(e2,q);return t>=-EPS&&t<=1+EPS?t:null;
+}
+function plankRayHits(s,start,end){const hits=[];for(const [i,triangle]of plankTriangles(s).entries()){
+ const t=triT(start,end,triangle);if(t===null)continue;
+ hits.push({id:s.id,kind:i<2?'bottom':i<4?'top':'side',t,at:{x:start.x+(end.x-start.x)*t,y:start.y+(end.y-start.y)*t,z:start.z+(end.z-start.z)*t}});
+ }return hits.sort((a,b)=>a.t-b.t);
+}
+
+return {makeSlopedPlank,plankHeight,plankAxisHeight,buildPlankTriangles:plankTriangles,plankCylinderContact,plankCircleContact,plankRayHits};
+})();
+
 // SPLOT FORGE: independent falsifiable substrate. All units are world metres,
 // XY is ground, Z is gravity-up. Never imports/modifies the A2 runtime.
 const SIZE={w:84,h:54};
 const DECK={id:'bridge',minX:37,maxX:47,minY:24,maxY:30,minZ:2.28,maxZ:2.60};
 const RAMP={id:'ramp',minX:34,maxX:37,minY:26.15,maxY:27.85};
 const RAMP_THICKNESS=.24;
-const rampHeight=x=>2.6*Math.max(0,Math.min(1,(x-RAMP.minX)/(RAMP.maxX-RAMP.minX)));
-// ONE sloped, finite-thickness plank: physics and rays derive from the same
-// construction. The board has open air underneath its high end (not a filled
-// earth wedge). This remains a fixed experimental construction, not a general
-// authoring format or a physics engine.
-const rampVertices=()=>{
- const {minX:a,maxX:b,minY:c,maxY:d}=RAMP,t=RAMP_THICKNESS;
- return [{x:a,y:c,z:-t},{x:b,y:c,z:2.6-t},{x:b,y:d,z:2.6-t},{x:a,y:d,z:-t},
-         {x:a,y:c,z:0},{x:b,y:c,z:2.6},{x:b,y:d,z:2.6},{x:a,y:d,z:0}];
-};
-const rampFaces=[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];
-const rampTriangles=()=>{const v=rampVertices();return rampFaces.map(ids=>ids.map(i=>v[i]));};
+// Preserve the exact K2 shape/location, but derive its surface and collision
+// triangles from the general, rotated sloped-plank primitive.
+const MAIN_RAMP=makeSlopedPlank({id:'ramp',ax:RAMP.minX,ay:(RAMP.minY+RAMP.maxY)/2,
+ bx:RAMP.maxX,by:(RAMP.minY+RAMP.maxY)/2,width:RAMP.maxY-RAMP.minY,
+ z0:0,z1:DECK.maxZ,thickness:RAMP_THICKNESS});
+const rampHeight=x=>plankAxisHeight(MAIN_RAMP,x,(RAMP.minY+RAMP.maxY)/2);
+const rampTriangles=()=>buildPlankTriangles(MAIN_RAMP);
 const DT=1/60;
 const EPS=1e-7;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const inside=(x,y,b)=>x>=b.minX-EPS&&x<=b.maxX+EPS&&y>=b.minY-EPS&&y<=b.maxY+EPS;
 function createWorld(seed=917){return {
- version:'forge-v1',seed,tick:0,time:0,deck:true,revision:0,authored:[],nextId:1,events:[],history:[],stats:{blocked:0,pushes:0,lands:0,routes:0,drags:0},grips:{},
+ version:'forge-v1',seed,tick:0,time:0,deck:true,revision:0,authored:[],constructions:[],nextId:1,events:[],history:[],stats:{blocked:0,pushes:0,lands:0,routes:0,drags:0},grips:{},
  bodies:[
  {id:'player',kind:'human',x:41.1,y:27.0,z:0,r:.30,h:1.64,mass:72,heading:0,gaze:0,support:'ground',vz:0,walk:0},
  {id:'scout',kind:'human',x:41.1,y:27.0,z:2.60,r:.30,h:1.64,mass:60,heading:Math.PI,gaze:Math.PI,support:'bridge',vz:0,walk:0},
@@ -106,26 +165,64 @@ function solids(w){const a=[
   box('pillar-se',46.45,29.58,47,30.08,0,2.6)];
  if(w.deck){a.push(box('slab-center',37,24,47,26.15,2.28,2.6),box('slab-south',37,27.85,47,30,2.28,2.6),box('slab-middle',37.5,26.15,47,27.85,2.28,2.6));}
  return a.concat(w.authored||[]);}
+const authoredPlanks=w=>(w.constructions||[]).map(makeSlopedPlank);
+const plankById=(w,id)=>authoredPlanks(w).find(s=>s.id===id);
+function constructionMeshes(w){return authoredPlanks(w).map(shape=>({id:shape.id,triangles:buildPlankTriangles(shape)}));}
+function pickConstructionAtProjection(w,x,groundY){
+ // Canvas projection is screenY = base + .67*scale*(y-camY) - .53*scale*z.
+ // The ray through a pixel therefore changes world Y as height changes.
+ const k=.53/.67,high={x,y:groundY+8*k,z:8},low={x,y:groundY-.5*k,z:-.5};
+ return authoredPlanks(w).flatMap(s=>plankRayHits(s,high,low).filter(hit=>hit.kind==='top'))
+ .sort((a,b)=>a.t-b.t).filter((h,i,list)=>!list.slice(0,i).some(prev=>prev.id===h.id&&Math.abs(prev.t-h.t)<1e-7));
+}
+
+
+// A projected pixel is a WORLD RAY, not the selected actor's elevation.
+// Exposes surface candidates rather than inventing a single target.
+function pickSurfacesAtProjection(w,x,groundY){
+ if(!Number.isFinite(x)||!Number.isFinite(groundY))return [];
+ const k=.53/.67, high={x,y:groundY+8*k,z:8}, low={x,y:groundY-.5*k,z:-.5}, hits=[];
+ const point=z=>({x,y:groundY+z*k,z});
+ const add=(id,z,y)=>{if(z<0||z>8||!Number.isFinite(y))return;
+  if(hits.some(h=>h.id===id&&Math.abs(h.z-z)<1e-6))return;
+  hits.push({id,x,y,z,kind:'surface'});};
+ // The historically authored bridge is a planar top; the ramp is a real slab.
+ if(w.deck){const p=point(DECK.maxZ);if(inside(x,p.y,DECK))add('bridge',p.z,p.y);
+  for(const hit of plankRayHits(MAIN_RAMP,high,low).filter(h=>h.kind==='top'))add('ramp',hit.at.z,hit.at.y);}
+ for(const slab of authoredPlanks(w))for(const hit of plankRayHits(slab,high,low).filter(h=>h.kind==='top'))add(slab.id,hit.at.z,hit.at.y);
+ if(x>=0&&x<=SIZE.w&&groundY>=0&&groundY<=SIZE.h)add('ground',0,groundY);
+ // Nearer to camera first. Distinct stacked heights must not be collapsed.
+ return hits.sort((a,b)=>b.z-a.z||a.id.localeCompare(b.id));
+}
+
+function constructionSupport(s,x,y,r=0){
+ if(r>0&&!plankCircleContact(s,{x,y,r}))return null;
+ const height=plankHeight(s,x,y);
+ if(height!==null)return height;
+ // A crate's footprint retains contact at a finite edge; axis height is an
+ // acknowledged kinematic approximation, not a tipping/torque calculation.
+ return r>0?plankAxisHeight(s,x,y):null;
+}
 function surfaces(w,x,y,r=0){const s=[{id:'ground',z:0}];if(w.deck){
   // Deck support uses the same physical rectangle as its solid slab. A body
   // for crates remains supported while some of its footprint still touches it.
   // Without rotational physics this models edge contact, NOT tipping forces.
   if(r>0?circleRect({x,y,r},DECK):inside(x,y,DECK))s.push({id:'bridge',z:2.6});
-  if(inside(x,y,RAMP))s.push({id:'ramp',z:rampHeight(x)});
- }return s;}
+  const rampZ=plankHeight(MAIN_RAMP,x,y);
+  if(rampZ!==null)s.push({id:'ramp',z:rampZ});
+ }for(const plank of authoredPlanks(w)){const z=constructionSupport(plank,x,y,r);if(z!==null)s.push({id:plank.id,z});}
+ return s;}
 function circleRect(b,s){const xx=clamp(b.x,s.minX,s.maxX),yy=clamp(b.y,s.minY,s.maxY);return (b.x-xx)**2+(b.y-yy)**2<(b.r-EPS)**2;}
 function touchesRampSlab(b){
- if(!circleRect(b,RAMP))return false;
- // The cylinder has an XY footprint. Its leading/back edges define the
- // occupied vertical interval of the tilted slab along its contact region.
- const xLow=Math.max(RAMP.minX,b.x-b.r),xHigh=Math.min(RAMP.maxX,b.x+b.r);
- const low=rampHeight(xLow)-RAMP_THICKNESS,high=rampHeight(xHigh);
- // A shallow leading edge belongs to the step-up transition, not a side wall.
- if(b.support==='ground'&&high<=.32)return false;
- // The game's upright cylinder approximation must not interpret its own
- // supported feet as penetrating the rising board under them.
- if(b.support==='ramp'&&Math.abs(b.z-rampHeight(b.x))<.05)return false;
- return b.z<high-EPS&&b.z+b.h>low+EPS;
+ return plankCylinderContact(MAIN_RAMP,b,'ramp');
+}
+function touchesAuthoredPlank(s,b){
+ if(!plankCylinderContact(s,b,s.id))return false;
+ // A body already approaching from a supported surface may step up to the
+ // thin upper face. The volume below that ledge still blocks low actors.
+ const z=constructionSupport(s,b.x,b.y,b.r);
+ if(z!==null&&b.support!==null&&z>=b.z-.01&&z-b.z<=.23&&b.z>=z-s.thickness-.05)return false;
+ return true;
 }
 function zOverlap(a,b){return a.z<b.z+b.h-EPS&&a.z+a.h>b.z+EPS;}
 function circles(a,b){return (a.x-b.x)**2+(a.y-b.y)**2<(a.r+b.r-EPS)**2;}
@@ -134,13 +231,14 @@ function bodyConflicts(w,b,moves=new Map(),ignoreIds=new Set()){
  if(bs.x-bs.r<0||bs.y-bs.r<0||bs.x+bs.r>SIZE.w||bs.y+bs.r>SIZE.h)hit.push('bounds');
  for(const s of solids(w)){if(circleRect(bs,s)&&bs.z<s.maxZ-EPS&&bs.z+bs.h>s.minZ+EPS)hit.push(s.id);}
  if(w.deck&&touchesRampSlab(bs))hit.push('ramp-slab');
+ for(const plank of authoredPlanks(w))if(touchesAuthoredPlank(plank,bs))hit.push(plank.id);
  for(const q of w.bodies){if(q.id===b.id||ignoreIds.has(q.id))continue;const qp={...q,...(moves.get(q.id)||{})};if(circles(bs,qp)&&zOverlap(bs,qp))hit.push(q.id);}
  return hit;
 }
 function requestedSupport(w,b,x,y){
  const opts=surfaces(w,x,y,b.kind==='crate'?b.r:0).filter(o=>Math.abs(o.z-b.z)<.24+EPS);
  const same=opts.find(o=>o.id===b.support);
- const entry=opts.find(o=>o.id==='ramp'&&o.z<.22&&b.support==='ground');
+ const entry=opts.find(o=>(o.id==='ramp'||o.id.startsWith('made-ramp-'))&&o.z<.22&&b.support==='ground');
  return entry||same||opts.sort((a,c)=>Math.abs(a.z-b.z)-Math.abs(c.z-b.z))[0]||null;
 }
 // Shared material memory: accepted ground contacts only. The small grid is a
@@ -177,6 +275,7 @@ function proposeHorizontal(w,actorId,dx,dy,{strength=120}={}){
    const current=getBody(w,id);const p=loc.get(id);const pos={...current,...p};
    for(const vol of solids(w)){if(circleRect(pos,vol)&&pos.z<vol.maxZ-EPS&&pos.z+pos.h>vol.minZ+EPS)return {ok:false,reason:'static',hits:[vol.id]};}
    if(w.deck&&touchesRampSlab(pos))return {ok:false,reason:'static',hits:['ramp-slab']};
+   for(const plank of authoredPlanks(w))if(touchesAuthoredPlank(plank,pos))return {ok:false,reason:'static',hits:[plank.id]};
    if(pos.x-pos.r<0||pos.x+pos.r>SIZE.w||pos.y-pos.r<0||pos.y+pos.r>SIZE.h)return {ok:false,reason:'bounds',hits:['bounds']};
    for(const other of w.bodies){if(group.has(other.id))continue;
     if(circles(pos,other)&&zOverlap(pos,other)){
@@ -285,15 +384,40 @@ function walk(w,id,dx,dy,{strength=120,emit=true}={}){
 // Every accepted edit changes the canonical collision/query/navigation world.
 function touchTopology(w){w.revision++;w.nav.path=[];w.nav.targetKey='';w.nav.lastReplan=0;}
 function boxIntersects(a,b){return a.minX<b.maxX-EPS&&a.maxX>b.minX+EPS&&a.minY<b.maxY-EPS&&a.maxY>b.minY+EPS&&a.minZ<b.maxZ-EPS&&a.maxZ>b.minZ+EPS;}
+function plankBounds(p){
+ const vs=buildPlankTriangles(p).flat();return {id:p.id,minX:Math.min(...vs.map(q=>q.x)),maxX:Math.max(...vs.map(q=>q.x)),minY:Math.min(...vs.map(q=>q.y)),maxY:Math.max(...vs.map(q=>q.y)),minZ:Math.min(...vs.map(q=>q.z)),maxZ:Math.max(...vs.map(q=>q.z))};
+}
+function constructionObstacles(w){return [...solids(w),...authoredPlanks(w).map(plankBounds),...(w.deck?[{...plankBounds(MAIN_RAMP),id:'historic-ramp'}]:[])];}
+
+// Until static authored walls have a true load-bearing body, require their
+// footprint to rest on one *flat* authored slab. No invisible ramp-mounted wall.
+function flatWallSupport(w,x,y,z){
+ const corners=[[x-.4,y-.4],[x-.4,y+.4],[x+.4,y-.4],[x+.4,y+.4]];
+ return (w.constructions||[]).some(def=>{
+  if(Math.abs(def.z0-def.z1)>.00001||Math.abs(def.z0-z)>.015)return false;
+  const plank=makeSlopedPlank(def);
+  return corners.every(([px,py])=>{const h=plankHeight(plank,px,py);return h!==null&&Math.abs(h-z)<.015;});
+ });
+}
+function authoredWallHasSupport(w,vol){
+ if(Math.abs(vol.minZ)<.015)return true;
+ const x=(vol.minX+vol.maxX)/2,y=(vol.minY+vol.maxY)/2,z=vol.minZ;
+ if(w.deck&&Math.abs(z-2.6)<.015&&inside(x,y,DECK))return true;
+ return flatWallSupport(w,x,y,z);
+}
 function placeObject(w,kind,x,y,{level='ground'}={}){
  if(!['crate','wall'].includes(kind)||!Number.isFinite(x)||!Number.isFinite(y))return {ok:false,reason:'bad-input'};
- const z=level==='bridge'&&w.deck&&inside(x,y,DECK)?2.6:0;
- if(level==='bridge'&&z!==2.6)return {ok:false,reason:'no-deck'};
+ // A named target surface must exist at the selected WORLD coordinate.
+ const requested=surfaces(w,x,y).find(s=>s.id===level);
+ if(!requested)return {ok:false,reason:level==='bridge'?'no-deck':'no-surface'};
+ const z=requested.z;
+
  if(x<1||y<1||x>SIZE.w-1||y>SIZE.h-1)return {ok:false,reason:'bounds'};
  if(w.bodies.length+w.authored.length>75)return {ok:false,reason:'edit-budget'};
+ if(kind==='wall'&&level!=='ground'&&level!=='bridge'&&!flatWallSupport(w,x,y,z))return {ok:false,reason:'needs-flat-support'};
  if(kind==='crate'){
   const id='made-crate-'+w.nextId;
-  const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:z>0?'bridge':'ground',vz:0};
+  const b={id,kind:'crate',x,y,z,r:.41,h:.82,mass:32,support:level,vz:0};
   const hit=bodyConflicts(w,b);if(hit.length)return {ok:false,reason:'occupied',hits:hit};
   w.bodies.push(b);w.nextId++;touchTopology(w);event(w,'authored',{id,kind,x,y,z});return {ok:true,id,kind};
  }
@@ -303,7 +427,50 @@ function placeObject(w,kind,x,y,{level='ground'}={}){
  if(hits.length)return {ok:false,reason:'occupied',hits};
  w.authored.push(v);w.nextId++;touchTopology(w);event(w,'authored',{id,kind,x,y,z});return {ok:true,id,kind};
 }
+// One authoring action creates two finite-volume planks: a sloped access and a
+// flat elevated surface. Each obeys exactly the same support/contact/ray laws.
+// No new terrain modes, bespoke physics or per-stage navigation scripts.
+function placeScaffold(w,x,y,{turns=0,height=1.8}={}){
+ if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(height)||height<.9||height>3.0||
+    !Number.isInteger(turns)||turns<0||turns>3)return {ok:false,reason:'invalid-geometry'};
+ if((w.constructions||[]).length>=20||w.bodies.length+w.authored.length>70)return {ok:false,reason:'edit-budget'};
+ const angles=[[1,0],[0,1],[-1,0],[0,-1]],v=angles[turns],rampLength=3.6,deckLength=4.2;
+ const rx=x+rampLength*v[0],ry=y+rampLength*v[1];
+ const defs=[
+  {id:'made-ramp-'+w.nextId,ax:x,ay:y,bx:rx,by:ry,width:1.75,z0:0,z1:height,thickness:.23},
+  {id:'made-platform-'+(w.nextId+1),ax:rx,ay:ry,bx:rx+deckLength*v[0],by:ry+deckLength*v[1],width:3.0,z0:height,z1:height,thickness:.27}
+ ];
+ const shapes=defs.map(makeSlopedPlank);
+ // Test footprint and occupied volume before committing either part.
+ const aabbs=shapes.map(plankBounds);
+ if(aabbs.some(b=>b.minX<.3||b.minY<.3||b.maxX>SIZE.w-.3||b.maxY>SIZE.h-.3))return {ok:false,reason:'bounds'};
+ const obstacles=constructionObstacles(w);
+ // Existing static AABBs (and stage AABBs) must not be penetrated in volume.
+ for(const candidate of aabbs)for(const o of obstacles)if(boxIntersects(candidate,o))return {ok:false,reason:'occupied',hits:[o.id]};
+ for(const body of w.bodies)if(shapes.some(s=>plankCylinderContact(s,body,s.id)))return {ok:false,reason:'actor-contact',hits:[body.id]};
+ w.constructions.push(...defs);w.nextId+=2;touchTopology(w);
+ for(const d of defs)event(w,'authored-construction',{id:d.id,kind:d.id.includes('ramp')?'ramp':'platform',x:d.ax,y:d.ay,z:d.z1});
+ return {ok:true,ids:defs.map(d=>d.id)};
+}
+function eraseConstruction(w,id){
+ const index=(w.constructions||[]).findIndex(v=>v.id===id);
+ if(index<0)return {ok:false,reason:'not-authored-construction'};
+ w.constructions.splice(index,1);touchTopology(w);event(w,'erased-construction',{id});
+ // Static authored walls cannot remain suspended after their real support is gone.
+ // This is an explicit local editor cleanup, NOT a load-bearing collapse solver.
+ const lost=w.authored.filter(vol=>!authoredWallHasSupport(w,vol));
+ if(lost.length){const vanished=new Set(lost.map(vol=>vol.id));w.authored=w.authored.filter(vol=>!vanished.has(vol.id));
+  for(const vol of lost)event(w,'editor-part-lost',{id:vol.id,reason:'support-removed'});}
+
+ for(const actorId of Object.keys(w.grips||{})){
+  const a=getBody(w,actorId),b=getBody(w,w.grips[actorId]);
+  if(a?.support===id||b?.support===id)clearGrip(w,actorId,'construction-removed');
+ }
+ for(const b of w.bodies)if(b.support===id){b.support=null;b.vz=0;event(w,'support-lost',{id:b.id,from:id});}
+ return {ok:true,id};
+}
 function eraseObject(w,id){
+ if((w.constructions||[]).some(s=>s.id===id))return eraseConstruction(w,id);
  let idx=w.authored.findIndex(s=>s.id===id);
  if(idx>=0){w.authored.splice(idx,1);touchTopology(w);event(w,'erased',{id});return {ok:true,id};}
  if(Object.values(w.grips||{}).includes(id))return {ok:false,reason:'held-by-actor'};
@@ -311,8 +478,11 @@ function eraseObject(w,id){
  if(idx>=0){w.bodies.splice(idx,1);if(w.nav.motionAnchors)delete w.nav.motionAnchors[id];touchTopology(w);event(w,'erased',{id});return {ok:true,id};}
  return {ok:false,reason:'not-authored'};
 }
-function eraseNear(w,x,y,{level='ground',radius=.75}={}){
- const z=level==='bridge'?2.6:0;
+function eraseNear(w,x,y,{level='ground',radius=.75,skipConstructions=false}={}){
+ const construction=(skipConstructions?[]:authoredPlanks(w)).filter(s=>plankCircleContact(s,{x,y,r:radius}))
+  .sort((a,b)=>Math.hypot((a.ax+a.bx)/2-x,(a.ay+a.by)/2-y)-Math.hypot((b.ax+b.bx)/2-x,(b.ay+b.by)/2-y))[0];
+ if(construction)return eraseConstruction(w,construction.id);
+ const z=surfaces(w,x,y).find(s=>s.id===level)?.z??-100;
  const candidates=[...w.authored.map(s=>({id:s.id,x:(s.minX+s.maxX)/2,y:(s.minY+s.maxY)/2,z:s.minZ})),...w.bodies.filter(b=>b.id.startsWith('made-crate-'))];
  const hit=candidates.filter(a=>Math.abs(a.z-z)<.12&&Math.hypot(a.x-x,a.y-y)<=radius).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];
  return hit?eraseObject(w,hit.id):{ok:false,reason:'no-edit-nearby'};
@@ -343,6 +513,10 @@ function gravityStep(w,dt=DT){
   if(!a||!b||a.support===null||b.support===null||Math.abs(a.z-b.z)>.95)clearGrip(w,actorId,'support-lost');}
  for(const b of [...w.bodies].sort((a,b)=>a.z-b.z)){
   if(b.support==='bridge'&&!w.deck){b.support=null;event(w,'support-lost',{id:b.id});}
+  if(b.support?.startsWith('made-')&&b.support?.includes('-')&&!['made-crate-','made-wall-'].some(prefix=>b.support.startsWith(prefix))){
+   const p=plankById(w,b.support),z=p&&constructionSupport(p,b.x,b.y,b.kind==='crate'?b.r:0);
+   if(z===null||z===undefined||Math.abs(b.z-z)>.045){const old=b.support;b.support=null;b.vz=0;event(w,'support-lost',{id:b.id,from:old});}
+  }
   if(b.support?.startsWith('solid:')){
    const id=b.support.slice(6),v=solids(w).find(s=>s.id===id);
    if(!v||!circleRect(b,v)||Math.abs(b.z-v.maxZ)>.02){
@@ -356,7 +530,7 @@ function gravityStep(w,dt=DT){
   const nextVz=Math.max(-15,b.vz-9.81*dt),target=b.z+nextVz*dt;
   let best={z:0,support:'ground'};
   const ceilingCandidates=[];
-  for(const s of surfaces(w,b.x,b.y))if(s.z<=b.z+EPS&&s.z>=best.z)best={z:s.z,support:s.id};
+  for(const s of surfaces(w,b.x,b.y,b.kind==='crate'?b.r:0))if(s.z<=b.z+EPS&&s.z>=best.z)best={z:s.z,support:s.id};
   for(const wall of solids(w))if(circleRect(b,wall)&&wall.maxZ<=b.z+EPS&&wall.maxZ>=best.z)best={z:wall.maxZ,support:'solid:'+wall.id};
   for(const other of w.bodies){if(b.id===other.id||other.z+other.h>b.z+EPS||!horizontalOverlap(b,other))continue;
    if(other.z+other.h>=best.z)best={z:other.z+other.h,support:'body:'+other.id};}
@@ -400,6 +574,7 @@ function raycast(w,start,end,{ignore=[]}={}){const d={x:end.x-start.x,y:end.y-st
   const t=rayTriangle(start,end,tri);
   if(t!==null&&t>=0&&t<1-1e-7&&(!best||t<best.t))best={id:'ramp-slab',t,at:{x:start.x+t*d.x,y:start.y+t*d.y,z:start.z+t*d.z}};
  }
+ for(const plank of authoredPlanks(w)){if(ignore.includes(plank.id))continue;for(const hit of plankRayHits(plank,start,end))if(hit.t>=0&&hit.t<1-1e-7&&(!best||hit.t<best.t))best={id:plank.id,t:hit.t,at:hit.at};}
  for(const b of w.bodies){if(ignore.includes(b.id))continue;const t=rayCylinder(start,d,b);if(t!==null&&t>=0&&t<1-1e-7&&(!best||t<best.t))best={id:b.id,t,at:{x:start.x+t*d.x,y:start.y+t*d.y,z:start.z+t*d.z}};}
  return best;}
 function canReach(w,actorId,targetId,reach=1.85){const a=getBody(w,actorId),b=getBody(w,targetId);if(!a||!b)return {ok:false,reason:'missing'};
@@ -435,8 +610,15 @@ function route(w,from,to,grid=.42){
  }
  return [];
 }
+// Food is a world-space target, not a 2D trigger. This deliberately narrow
+// contact rule prevents false interactions across stacked support surfaces.
+// It does NOT solve how a boar perceives a target or navigates between floors.
+function boarCanReachFood(b,goal){
+ return Math.hypot(goal.x-b.x,goal.y-b.y)<.65 &&
+        Math.abs((goal.z??0)-b.z)<.45;
+}
 function updateBoar(w,dt=DT){const b=getBody(w,'boar'),t=w.goal;if(!b||b.support===null||t.eaten)return;
- if(Math.hypot(t.x-b.x,t.y-b.y)<.65){event(w,'food-reached',{by:b.id});w.goal.eaten=true;w.revision++;return;}
+ if(boarCanReachFood(b,t)){event(w,'food-reached',{by:b.id});w.goal.eaten=true;w.revision++;return;}
  const targetKey=`${t.x},${t.y},${t.z||0}`;
  // No-route is a legitimate result, not an instruction to run A* every tick.
  // Replan on a topology edit, goal change or a bounded periodic retry.
@@ -456,16 +638,33 @@ function tickWorld(w,commands={},dt=DT){w.tick++;w.time+=dt;w.events=[];
  if(w.tick%30===0)event(w,'world-heartbeat',{time:w.time});
  return w.events;
 }
-function snapshot(w){return JSON.stringify({version:w.version,seed:w.seed,tick:w.tick,time:w.time,deck:w.deck,revision:w.revision,authored:w.authored,nextId:w.nextId,bodies:w.bodies,goal:w.goal,nav:w.nav,stats:w.stats,imprints:w.imprints,grips:w.grips});}
+function snapshot(w){return JSON.stringify({version:w.version,seed:w.seed,tick:w.tick,time:w.time,deck:w.deck,revision:w.revision,authored:w.authored,constructions:w.constructions||[],nextId:w.nextId,bodies:w.bodies,goal:w.goal,nav:w.nav,stats:w.stats,imprints:w.imprints,grips:w.grips});}
 function restore(json){const v=typeof json==='string'?JSON.parse(json):json;
  if(v.version!=='forge-v1'||!Array.isArray(v.bodies)||v.bodies.length<5||v.bodies.length>75)throw new Error('Incompatible snapshot');
- const w=createWorld(v.seed);Object.assign(w,{...v,authored:v.authored||[],nextId:v.nextId||1,grips:v.grips||{},events:[],history:[],traces:[]});
+ const w=createWorld(v.seed);Object.assign(w,{...v,authored:v.authored||[],constructions:v.constructions||[],nextId:v.nextId||1,grips:v.grips||{},events:[],history:[],traces:[]});
  const ids=w.bodies.map(b=>b.id),essential=['player','scout','boar','crate','deck-crate'];
  if(new Set(ids).size!==ids.length||essential.some(id=>!ids.includes(id))||w.bodies.some(b=>!essential.includes(b.id)&&(!/^made-crate-\d+$/.test(b.id)||b.kind!=='crate')))throw new Error('Invalid body roster');
  if(!Array.isArray(w.authored)||w.authored.length>75||w.authored.some(o=>!/^made-wall-\d+$/.test(o.id)||!Number.isFinite(o.minX)||!Number.isFinite(o.minY)||!Number.isFinite(o.minZ)||!Number.isFinite(o.maxX)||!Number.isFinite(o.maxY)||!Number.isFinite(o.maxZ)||o.minX>=o.maxX||o.minY>=o.maxY||o.minZ>=o.maxZ||o.minX<0||o.minY<0||o.maxX>SIZE.w||o.maxY>SIZE.h))throw new Error('Invalid authored solids');
- if(w.authored.some(o=>o.minZ!==0&&!(w.deck&&Math.abs(o.minZ-2.6)<.01&&inside((o.minX+o.maxX)/2,(o.minY+o.maxY)/2,DECK))))throw new Error('Unsupported authored volume');
+ // Validate elevated authoring *after* construction data has been validated.
+ // A flat authored support permits a local elevated wall, never a fake ramp-mounted block.
+ const shapes=w.constructions||[];if(!Array.isArray(shapes)||shapes.length>20)throw new Error('Invalid construction list');
+ const names=new Set([...ids,...w.authored.map(a=>a.id)]);
+ for(const def of shapes){if(!/^made-(ramp|platform)-\d+$/.test(def.id)||names.has(def.id))throw new Error('Invalid construction identity');names.add(def.id);
+  const valid=['id','ax','ay','bx','by','width','z0','z1','thickness'];if(Object.keys(def).length!==valid.length||valid.some(k=>!Object.hasOwn(def,k)))throw new Error('Invalid construction fields');
+  const shape=makeSlopedPlank(def),verts=buildPlankTriangles(shape).flat();
+  if(verts.some(q=>q.x<.3-EPS||q.y<.3-EPS||q.x>SIZE.w-.3+EPS||q.y>SIZE.h-.3+EPS))
+   throw new Error('Invalid construction bounds');
+ }
+ // A saved author's geometry may not silently intersect permanent collision
+ // volumes, the historic ramp, or other separately authored constructions.
+ const staticBoxes=constructionObstacles({...w,constructions:[]});
+ const constructedBoxes=shapes.map(def=>plankBounds(makeSlopedPlank(def)));
+ for(const b of constructedBoxes){if(staticBoxes.some(o=>boxIntersects(b,o)))throw new Error('Invalid construction overlap '+b.id);}
+ for(let i=0;i<constructedBoxes.length;i++)for(let j=i+1;j<constructedBoxes.length;j++)
+  if(boxIntersects(constructedBoxes[i],constructedBoxes[j]))throw new Error('Invalid construction overlap '+constructedBoxes[i].id);
+ if(w.authored.some(o=>!authoredWallHasSupport(w,o)))throw new Error('Unsupported authored volume');
  if(w.authored.some(a=>ids.includes(a.id))||new Set(w.authored.map(x=>x.id)).size!==w.authored.length)throw new Error('Repeated authored ids');
- const numericIds=[...ids,...w.authored.map(x=>x.id)].filter(x=>/^made-(crate|wall)-\d+$/.test(x)).map(x=>Number(x.split('-').at(-1)));
+ const numericIds=[...ids,...w.authored.map(x=>x.id),...shapes.map(x=>x.id)].filter(x=>/^made-(crate|wall|ramp|platform)-\d+$/.test(x)).map(x=>Number(x.split('-').at(-1)));
  if(!Number.isSafeInteger(w.nextId)||w.nextId<=Math.max(0,...numericIds))throw new Error('Invalid authoring sequence');
  for(const v of w.authored)if(solids({...w,authored:[]}).some(s=>boxIntersects(s,v)))throw new Error('Authored volume overlap with static solids');
  for(let i=0;i<w.authored.length;i++)for(let j=i+1;j<w.authored.length;j++)if(boxIntersects(w.authored[i],w.authored[j]))throw new Error('Authored solids overlap');
@@ -474,14 +673,18 @@ function restore(json){const v=typeof json==='string'?JSON.parse(json):json;
  for(const b of w.bodies){
   if(b.support==='ground'&&Math.abs(b.z)>.015)throw new Error('Invalid ground support for '+b.id);
   if(b.support==='bridge'&&(!w.deck||!(b.kind==='crate'?circleRect(b,DECK):inside(b.x,b.y,DECK))||Math.abs(b.z-2.6)>.015))throw new Error('Invalid bridge support for '+b.id);
-  if(b.support==='ramp'&&(!w.deck||!inside(b.x,b.y,RAMP)||Math.abs(b.z-2.6*(b.x-RAMP.minX)/(RAMP.maxX-RAMP.minX))>.02))throw new Error('Invalid ramp support for '+b.id);
+  if(b.support==='ramp'&&(!w.deck||plankHeight(MAIN_RAMP,b.x,b.y)===null||Math.abs(b.z-plankHeight(MAIN_RAMP,b.x,b.y))>.02))throw new Error('Invalid ramp support for '+b.id);
+  if(typeof b.support==='string'&&/^made-(ramp|platform)-/.test(b.support)){
+   const p=plankById(w,b.support),z=p&&constructionSupport(p,b.x,b.y,b.kind==='crate'?b.r:0);
+   if(z===null||z===undefined||Math.abs(b.z-z)>.045)throw new Error('Invalid construction support '+b.id);
+  }
   if(typeof b.support==='string'&&b.support.startsWith('body:')){
    const q=getBody(w,b.support.slice(5));if(!q||!circles(b,q)||Math.abs(b.z-q.z-q.h)>.02)throw new Error('Invalid body support for '+b.id);
   }
   if(typeof b.support==='string'&&b.support.startsWith('solid:')){
    const o=solids(w).find(x=>x.id===b.support.slice(6));if(!o||!circleRect(b,o)||Math.abs(b.z-o.maxZ)>.02)throw new Error('Invalid solid support for '+b.id);
   }
-  if(b.support!==null&&!['ground','bridge','ramp'].includes(b.support)&&!b.support.startsWith('body:')&&!b.support.startsWith('solid:'))throw new Error('Unknown support for '+b.id);
+  if(b.support!==null&&!['ground','bridge','ramp'].includes(b.support)&&!/^made-(ramp|platform)-/.test(b.support)&&!b.support.startsWith('body:')&&!b.support.startsWith('solid:'))throw new Error('Unknown support for '+b.id);
  }
  if(!w.grips||typeof w.grips!=='object'||Array.isArray(w.grips))throw new Error('Invalid grips');
  const used=new Set();for(const [id,crateId]of Object.entries(w.grips)){
@@ -494,10 +697,14 @@ function restore(json){const v=typeof json==='string'?JSON.parse(json):json;
  for(const b of w.bodies)if(bodyConflicts(w,b).length)throw new Error('Snapshot contains overlaps: '+b.id+' '+bodyConflicts(w,b).join(','));
  return w;}
 
-const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),ctx=canvas.getContext('2d'),mctx=mini.getContext('2d');
+const canvas=document.getElementById('world'),mini=document.getElementById('minimap'),mctx=mini.getContext('2d');
+let ctx=canvas.getContext('2d');
+const visibilityCanvas=document.createElement('canvas'),visibilityCtx=visibilityCanvas.getContext('2d');
+let visibilityPreview=new URLSearchParams(location.search).get('occlusion')==='fragments'; // opt-in, never a release default
 const $=id=>document.getElementById(id), keys=new Set();
-let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode='auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
-let cam={x:42,y:27}, scale=45,tone='phys',tool='none',note='Użyj WASD. Sytuacja istnieje wewnątrz świata 84×54, nie w miniaturowym zamienniku.',pulse=[],lastFrame=performance.now(),accumulator=0,lastUi=0,frames=0;
+let w=createWorld(),selected='player',running=true,showDebug=false,ai=true,viewMode=(visibilityPreview||new URLSearchParams(location.search).get('view')==='solid')?'solid':'auto',scenario='przeciaganie',viewW=0,viewH=0,dpr=1;
+let cam={x:42,y:27}, scale=45,tone='phys',tool='none',scaffoldTurns=0,scaffoldHeight=1.8,note='Użyj WASD. Sytuacja istnieje wewnątrz świata 84×54, nie w miniaturowym zamienniku.',pulse=[],lastFrame=performance.now(),accumulator=0,lastUi=0,frames=0;
+let pickLayer=0,pickPointer=null,pickResult=null; // UI-only editor target, never serialized
 let errors=[];window.addEventListener('error',e=>errors.push(e.message));
 let mobileStick={x:0,y:0,id:null},mobileToastAt=0;
 function closeMobileMenu(){document.body.classList.remove('mobile-menu-open');$('mobile-options').setAttribute('aria-expanded','false');resetMobileStick();}
@@ -528,12 +735,31 @@ function bindMobileAction(id,desktopId){const el=$(id);let lastTouch=-1e9;
 bindMobileAction('mobile-view','viewmode');
 bindMobileAction('mobile-grip','grip');
 bindMobileAction('mobile-touch-info','actor');
+bindMobileAction('mobile-pick-layer','pick-layer');
 
+function targetName(id){return id==='ground'?'grunt':id==='bridge'?'most':id==='ramp'?'rampa':id.includes('platform')?'podest':id.includes('ramp')?'rampa':id;}
+function surfaceAtScreen(sx,sy){
+ const x=cam.x+(sx-viewW*.51)/scale,groundY=cam.y+(sy-viewH*.57)/(scale*.67);
+ const hits=pickSurfacesAtProjection(w,x,groundY), index=hits.length?pickLayer%hits.length:0;
+ return {sx,sy,hits,index,hit:hits[index]||null};
+}
+function setPickPointer(sx,sy){pickPointer={sx,sy};pickResult=surfaceAtScreen(sx,sy);return pickResult;}
+function layerIndicator(){const d=pickResult,h=d?.hit;return !h?(pickLayer?'Warstwa: niższa (wskaż miejsce)':'Warstwa: górna (wskaż miejsce)'):`Warstwa: ${targetName(h.id)} ${h.z.toFixed(1)} m (${d.index+1}/${d.hits.length})`;}
+function syncLayerDisplay(){
+ $('pick-layer').textContent=layerIndicator()+' (Q)';
+ $('mobile-pick-layer').hidden=tool==='none';
+ if(tool!=='none')$('mobile-level').textContent=layerIndicator().replace('Warstwa: ','CEL: ');
+}
 const color={player:'#79dbc3',scout:'#e5b878',boar:'#cf8670',crate:'#bd9473','deck-crate':'#bd9473'};
-function syncButtons(){ $('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+(getBody(w,selected)?.z??0).toFixed(1)+' m';$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt'; $('play').textContent=running?'Pauza':'Uruchom'; $('actor').textContent=selected==='player'?'Postać: dół':'Postać: góra'; $('debug').textContent=showDebug?'Debug: tak':'Debug: nie';$('ai').textContent=ai?'Dzik: działa':'Dzik: stop'; $('remove').disabled=!w.deck; $('viewmode').textContent='Widok: '+(viewMode==='auto'?'automatyczny':viewMode==='cut'?'przekrój':'pełna bryła')+' (C)'; }
+function syncButtons(){ $('visibility-preview').textContent=visibilityPreview?'Widoczność A/B: fragmenty (V)':'Widoczność A/B: painter (V)';$('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+(getBody(w,selected)?.z??0).toFixed(1)+' m';$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt'; $('play').textContent=running?'Pauza':'Uruchom'; $('actor').textContent=selected==='player'?'Postać: dół':'Postać: góra'; $('debug').textContent=showDebug?'Debug: tak':'Debug: nie';$('ai').textContent=ai?'Dzik: działa':'Dzik: stop'; $('remove').disabled=!w.deck; $('viewmode').textContent='Widok: '+(viewMode==='auto'?'automatyczny':viewMode==='cut'?'przekrój':'pełna bryła')+' (C)';syncLayerDisplay(); }
 function msg(t){note=t;$('status').textContent=t;const el=$('mobile-toast');el.textContent=t;el.classList.add('shown');mobileToastAt=performance.now();}
-function setScenario(type){closeMobileMenu();w=createWorld();selected='player';scenario=type;running=true;ai=true;
- if(type==='skrot'){
+function setScenario(type){closeMobileMenu();pickLayer=0;pickPointer=null;pickResult=null;w=createWorld();selected='player';scenario=type;running=true;ai=true;
+ if(type==='warsztat'){
+  const one=placeScaffold(w,20,23,{turns:3,height:1.8}),two=placeScaffold(w,16,13,{turns:0,height:2.2});
+  Object.assign(getBody(w,'player'),{x:20,y:24.25,z:0,support:'ground'});
+  if(!one.ok||!two.ok)throw Error('research scene placement failed');
+  ai=false;msg('WARSZTAT: dwa różne pomosty z dojściami. Wejdź na nie, obserwuj ich wysokość, zbuduj trzeci narzędziem Konstrukcja (6) i zmień kierunek obrotu (T).');
+ }else if(type==='skrot'){
   Object.assign(getBody(w,'player'),{x:46.7,y:27.93,z:0,support:'ground'});
   Object.assign(getBody(w,'crate'),{x:47.75,y:27.93,z:0,support:'ground'});
   Object.assign(getBody(w,'boar'),{x:43.8,y:27.93,z:0,support:'ground'});
@@ -568,35 +794,57 @@ function setScenario(type){closeMobileMenu();w=createWorld();selected='player';s
  }else msg('PRZĘSŁO: dwie postacie na tym samym XY, ale różne Z i podpory. Spróbuj przejść pod mostem i wejść rampą.');
  document.querySelector('.corner').textContent=type.toUpperCase()+' / ŚWIAT XYZ';
  $('mobile-toast').classList.remove('shown');mobileToastAt=0;
- cam=type==='zagroda'?{x:43.4,y:37.2}:type==='skrot'?{x:47,y:27.93}:type==='zrzut'?{x:45.4,y:27.8}:{x:42,y:27};pulse=[];setTool('none');syncButtons();}
+ cam=type==='warsztat'?{x:20,y:22}:type==='zagroda'?{x:43.4,y:37.2}:type==='skrot'?{x:47,y:27.93}:type==='zrzut'?{x:45.4,y:27.8}:{x:42,y:27};pulse=[];setTool('none');syncButtons();}
 // Authoring mode is an explicit debug/editor privilege, NOT an in-world hand/grab.
 // Pointer positions are mapped through the same CSS-pixel projection as drawScene.
-function setTool(k){tool=k;for(const b of document.querySelectorAll('[data-tool]')){b.setAttribute('aria-pressed',String(b.dataset.tool===k));b.style.borderColor=b.dataset.tool===k?'#e8b97f':'';} }
+function setTool(k){tool=k;pickLayer=0;pickResult=pickPointer?surfaceAtScreen(pickPointer.sx,pickPointer.sy):null;for(const b of document.querySelectorAll('[data-tool]')){b.setAttribute('aria-pressed',String(b.dataset.tool===k));b.style.borderColor=b.dataset.tool===k?'#e8b97f':'';}syncLayerDisplay(); }
 for(const b of document.querySelectorAll('[data-tool]'))b.addEventListener('click',()=>{setTool(b.dataset.tool);closeMobileMenu();});
+// Pointer has a single world-space target. The actor being controlled is NOT
+// a hidden editor-layer switch. A deliberate Q/button cycle chooses overlap.
+canvas.addEventListener('pointermove',e=>{if(tool==='none')return;
+ const r=canvas.getBoundingClientRect();setPickPointer(e.clientX-r.left,e.clientY-r.top);syncLayerDisplay();});
+canvas.addEventListener('pointerleave',()=>{pickPointer=null;pickResult=null;syncLayerDisplay();});
+$('pick-layer').addEventListener('click',()=>{pickLayer=(pickLayer+1)%Math.max(2,pickResult?.hits.length||2);
+ if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);
+ syncLayerDisplay();});
+function eraseAtSurface(h){
+ // The surface determines WHICH layer, not WHICH object is destroyed.
+ // Respect an authored object on the surface before removing its support.
+ const object=eraseNear(w,h.x,h.y,{level:h.id,skipConstructions:true});
+ if(object.ok||object.reason!=='no-edit-nearby')return object;
+ if((w.constructions||[]).some(d=>d.id===h.id))return eraseConstruction(w,h.id);
+ return object;
+}
 canvas.addEventListener('pointerdown',e=>{
  if(tool==='none')return;
- e.preventDefault();const r=canvas.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
- const b=getBody(w,selected),level=b?.support==='bridge'?'bridge':'ground',z=level==='bridge'?2.6:0;
- const x=cam.x+(sx-viewW*.51)/scale,y=cam.y+(sy-viewH*.57+z*scale*.53)/(scale*.67);
- const result=tool==='erase'?eraseNear(w,x,y,{level}):placeObject(w,tool,x,y,{level});
- msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${result.id}. Obiekt uczestniczy w kolizji, promieniach, nawigacji i zapisie.`:
-  `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}). Świat nie został zmieniony.`);updateUI();
+ e.preventDefault();const r=canvas.getBoundingClientRect();
+ const choice=setPickPointer(e.clientX-r.left,e.clientY-r.top),h=choice.hit;
+ if(!h){msg('EDYTOR: poza obszarem dostępnych powierzchni.');syncLayerDisplay();return;}
+ const result=tool==='scaffold'?(h.id==='ground'?placeScaffold(w,h.x,h.y,{turns:scaffoldTurns,height:scaffoldHeight}):{ok:false,reason:'requires-ground'}):
+   tool==='erase'?eraseAtSurface(h):placeObject(w,tool,h.x,h.y,{level:h.id});
+ const itemLabel=result.id??(Array.isArray(result.ids)?result.ids.map(targetName).join(' + '):'element');
+ msg(result.ok?`EDYTOR: ${tool==='erase'?'Usunięto':'Dodano'} ${itemLabel}. Cel: ${targetName(h.id)} (${h.z.toFixed(1)} m).`:
+  `EDYTOR: odmowa (${result.reason}${result.hits?.length?': '+result.hits.join(', '):''}) na ${targetName(h.id)}. Świat nie został zmieniony.`);
+ pickResult=surfaceAtScreen(choice.sx,choice.sy);syncLayerDisplay();updateUI();
 });
 $('export-world').onclick=()=>{const data=new Blob([snapshot(w)],{type:'application/json'}),url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download='Splot_Forge_Authored_World.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1200);msg('Wyeksportowano świat. To zapis badawczy Forge, nie save produkcyjny.');};
 $('import-world').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const replacement=restore(await file.text());w=replacement;selected='player';cam={x:getBody(w,selected).x,y:getBody(w,selected).y};syncButtons();updateUI();msg('Import przyjęty — geometria zapisu przeszła walidację.');}catch(err){msg('Import odrzucony: '+err.message);}finally{e.target.value='';}});
-$('cycle').onclick=()=>{const scenes=['skrot','przeciaganie','zrzut','przeslo','kontakt','upadek','obchodzenie','blokada','zagroda'];setScenario(scenes[(scenes.indexOf(scenario)+1)%scenes.length])};$('reset').onclick=()=>setScenario(scenario);$('actor').onclick=()=>{selected=selected==='player'?'scout':'player';msg('Sterujesz postacią '+(selected==='player'?'na dole':'na górze')+'.');syncButtons()};
+$('cycle').onclick=()=>{const scenes=['warsztat','skrot','przeciaganie','zrzut','przeslo','kontakt','upadek','obchodzenie','blokada','zagroda'];setScenario(scenes[(scenes.indexOf(scenario)+1)%scenes.length])};$('reset').onclick=()=>setScenario(scenario);$('actor').onclick=()=>{selected=selected==='player'?'scout':'player';msg('Sterujesz postacią '+(selected==='player'?'na dole':'na górze')+'.');syncButtons()};
 $('remove').onclick=()=>{removeBridge(w);msg('Usunięto most; grawitacja działa w czasie, a nowe kontakty wynikają z geometrii.');syncButtons()};
-$('viewmode').onclick=()=>{viewMode=viewMode==='auto'?'cut':viewMode==='cut'?'solid':'auto';syncButtons()};
+$('viewmode').onclick=()=>{viewMode=viewMode==='auto'?'cut':viewMode==='cut'?'solid':'auto';if(viewMode!=='solid')visibilityPreview=false;syncButtons()};
+$('visibility-preview').onclick=()=>{visibilityPreview=!visibilityPreview;if(visibilityPreview)viewMode='solid';msg(visibilityPreview?'BADANIE: maska głębi bryła–sprite (Canvas); to nie jest zatwierdzony renderer.':'BADANIE: przywrócono malowanie całych obiektów.');syncButtons()};
+$('scaffold-turn').onclick=()=>{scaffoldTurns=(scaffoldTurns+1)%4;setTool('scaffold');msg('KONSTRUKCJA: obrót '+(scaffoldTurns*90)+'°. Dotknij pustego gruntu, aby dodać dojście i podest.');updateUI()};
+$('scaffold-height').onclick=()=>{scaffoldHeight=scaffoldHeight===1.8?2.2:scaffoldHeight===2.2?1.35:1.8;setTool('scaffold');msg('KONSTRUKCJA: wysokość '+scaffoldHeight.toFixed(2)+' m.');updateUI()};
 $('play').onclick=()=>{running=!running;syncButtons()};$('debug').onclick=()=>{showDebug=!showDebug;syncButtons()};$('ai').onclick=()=>{ai=!ai;syncButtons()};
 $('grip').onclick=()=>{const r=toggleGrip(w,selected);msg(r.ok?(w.grips?.[selected]?`CHWYT: ${r.crate}. Skrzynia pozostaje na podłożu; przesuwasz oba ciała wspólnie.`:`PUSZCZONO: ${r.crate}.`):`CHWYT: odmowa (${r.reason}). Zbliż się do skrzyni na tym samym podłożu.`);updateUI()};
 $('reach').onclick=()=>{const a=getBody(w,selected),objs=w.bodies.filter(x=>x.kind==='crate').sort((a,b)=>Math.hypot(a.x-getBody(w,selected).x,a.y-getBody(w,selected).y)-Math.hypot(b.x-getBody(w,selected).x,b.y-getBody(w,selected).y));const r=canReach(w,selected,objs[0].id);msg('Próba zasięgu do '+objs[0].id+': '+(r.ok?'kontakt możliwy':'brak kontaktu — '+r.reason));};
 for(const n of document.querySelectorAll('[data-scenario]'))n.onclick=()=>setScenario(n.dataset.scenario);
 function down(k){keys.add(k);}function up(k){keys.delete(k);}
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k))e.preventDefault();if(e.repeat&&['tab',' ','x','r','h','e','1','2','3','4','5','0'].includes(k))return;
- if(k==='tab'){$('actor').click();return;}if(k===' ') {$('play').click();return;}if(k==='x'){$('remove').click();return;}if(k==='r'){$('reset').click();return;}if(k==='h'){$('debug').click();return;}if(k==='e'){$('grip').click();return;}if(k==='c'){$('viewmode').click();return;}if(k==='3'){setTool('crate');return;}if(k==='4'){setTool('wall');return;}if(k==='5'){setTool('erase');return;}if(k==='0'){setTool('none');return;}if(k==='1'||k==='2'){selected=k==='1'?'player':'scout';syncButtons();return;}down(k);
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k))e.preventDefault();if(e.repeat&&['tab',' ','x','r','t','h','e','q','v','1','2','3','4','5','0'].includes(k))return;
+ if(k==='tab'){$('actor').click();return;}if(k===' ') {$('play').click();return;}if(k==='x'){$('remove').click();return;}if(k==='r'){$('reset').click();return;}if(k==='t'){$('scaffold-turn').click();return;}if(k==='h'){$('debug').click();return;}if(k==='q'){$('pick-layer').click();return;}if(k==='v'){$('visibility-preview').click();return;}if(k==='e'){$('grip').click();return;}if(k==='c'){$('viewmode').click();return;}if(k==='3'){setTool('crate');return;}if(k==='4'){setTool('wall');return;}if(k==='5'){setTool('erase');return;}if(k==='6'){setTool('scaffold');return;}if(k==='0'){setTool('none');return;}if(k==='1'||k==='2'){selected=k==='1'?'player':'scout';syncButtons();return;}down(k);
 });addEventListener('keyup',e=>up(e.key.toLowerCase()));addEventListener('blur',()=>keys.clear());
 for(const el of document.querySelectorAll('[data-dir]')){const k=el.dataset.dir;el.addEventListener('pointerdown',e=>{e.preventDefault();down(k);el.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,()=>up(k));}
-function resize(){dpr=Math.min(2.5,devicePixelRatio||1);let r=canvas.getBoundingClientRect();viewW=r.width;viewH=r.height;canvas.width=Math.max(1,Math.round(viewW*dpr));canvas.height=Math.max(1,Math.round(viewH*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);}
+function resize(){dpr=Math.min(2.5,devicePixelRatio||1);let r=canvas.getBoundingClientRect();viewW=r.width;viewH=r.height;canvas.width=Math.max(1,Math.round(viewW*dpr));canvas.height=Math.max(1,Math.round(viewH*dpr));visibilityCanvas.width=Math.ceil(116*dpr);visibilityCanvas.height=Math.ceil(320*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);}
 window.addEventListener('resize',resize);resize();
 function shade(col,a=1){return col}const between=(a,b,t)=>a+(b-a)*t;
 function visualHash(x,y,z=0){let n=(Math.imul(Math.floor(x)*374761393,1)^Math.imul(Math.floor(y)*668265263,1)^Math.imul(z*1903,1))|0;n=Math.imul(n^(n>>>13),1274126177);return (n^(n>>>16))>>>0;}
@@ -662,10 +910,30 @@ function bridge(){if(!w.deck)return;
   ctx.save();ctx.strokeStyle='#e6d0a299';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;
   ctx.beginPath();ctx.ellipse(center.x,center.y-13,scale*1.45,scale*1.18,0,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
- const pts=[[RAMP.minX,RAMP.minY],[RAMP.maxX,RAMP.minY],[RAMP.maxX,RAMP.maxY],[RAMP.minX,RAMP.maxY]].map(([x,y])=>XY(x,y,rampHeight(x)));
- const rim=[XY(RAMP.minX,RAMP.maxY,rampHeight(RAMP.minX)),XY(RAMP.maxX,RAMP.maxY,rampHeight(RAMP.maxX)),
-  XY(RAMP.maxX,RAMP.maxY,rampHeight(RAMP.maxX)-.24),XY(RAMP.minX,RAMP.maxY,rampHeight(RAMP.minX)-.24)];
- path(rim,'#655644','#ac926e',1);path(pts,'#8a785a','#cfb994',1.5);
+ // Do not keep a second, hand-drawn definition of the sloped surface.
+ // These faces are the same 3D triangles used by world-space raycasting.
+ const triangles=rampTriangles(),rampTopVertices=[triangles[2][0],triangles[2][1],triangles[2][2],triangles[3][2]];
+ const rim=[triangles[3][2],triangles[2][2],triangles[1][2],triangles[1][1]];
+ path(rim.map(v=>XY(v.x,v.y,v.z)),'#655644','#ac926e',1);
+ path(rampTopVertices.map(v=>XY(v.x,v.y,v.z)),'#8a785a','#cfb994',1.5);
+}
+function drawConstruction(def){
+ // No duplicate definition of ramp corners here: these finite-volume faces
+ // are the SAME triangles used by the world's ray queries.
+ const mesh=constructionMeshes(w).find(m=>m.id===def.id),triangles=mesh.triangles;
+ const point=v=>XY(v.x,v.y,v.z),selectedBody=getBody(w,selected);
+ const under=selectedBody.z+selectedBody.h<Math.min(def.z0,def.z1)-.05;
+ const near=Math.hypot(selectedBody.x-(def.ax+def.bx)/2,selectedBody.y-(def.ay+def.by)/2)<4.6;
+ ctx.save();ctx.globalAlpha=viewMode==='cut'?.2:viewMode==='auto'&&under&&near?.38:1;
+ const sideColors=['#3a4a4d','#476267','#40545a','#3c5459'];
+ for(let i=4,j=0;i<=10;i+=2,j++){
+  const face=[triangles[i][0],triangles[i][1],triangles[i][2],triangles[i+1][2]].map(point);
+  path(face,sideColors[j],null);
+ }
+ const top=[triangles[2][0],triangles[2][1],triangles[2][2],triangles[3][2]].map(point);
+ path(top,def.id.includes('ramp')?'#798279':'#718c91','#b5c9b0',1.2);
+ ctx.restore();
+ if(showDebug){const c=XY((def.ax+def.bx)/2,(def.ay+def.by)/2,Math.max(def.z0,def.z1));ctx.font='10px monospace';ctx.fillStyle='#fff2d0';ctx.fillText(def.id+' '+def.z1.toFixed(1)+'m',c.x-35,c.y-4);}
 }
 function actor(b){const p=XY(b.x,b.y,b.z),shadow=XY(b.x,b.y,b.support==='bridge'||b.support==='ramp'?b.z:0),s=scale*.65,clr=color[b.id]||'#b2baa7';ctx.save();
  // This sprite stays upright; world-space heading and gaze are not screen rotation.
@@ -705,27 +973,104 @@ function drawPulses(){
   ctx.beginPath();ctx.ellipse(pt.x,pt.y,radius,radius*.45,0,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
 }
+
+// EXPERIMENTAL VISIBILITY: geometric screen-space fragments, not sprite bands.
+// Camera rays run towards increasing Y and Z with invariant dy/dz=.53/.67.
+// At an equal projected pixel the portion of a physical face with world Y
+// beyond the actor's billboard plane is closer to the camera.
+// Clip each 3D face against that plane, then erase its projected silhouette
+// from a small offscreen sprite buffer. All construction triangles come from
+// the same geometry as contact/raycast. This ONLY tests solid-vs-billboard
+// occlusion: not face-vs-face order, true volumetric sprites or art direction.
+function clipFaceAgainstViewer(face,actorY){
+ const result=[];
+ for(let i=0;i<face.length;i++){
+  const a=face[i],b=face[(i+1)%face.length],aboveA=a.y>actorY+1e-5,aboveB=b.y>actorY+1e-5;
+  if(aboveA!==aboveB){
+   const t=(actorY+1e-5-a.y)/(b.y-a.y);
+   result.push({x:a.x+t*(b.x-a.x),y:actorY+1e-5,z:a.z+t*(b.z-a.z)});
+  }
+  if(aboveB)result.push(b);
+ }
+ return result;
+}
+function boxFaces(b){
+ const p=(x,y,z)=>({x,y,z}),x=b.minX,X=b.maxX,y=b.minY,Y=b.maxY,z=b.minZ,Z=b.maxZ;
+ return [[p(x,y,Z),p(X,y,Z),p(X,Y,Z),p(x,Y,Z)],
+         [p(x,y,z),p(x,Y,z),p(X,Y,z),p(X,y,z)],
+         [p(x,y,z),p(X,y,z),p(X,y,Z),p(x,y,Z)],
+         [p(X,y,z),p(X,Y,z),p(X,Y,Z),p(X,y,Z)],
+         [p(X,Y,z),p(x,Y,z),p(x,Y,Z),p(X,Y,Z)],
+         [p(x,Y,z),p(x,y,z),p(x,y,Z),p(x,Y,Z)]];
+}
+function physicalOccluderFaces(){
+ const meshes=constructionMeshes(w).flatMap(m=>m.triangles);
+ if(w.deck)meshes.push(...rampTriangles());
+ for(const b of solids(w))meshes.push(...boxFaces(b));
+ return meshes;
+}
+function drawMaskedActor(b,faces){
+ // Small reusable offscreen raster. All coordinates remain in the same CSS
+ // projection as the live renderer; no full-screen pixel buffer is allocated.
+ const p=XY(b.x,b.y,b.z),g=XY(b.x,b.y,0);
+ const left=Math.floor(p.x-58),top=Math.floor(p.y-Math.max(95,b.h*scale*.60+39));
+ const bottom=Math.ceil(Math.max(p.y+44,g.y+39)),height=bottom-top;
+ if(height>320||!visibilityCtx){actor(b);return;}
+ const main=ctx;
+ visibilityCtx.setTransform(1,0,0,1,0,0);
+ visibilityCtx.clearRect(0,0,visibilityCanvas.width,visibilityCanvas.height);
+ visibilityCtx.setTransform(dpr,0,0,dpr,-left*dpr,-top*dpr);
+ ctx=visibilityCtx;
+ try{
+  actor(b);
+  ctx.save();ctx.globalCompositeOperation='destination-out';ctx.globalAlpha=1;
+  for(const face of faces){
+   const clipped=clipFaceAgainstViewer(face,b.y);
+   if(clipped.length>=3)path(clipped.map(v=>XY(v.x,v.y,v.z)),'#000');
+  }
+  ctx.restore();
+ }finally{ctx=main;}
+ main.drawImage(visibilityCanvas,0,0,visibilityCanvas.width,Math.ceil(height*dpr),left,top,116,height);
+}
+
 function drawScene(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,viewW,viewH);background();groundDetails();
  // The deck is a real occluder in the painter's order. Lower bodies render
  // BEFORE it; upper bodies AFTER it. Transparent cutaway remains a deliberate
  // view aid, never a physical change to the bridge.
  groundOverlay();
- const ordered=[...w.bodies].sort((a,b)=>a.y-b.y);
- for(const b of ordered.filter(b=>b.z+b.h<DECK.minZ+.035))actor(b);
- bridge();
- for(const b of ordered.filter(b=>b.z+b.h>=DECK.minZ+.035))actor(b);
- drawPulses();
- if(showDebug){if(w.nav.path.length){ctx.strokeStyle='#ffd19a';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();w.nav.path.forEach((v,i)=>{const p=XY(v.x,v.y,0);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.stroke();ctx.setLineDash([])}
+ // Painter depth is only a heuristic: both XY depth and elevation matter.
+ // Sorting purely by height hid even a grounded player standing *in front*
+ // of a nearby ramp. A true visibility/cutaway pipeline remains open.
+ const DEPTH=.57;
+ if(visibilityPreview&&viewMode==='solid'){
+  // The same playable world, not a separate geometry demo. Opaque geometry
+  // first, then each billboard clipped by actual finite-volume faces.
+  for(const def of w.constructions||[])drawConstruction(def);
+  if(w.deck)bridge();
+  const faces=physicalOccluderFaces();
+  for(const b of [...w.bodies].sort((a,b)=>a.y-b.y))drawMaskedActor(b,faces);
+ }else{
+  const layers=[...w.bodies.map(b=>({order:b.z+b.h-.05+DEPTH*b.y,y:b.y,render:()=>actor(b)})),
+   ...(w.constructions||[]).map(d=>({order:Math.max(d.z0,d.z1)+DEPTH*(d.ay+d.by)/2,y:(d.ay+d.by)/2,render:()=>drawConstruction(d)}))];
+  if(w.deck)layers.push({order:DECK.maxZ+DEPTH*27,y:27,render:bridge});
+  layers.sort((a,b)=>a.order-b.order||a.y-b.y);
+  for(const layer of layers)layer.render();
+ }
+  drawPulses();
+  if(tool!=='none'&&pickResult?.hit){const d=pickResult,h=d.hit;ctx.save();ctx.strokeStyle='#ffe4a9';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();ctx.ellipse(d.sx,d.sy,13,7,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+   const label=targetName(h.id)+' · '+h.z.toFixed(1)+'m · '+(d.index+1)+'/'+d.hits.length;ctx.font='600 12px system-ui';const bw=Math.min(viewW-12,ctx.measureText(label).width+16),tx=Math.max(5,Math.min(viewW-bw-5,d.sx+12)),ty=Math.max(16,Math.min(viewH-20,d.sy-11));ctx.fillStyle='#10282de8';ctx.fillRect(tx,ty-16,bw,20);ctx.fillStyle='#ffdfa6';ctx.fillText(label,tx+8,ty-2);ctx.restore();}
+  if(showDebug){if(w.nav.path.length){ctx.strokeStyle='#ffd19a';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();w.nav.path.forEach((v,i)=>{const p=XY(v.x,v.y,0);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.stroke();ctx.setLineDash([])}
  const p=getBody(w,selected);ctx.fillStyle='#f3dcaa';ctx.font='12px monospace';ctx.fillText(`KANON XYZ x:${p.x.toFixed(2)} y:${p.y.toFixed(2)} z:${p.z.toFixed(2)}`,18,22);}
 }
 function drawMini(){let width=mini.width,height=mini.height;mctx.fillStyle='#223c3b';mctx.fillRect(0,0,width,height);const ox=3,oy=3,sx=(width-6)/SIZE.w,sy=(height-6)/SIZE.h;for(let j=0;j<SIZE.h;j+=2)for(let i=0;i<SIZE.w;i+=2){mctx.fillStyle=terrain(i,j,w.seed)==='grass'?'#355b4c':'#4d5449';mctx.fillRect(ox+i*sx,oy+j*sy,sx*2+1,sy*2+1)}
  if(w.deck){mctx.fillStyle='#cb9c67';mctx.fillRect(ox+37*sx,oy+24*sy,10*sx,6*sy)} for(const b of w.authored){mctx.fillStyle='#b78c66';mctx.fillRect(ox+b.minX*sx,oy+b.minY*sy,(b.maxX-b.minX)*sx,(b.maxY-b.minY)*sy)}
+ for(const d of w.constructions||[]){mctx.strokeStyle='#b7c4a6';mctx.lineWidth=2;mctx.beginPath();mctx.moveTo(ox+d.ax*sx,oy+d.ay*sy);mctx.lineTo(ox+d.bx*sx,oy+d.by*sy);mctx.stroke()}
  for(const b of w.bodies){mctx.fillStyle=color[b.id];mctx.fillRect(ox+b.x*sx-2,oy+b.y*sy-2,4,4)}let c=getBody(w,selected);mctx.strokeStyle='#f3deb6';mctx.strokeRect(ox+(cam.x-9)*sx,oy+(cam.y-6)*sy,18*sx,12*sy);
 }
-function updateUI(){let b=getBody(w,selected);$('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+b.z.toFixed(1)+' m'+(tool!=='none'?' · '+({crate:'SKRZYNIA',wall:'MUR',erase:'USUŃ'}[tool]||tool):'');$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt';$('clock').textContent=w.time.toFixed(1)+' s';$('height').textContent=b.z.toFixed(2)+' m';$('support').textContent=b.support||'w powietrzu';$('stats').textContent=`Ruchy skrzyń: ${w.stats.pushes}  ·  Odmowy: ${w.stats.blocked}  ·  Lądowania: ${w.stats.lands}  ·  Planowania: ${w.stats.routes}  ·  Przeciąganie: ${w.stats.drags||0}`;
+function updateUI(){let b=getBody(w,selected);$('mobile-level').textContent=(selected==='player'?'DÓŁ':'GÓRA')+' · '+b.z.toFixed(1)+' m'+(tool!=='none'?' · '+({crate:'SKRZYNIA',wall:'MUR',erase:'USUŃ',scaffold:'KONSTRUKCJA'}[tool]||tool):'');$('mobile-grip').textContent=w.grips?.[selected]?'Puść':'Chwyt';$('clock').textContent=w.time.toFixed(1)+' s';$('height').textContent=b.z.toFixed(2)+' m';$('support').textContent=b.support||'w powietrzu';$('stats').textContent=`Ruchy skrzyń: ${w.stats.pushes}  ·  Odmowy: ${w.stats.blocked}  ·  Lądowania: ${w.stats.lands}  ·  Planowania: ${w.stats.routes}  ·  Przeciąganie: ${w.stats.drags||0}`;
  $('grip').textContent=w.grips?.[selected]?'Puść skrzynię (E)':'Chwyć skrzynię (E)';
- $('builder-info').textContent=`Mury: ${w.authored.length} · dodatkowe skrzynie: ${w.bodies.filter(b=>b.id.startsWith('made-crate-')).length} · rewizja: ${w.revision}`;
- $('events').replaceChildren(...w.history.slice(-5).reverse().map(e=>{let d=document.createElement('div');d.className='event';d.textContent=`${(e.tick/60).toFixed(1)}s  ${e.type} ${e.id||e.actor||e.by||''}`;return d}));}
+ $('builder-info').textContent=`Mury: ${w.authored.length} · dodatkowe skrzynie: ${w.bodies.filter(b=>b.id.startsWith('made-crate-')).length} · konstrukcje: ${(w.constructions||[]).length} · obrót: ${scaffoldTurns*90}° · wys.: ${scaffoldHeight.toFixed(2)} m · rewizja: ${w.revision}`;
+ $('events').replaceChildren(...w.history.slice(-5).reverse().map(e=>{let d=document.createElement('div');d.className='event';d.textContent=`${(e.tick/60).toFixed(1)}s  ${e.type} ${e.id||e.actor||e.by||''}`;return d}));syncLayerDisplay();}
 function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){accumulator+=dt;for(let i=0;accumulator>=DT&&i<6;i++,accumulator-=DT){let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);if(!dx&&!dy){dx=mobileStick.x;dy=mobileStick.y;}let ev=tickWorld(w,{selected,move:[dx,dy],precision:keys.has('shift'),ai});for(const e of ev){
   if(e.type==='grip-released'&&e.reason==='edge-lost-support')
    msg('KRAWĘDŹ: skrzynia straciła podparcie; chwyt nie utrzymał jej ciężaru.');
@@ -738,8 +1083,17 @@ function loop(t){let dt=Math.min(.1,(t-lastFrame)/1000);lastFrame=t;if(running){
  else pulse.push({id,type:e.type,x:b.x,y:b.y,z:b.z,count:1,last:w.time});
  }}}}
  if(mobileToastAt&&t-mobileToastAt>2700){$('mobile-toast').classList.remove('shown');mobileToastAt=0;}
- const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
-setScenario('przeciaganie');requestAnimationFrame(loop);
-window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>placeObject(w,kind,x,y,{level}),erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get viewMode(){return viewMode},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};
+ const actorB=getBody(w,selected);cam.x=between(cam.x,actorB.x,.09);cam.y=between(cam.y,actorB.y,.09);if(pickPointer)pickResult=surfaceAtScreen(pickPointer.sx,pickPointer.sy);drawScene();if(t-lastUi>170){drawMini();updateUI();lastUi=t;}frames++;requestAnimationFrame(loop);}
+setScenario(new URLSearchParams(location.search).get('scene')==='warsztat'?'warsztat':'przeciaganie');
+const visibilityProbe=new URLSearchParams(location.search).get('probe');
+if(['feet','side','edge'].includes(visibilityProbe)){
+ // Research-only positions, not a new game mode. Side case tests a partial
+ // foreground slab while the old whole-object sorter paints the actor last.
+ setScenario('warsztat');const b=getBody(w,'player');
+ Object.assign(b,{x:visibilityProbe==='edge'?20:visibilityProbe==='side'?18.17:18.55,y:visibilityProbe==='edge'?22.8:visibilityProbe==='side'?18.3:14.55,z:0,support:'ground'});
+ cam={x:b.x,y:b.y};running=false;ai=false;syncButtons();
+}
+requestAnimationFrame(loop);
+window.__forge={get world(){return w},get selected(){return selected},choose:id=>{selected=id;syncButtons()},scenario:setScenario,runSteps:(n,command)=>{for(let i=0;i<n;i++)tickWorld(w,command||{ai:false})},remove:()=>removeBridge(w),pause:()=>{running=false;syncButtons()},grip:(actorId='player',targetId=null)=>toggleGrip(w,actorId,targetId),place:(kind,x,y,level='ground')=>kind==='scaffold'?placeScaffold(w,x,y,{turns:scaffoldTurns,height:scaffoldHeight}):placeObject(w,kind,x,y,{level}),setScaffold:(turns,height=1.8)=>{scaffoldTurns=turns;scaffoldHeight=height;return {turns,height}},erase:(id)=>eraseNear(w,id.x,id.y,{level:id.level||'ground'}),get tool(){return tool},get pick(){return pickResult?{index:pickResult.index,hits:pickResult.hits.map(h=>({...h})),selected:pickResult.hit&&{...pickResult.hit}}:null},get viewMode(){return viewMode},get visibilityPreview(){return visibilityPreview},get diagnostics(){return {viewW,viewH,dpr,canvasW:canvas.width,canvasH:canvas.height,errors,stats:w.stats,mobileStick:{...mobileStick},menuOpen:document.body.classList.contains('mobile-menu-open')}},state:()=>snapshot(w),reset:()=>setScenario('przeslo')};
 
 </script></body></html>

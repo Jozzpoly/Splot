@@ -50,7 +50,8 @@ test('changing anchored to dynamic must move to uncached geometry on scene revis
  assert.equal(replaceElement(w,e.id,q).ok,true);
  cache.triangles(w);
  assert.equal(cache.stats().staticBuilds,2);
- q.min[2]=9; // not authoritative, mutate canonical world instead
- w.elements.find(e=>e.id==='anchored').min[2]=9;
- assert.ok(Math.abs(cache.triangles(w).find(t=>t.owner==='anchored'&&t.face==='top').a[2]-w.elements.find(e=>e.id==='anchored').max[2])<1e-8);
+ const moving=w.elements.find(e=>e.id==='anchored');
+ moving.min[2]+=2;moving.max[2]+=2; // per-physics translation, no revision
+ assert.equal(cache.stats().staticBuilds,2);
+ assert.ok(Math.abs(cache.triangles(w).find(t=>t.owner==='anchored'&&t.face==='top').a[2]-3)<1e-8);
 });

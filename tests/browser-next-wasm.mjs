@@ -217,7 +217,23 @@ try{
   await phone.locator('[data-mode="material"]').tap();
   await mobileTapWorld([(block.min[0]+block.max[0])/2,(block.min[1]+block.max[1])/2,block.max[2]]);
   await phone.waitForFunction(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.motionType==='dynamic',null,{timeout:5000});
-  console.log('PASS synthetic mobile touch / Box3D editor and material release');
+  await phone.locator('#mobile-menu').tap();
+  assert.ok(await phone.locator('#save').isVisible(),'mobile Save must be accessible');
+  assert.ok(await phone.locator('#load').isVisible(),'mobile Load must be accessible');
+  const [mobileDownload]=await Promise.all([
+   phone.waitForEvent('download'),phone.locator('#save').tap()
+  ]);
+  const mobileSaved=JSON.parse(await readFile(await mobileDownload.path(),'utf8'));
+  assert.equal(mobileSaved.scene.elements.length,8);
+  assert.equal(mobileSaved.scene.elements.find(e=>e.id==='block-10')?.motionType,'dynamic');
+  const [picker]=await Promise.all([
+   phone.waitForEvent('filechooser'),phone.locator('#load').tap()
+  ]);
+  await picker.setFiles({name:'Splot_Nowy_Rozdzial.json',mimeType:'application/json',
+   buffer:Buffer.from(JSON.stringify(mobileSaved))});
+  await phone.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',null,{timeout:8000});
+  assert.equal(await phone.evaluate(()=>window.__splotNext.world.scene.elements.length),8);
+  console.log('PASS synthetic mobile touch / Box3D edit → save download → native file picker → paused restore');
  }catch(e){
   failures++;console.error('FAIL synthetic mobile:',String(e));
   console.error('MOBILE SNAPSHOT',await phone.evaluate(()=>({physics:window.__splotNext?.physics,

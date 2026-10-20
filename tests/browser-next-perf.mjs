@@ -23,7 +23,9 @@ try{
  await page.goto('http://127.0.0.1:18880/src/next/Splot_Next_GRAJ.html?physics=box3d');
  await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
  const measure=async(name)=>{
-  await page.waitForTimeout(3300);
+  await page.waitForTimeout(900); // settle scene after transition
+  await page.evaluate(()=>window.__splotNext.clearProfile());
+  await page.waitForTimeout(2700);
   const r=await page.evaluate(()=>{
    const g=window.__splotNext,w=g.world;
    return {profile:g.profile(),sceneParts:w.scene.elements.length,

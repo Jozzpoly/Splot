@@ -11,6 +11,7 @@ node --test \
  tests/spatial-core.test.mjs \
  tests/spatial-sim.test.mjs \
  tests/research/actor-contact.test.mjs \
+ tests/research/analytic-support.test.mjs \
  tests/research/actor-contact-pressure.test.mjs \
  tests/research/boar-intent.test.mjs \
  tests/research/crate-visual.test.mjs \

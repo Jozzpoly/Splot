@@ -104,5 +104,50 @@ try{
   await page.screenshot({path:'/tmp/splot-manual-ui-FAIL.png'}).catch(()=>{});
  }
  await page.close();
+ // Synthetic touch is NOT a physical phone acceptance. It catches the
+ // easier but costly failures: hidden tools, pointer ownership, view clipping.
+ const mobile=await browser.newContext({viewport:{width:393,height:852},
+  deviceScaleFactor:1,isMobile:true,hasTouch:true});
+ const phone=await mobile.newPage();
+ const mobileErrors=[];
+ phone.on('pageerror',e=>mobileErrors.push(String(e)));
+ console.log('\nRUN mobile-touch: menu → elevated block → release via touch');
+ await phone.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await phone.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await phone.locator('#mobile-menu').tap();
+  await phone.locator('#height').tap();
+  await phone.locator('#height').tap();
+  await phone.locator('[data-mode="box"]').tap(); // closes menu on selection
+  const mobileTapWorld=async(p)=>{
+   const xy=await phone.evaluate(v=>{
+    const c=window.__splotNext.camera,p=projectPoint(c,v);
+    const el=document.querySelector('#world'),r=el.getBoundingClientRect();
+    const x=r.left+p.x/el.width*r.width,y=r.top+p.y/el.height*r.height;
+    return {x,y,top:document.elementFromPoint(x,y)?.id||document.elementFromPoint(x,y)?.className||'unknown',
+      dimensions:[r.width,r.height]};
+   },p);
+   console.log('TOUCH WORLD',JSON.stringify(xy));
+   assert.ok(xy.x>0&&xy.x<393&&xy.y>50&&xy.y<730,'tap location must be inside usable game view');
+   await phone.touchscreen.tap(xy.x,xy.y);
+  };
+  await mobileTapWorld([10.5,17.2,0]);
+  const block=await phone.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'));
+  assert.ok(block?.min[2]>2.3,'mobile tap did not build an elevated block');
+  await phone.locator('#mobile-menu').tap();
+  await phone.locator('[data-mode="material"]').tap();
+  await mobileTapWorld([(block.min[0]+block.max[0])/2,(block.min[1]+block.max[1])/2,block.max[2]]);
+  await phone.waitForFunction(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.motionType==='dynamic',null,{timeout:5000});
+  console.log('PASS synthetic mobile touch / Box3D editor and material release');
+ }catch(e){
+  failures++;console.error('FAIL synthetic mobile:',String(e));
+  console.error('MOBILE SNAPSHOT',await phone.evaluate(()=>({physics:window.__splotNext?.physics,
+   mode:window.__splotNext?.mode,menu:document.body.className,
+   blocks:window.__splotNext?.world?.scene?.elements?.filter(x=>x.id.startsWith('block-')),
+   viewport:[innerWidth,innerHeight]})));
+  if(mobileErrors.length)console.error('JS ERRORS',mobileErrors);
+  await phone.screenshot({path:'/tmp/splot-mobile-FAIL.png'}).catch(()=>{});
+ }
+ await mobile.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

@@ -88,7 +88,7 @@ $('#test-export').onclick=()=>{
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
-function setMode(m){if(m==='material'&&physicsState!=='box3d'){actionText('Uwalnianie brył wymaga Box3D R&D.');return;}playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;editDrag=null;editSelectedId=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część',material:'Kotwica / uwolnij bryłę',edit:'Popraw zakotwiczoną część'}[m]||m);document.body.classList.remove('menu-open');
+function setMode(m){if(m==='material'&&physicsState!=='box3d'){actionText('Uwalnianie brył wymaga Box3D R&D.');return;}playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;editDrag=null;editSelectedId=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część',material:'Kotwica / uwolnij bryłę',edit:'Popraw zakotwiczoną część'}[m]||m);document.body.classList.remove('menu-open');document.body.classList.toggle('editing',m==='edit');
  for(const b of buttons)b.classList.toggle('active',b.dataset.mode===m);refreshEditButtons();
 }
 function refreshEditButtons(){
@@ -263,7 +263,7 @@ canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.55,Math.min(2.3,zoom*(e.deltaY<0?1.09:.91)));},{passive:false});
 window.addEventListener('keydown',e=>{
  const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' ','tab'].includes(k))e.preventDefault();
- if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();$('#undo').click();return;}
+ if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();$(e.shiftKey?'#redo':'#undo').click();return;}
  if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();$('#redo').click();return;}
  if(e.repeat&&['e','q','z','x','v','p','r','1','2','3','4','5',' '].includes(k))return;
  if(k==='e')$('#grip').click();else if(k==='q')$('#layer').click();

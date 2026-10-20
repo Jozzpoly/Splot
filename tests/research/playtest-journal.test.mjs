@@ -89,3 +89,19 @@ test('source provenance distinguishes reached food from frozen physics and recor
  advance(1000);
  assert.equal(j.report().windowSeconds,1);
 });
+
+test('opt-in trace stores stage performance without claiming GPU speed or presence',()=>{
+ const {journal:j}=mock(),w=scene();
+ const perf={rafMs:{median:33.3},simulationCpuMs:{median:1.2},
+  geometryCpuMs:{median:2.4},drawSubmissionCpuMs:{median:1.8},
+  triangles:{median:6982}};
+ j.start({engine:'box3d'});
+ j.observe(w,{engine:'box3d',performance:perf});
+ const sample=j.report().events.find(e=>e.type==='sample');
+ assert.equal(sample.data.perf.rafP50,33.3);
+ assert.equal(sample.data.perf.simCpuP50,1.2);
+ assert.equal(sample.data.perf.geometryCpuP50,2.4);
+ assert.equal(sample.data.perf.submitCpuP50,1.8);
+ assert.equal(sample.data.perf.triangles,6982);
+ j.stop();
+});

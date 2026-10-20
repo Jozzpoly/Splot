@@ -52,7 +52,7 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
   for(const e of events.slice(first)){
    append('world-event',{kind:String(e.type||'unknown'),id:e.id??null,
     reason:e.reason??null,on:e.on??null,with:e.with??null,mode:e.mode??null,
-    gap:num(e.gap),impulse:num(e.impulse)});
+    phase:e.phase??null,gap:num(e.gap),impulse:num(e.impulse)});
   }
   if(events.length)lastWorldEvent=events.at(-1);
   if(clock()-lastSample<500)return;
@@ -76,7 +76,13 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
   }
   append('sample',{engine,t:num(world.time),player:point(human),boar:point(boar),
    crate:point(crate),boarSurfaceGap:boarGap,grip:world.grip??null,
-   parts:world.scene?.elements?.length??0});
+   // Intent provenance lets later audits separate a reached objective
+   // from a blocked physics controller. Not evidence of actual NPC perception.
+   boarIntent:world.boarIntent?{
+    phase:world.boarIntent.phase,goal:world.boarIntent.goal,mode:world.boarIntent.mode,
+    foodDistance:num(world.boarIntent.foodDistance),
+    playerDistance:num(world.boarIntent.playerDistance)
+   }:null,parts:world.scene?.elements?.length??0});
  }
  function status({visible=true,focused=true}={}){
   const ago=clock()-lastInput;

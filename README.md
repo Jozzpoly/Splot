@@ -1,5 +1,7 @@
 # Splot — living-world research, playable baseline and 2.5D donors
 
+> **Research state update (20.10.2026):** for the active but unpromoted Splot Next work, begin at [next-session entrypoint](docs/START_NEXT_SESSION_2026-10-21.md). K2 below remains the `main` baseline; PR #3→#4→#5 are *dependent draft experiments*, not released updates. The deterministic Next gate is `bash tests/verify-next.sh` on the PR #5 branch; gameplay/mobile approval remains pending.
+
 **Status (2026-10-18): experimental / Owner review pending.** This public repository holds a reproducible **playable baseline** and a separate, **non-promoted** construction-geometry research donor. It is not a validated game engine, not the canonical geometry system for Feniks Studio, and not a replacement for Jaskinia.
 
 Splot explores a small 2D-like living world with material manipulation, multiple elevations and behavior that responds to changes in the world. Core priority: **the player must be able to *do* interesting things in a convincing, legible, responsive world**. A successful isolated kernel test does not mean the game improved. The K3 geometry lab passed its own tests and failed the Owner's actual gameplay comparison because it removed much of the game.

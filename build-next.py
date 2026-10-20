@@ -13,6 +13,7 @@ modules=[
  ('BoxBasis','box3d-basis.mjs',['splotToBox3D','box3DToSplot','qmul','panelQuaternionInBox3D']),
  ('ActorContact','actor-contact.mjs',['compliantActorImpulse']),
  ('BoarIntent','boar-intent.mjs',['createBoarIntent']),
+ ('PartLifecycle','part-lifecycle.mjs',['partMotionMode','setBoxMotion','boxCenter','translateBoxToCenter','boxVolume']),
  ('Box3DBridge','box3d-live.mjs',['createBox3DBridge']),
  ('PlaytestJournal','playtest-journal.mjs',['createPlaytestJournal']),
  ('RapierBridge','rapier-live.mjs',['createRapierBridge']),

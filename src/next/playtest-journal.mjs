@@ -84,7 +84,8 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
     phase:world.boarIntent.phase,goal:world.boarIntent.goal,mode:world.boarIntent.mode,
     foodDistance:num(world.boarIntent.foodDistance),
     playerDistance:num(world.boarIntent.playerDistance)
-   }:null,parts:world.scene?.elements?.length??0});
+   }:null,parts:world.scene?.elements?.length??0,
+   dynamicParts:world.scene?.elements?.filter(e=>e.motionType==='dynamic').length??0});
  }
  function status({visible=true,focused=true}={}){
   const ago=clock()-lastInput;

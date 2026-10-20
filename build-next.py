@@ -26,6 +26,7 @@ modules = [
  ("PartLifecycle","part-lifecycle.mjs",["partMotionMode","setBoxMotion","boxCenter","translateBoxToCenter","boxVolume"]),
  ("CrateVisual","crate-visual.mjs",["crateTriangles"]),
  ("PerfMetrics","perf-metrics.mjs",["summarizePerfFrames"]),
+ ("AuthoringEditor","authoring-editor.mjs",["createEditHistory","translatedElement","screenOnHeightPlane"]),
  ("SceneRestore","scene-restore.mjs",["restoreResearchWorld","nextAuthoringSequence"]),
  ("Box3DBridge","box3d-live.mjs",["createBox3DBridge"]),
  ("PlaytestJournal","playtest-journal.mjs",["createPlaytestJournal"]),

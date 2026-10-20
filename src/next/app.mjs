@@ -2,15 +2,80 @@ import {makeCamera,projectPoint,sceneTriangles,trianglesFor,pickPixel,insertElem
 import {createLiveWorld,getBody,stepLive,toggleGrip,addCrate} from './spatial-sim.mjs';
 import {createRenderer} from './render.mjs';
 import {createRapierBridge} from './rapier-live.mjs';
+import {createBox3DBridge} from './box3d-live.mjs';
+import {createPlaytestJournal} from './playtest-journal.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
-let bridge=null,rapierLibrary=null,physicsState='legacy',physicsMessage='';
+let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const researchArgs=new URLSearchParams(location.search);
+// Prevent all background stepping while an external WASM module is fetched.
+if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
+const playtest=createPlaytestJournal();
+for(const name of ['pointerdown','keydown','wheel']){
+ document.addEventListener(name,e=>{
+  if(e.isTrusted)playtest.interact(name==='keydown'?'keyboard':name==='wheel'?'wheel':'pointer');
+ },{capture:true,passive:true});
+}
+function refreshActorContactUI(){
+ const btn=$('#actor-contact'),supported=physicsState==='box3d'&&Boolean(bridge?.setActorContactMode);
+ btn.disabled=!supported;
+ const mode=supported?bridge.actorContactMode:box3dOptions.actorContact;
+ btn.textContent=supported?(mode==='compliant'?'Impuls R&D: ON':'Kontakt: swobodny'):'Kontakt: Box3D';
+ btn.classList.toggle('active',supported&&mode==='compliant');
+}
+$('#actor-contact').onclick=()=>{
+ if(physicsState!=='box3d'||!bridge?.setActorContactMode)return;
+ const next=bridge.actorContactMode==='ghost'?'compliant':'ghost';
+ bridge.setActorContactMode(next);box3dOptions.actorContact=next;
+ playtest.event('actor-contact-mode',{mode:next});
+ actionText(next==='compliant'?
+  'Próba impulsu R&D; w testach nadal występuje silne przenikanie. Nie jest to naprawa kolizji.':
+  'Swobodne mijanie aktorów — kontrola.');
+ refreshActorContactUI();
+};
+function refreshBoarUI(){
+ const btn=$('#boar-behavior'),supported=physicsState==='box3d'&&Boolean(bridge?.setBoarMode);
+ btn.disabled=!supported;
+ const mode=supported?bridge.boarMode:box3dOptions.boarMode;
+ btn.textContent=supported?(mode==='responsive'?'Dzik: reaguje':'Dzik: żeruje'):'Dzik: Box3D';
+ btn.classList.toggle('active',supported&&mode==='responsive');
+}
+$('#boar-behavior').onclick=()=>{
+ if(physicsState!=='box3d'||!bridge?.setBoarMode)return;
+ const mode=bridge.boarMode==='forage'?'responsive':'forage';
+ bridge.setBoarMode(mode);box3dOptions.boarMode=mode;
+ playtest.event('boar-behavior-mode',{mode});
+ actionText(mode==='responsive'?
+  'Dzik reaguje na bliskiego gracza, nie otrzymuje twardej kolizji.':
+  'Dzik wraca do jedzenia; przy pokarmie odpoczywa.');
+ refreshBoarUI();
+};
+function updatePlaytestStatus(){
+ $('#test-status').textContent=playtest.status({visible:!document.hidden,focused:document.hasFocus()}).label;
+}
+$('#test-toggle').onclick=()=>{
+ if(playtest.recording){
+  playtest.stop();$('#test-toggle').textContent='Nowy test';
+  actionText('Lokalny test zakończony. Raport pozostaje w tej karcie.');
+ }else{
+  playtest.start({engine:physicsState,scenario:researchArgs.get('probe')?'automated-probe':'free-play'});
+  $('#test-toggle').textContent='Zakończ test';
+  actionText('Rejestrowanie włączone tylko w tej karcie. Bez wysyłania danych.');
+ }
+ $('#test-export').disabled=false;updatePlaytestStatus();
+};
+$('#test-export').onclick=()=>{
+ const report=playtest.report(),blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});
+ const link=document.createElement('a'),url=URL.createObjectURL(blob);
+ link.href=url;link.download='Splot_Sesja_Badawcza.json';link.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+};
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
-function setMode(m){mode=m;startPanel=null;selection=0;selected=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część'}[m]||m);document.body.classList.remove('menu-open');
+function setMode(m){playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część'}[m]||m);document.body.classList.remove('menu-open');
  for(const b of buttons)b.classList.toggle('active',b.dataset.mode===m);
 }
 for(const b of buttons)b.addEventListener('click',()=>setMode(b.dataset.mode));
@@ -18,13 +83,15 @@ $('#mobile-menu').onclick=()=>document.body.classList.toggle('menu-open');$('#ac
 const rotate=d=>{rot+=d;actionText('Kamera · obrót '+Math.round(rot*180/Math.PI)+'°')};
 $('#turn-left').onclick=()=>rotate(-Math.PI/6);$('#turn-right').onclick=()=>rotate(Math.PI/6);
 $('#pause').onclick=()=>{paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
-$('#grip').onclick=()=>{const r=toggleGrip(world);actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
+$('#grip').onclick=()=>{const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
 $('#layer').onclick=()=>{selection++;refreshSelection();};
-$('#reset').onclick=()=>{if(bridge?.engine?.free)bridge.engine.free();world=createLiveWorld();
- if(rapierLibrary&&physicsState==='rapier'){try{bridge=createRapierBridge(world,rapierLibrary);}catch(e){bridge=null;physicsState='legacy';physicsMessage='Rapier reset failed: '+e.message;}}
- camTarget=[14.5,14,0];setMode('move');actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+$('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();
+ try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
+  if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
+ }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -42,17 +109,17 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
   const xyz=[...a.point];xyz[2]+=buildHeight;
   if(!startPanel){startPanel=xyz;actionText('Pierwszy koniec ustawiony. Wskaż drugi punkt.');return;}
   const e={id:'part-'+sequence++,kind:'panel',a:startPanel,b:xyz,width:buildWidth,thickness:.26,material:'wood'};
-  const result=insertElement(world.scene,e);startPanel=null;
+  const result=insertElement(world.scene,e);playtest.event('build-panel',{ok:result.ok,id:e.id});startPanel=null;
   actionText(result.ok?'Powstał niezależny element XYZ.':'Odmowa: '+result.reason);return;
  }
  if(mode==='box'){
   const [x,y,z]=a.point,r=insertElement(world.scene,{id:'block-'+sequence++,kind:'box',min:[x-.6,y-.6,z],max:[x+.6,y+.6,z+1.1],material:'stone'});
-  actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
+  playtest.event('build-box',{ok:r.ok});actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
  }
- if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
+ if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
  if(mode==='erase'){
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}
-  const r=removeElement(world.scene,a.id);
+  const r=removeElement(world.scene,a.id);playtest.event('delete-part',{ok:r.ok,id:a.id});
   actionText(r.ok?'Element usunięty; ciała zareagują na utratę podparcia.':'Odmowa: '+r.reason);
  }
 }
@@ -152,38 +219,50 @@ function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
  const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
  renderer.render(tris,cam);renderOverlay(cam);
- if(t-lastHud>260){const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
+ playtest.observe(world,{engine:physicsState,camera:cam});
+ if(t-lastHud>260){updatePlaytestStatus();const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);
 }
 setMode('move');actionText('Splot Next: ruszaj, pchaj, chwytaj, konstruuj. Wszystko w tej samej przestrzeni XYZ.');
 async function startPhysicsChallenger(){
- if(researchArgs.get('physics')!=='rapier')return;
- physicsState='loading-rapier';actionText('Ładowanie badawczej fizyki Rapier 0.21.0. Nadal możesz grać.');
+ const choice=researchArgs.get('physics');
+ if(choice!=='rapier'&&choice!=='box3d')return;
+ physicsState='loading-'+choice;actionText('Ładowanie '+choice+' · badawcza fizyka, ta sama gra.');
  try{
-  const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
-  const R=module.default||module;
-  if(typeof R.init==='function')await R.init();
-  rapierLibrary=R;bridge=createRapierBridge(world,R);physicsState='rapier';
-  actionText('Rapier aktywny · ta sama gra i grafika · zmieniona warstwa kontaktu (R&D).');
+  if(choice==='rapier'){
+   const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
+   const R=module.default||module;if(typeof R.init==='function')await R.init();
+   rapierLibrary=R;bridge=createRapierBridge(world,R);
+  }else{
+   const module=await import('https://esm.sh/box3d.js@0.1.1/inline?bundle');
+   if(typeof module.default!=='function')throw Error('Box3D inline initializer unavailable');
+   box3dLibrary=await module.default();
+   bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
+  }
+  physicsState=choice;
+  refreshActorContactUI();refreshBoarUI();
+  actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
+   bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
+   world=createLiveWorld(); // identical deterministic setup for every backend
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
    if(probe==='ascent')Object.assign(human,{x:12,y:13,z:0,support:'ground'});
    if(probe==='fall')Object.assign(human,{x:23,y:13,z:2.4,support:'footbridge-deck'});
    if(probe==='grip')Object.assign(human,{x:15.28,y:15.2,z:0,support:'ground'});
-   if(bridge?.engine?.free)bridge.engine.free();
-   bridge=createRapierBridge(world,R);world.paused=false;
+   bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary,box3dOptions);
+   world.paused=false;
    let ok=false,detail='';
    if(probe==='ascent'){
     for(let i=0;i<225;i++)bridge.advance(1/60,[1,0]);
     ok=human.x>19&&human.z>1.8;
-    detail='live ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2);
+    detail='ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2)+' support='+human.support;
    }else if(probe==='fall'){
     removeElement(world.scene,'footbridge-deck');
     for(let i=0;i<140;i++)bridge.advance(1/60,[0,0]);
     ok=human.z<.2&&human.support==='ground';
-    detail='support removal / z='+human.z.toFixed(2)+' on '+human.support;
+    detail='support removal / z='+human.z.toFixed(2)+' support='+human.support;
    }else if(probe==='edit'){
     const part={id:'probe-overlap',kind:'box',
      min:[human.x-.4,human.y-.4,0],max:[human.x+.4,human.y+.4,1.3],material:'stone'};
@@ -191,19 +270,24 @@ async function startPhysicsChallenger(){
     bridge.syncStatics();bridge.advance(1/60,[0,0]);
     const q=clearanceAt(world.scene,{x:human.x,y:human.y,z:human.z,r:human.r,h:human.h,supportId:human.support});
     ok=placed.ok&&q.free&&world.events.some(e=>e.type==='authoring-contact-resolved');
-    detail='live authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
+    detail='authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
    }else if(probe==='grip'){
-    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0;
+    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0,releaseAt=-1;
     for(let i=0;i<100;i++){bridge.advance(1/60,[1,0]);
-     maxGap=Math.max(maxGap,Math.hypot(human.x-crate.x,human.y-crate.y));}
+     const gap=Math.hypot(human.x-crate.x,human.y-crate.y);
+     if(world.grip==='crate-1')maxGap=Math.max(maxGap,gap);
+     else if(releaseAt<0)releaseAt=i;}
     ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1'&&maxGap<1.9;
-    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' max-gap='+maxGap.toFixed(2);
+    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' held-max-gap='+maxGap.toFixed(2)+' released-at='+releaseAt;
    }
    paused=true;world.paused=true;
-   physicsMessage=(ok?'PASS':'FAIL')+' / '+detail;actionText(physicsMessage);
+   physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
- }catch(err){bridge=null;physicsState='legacy-fallback';physicsMessage=String(err?.message||err);
-  actionText('Rapier niedostępny. Pozostaje stary solver. '+physicsMessage.slice(0,130));}
+ }catch(err){
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();
+  physicsMessage=String(err?.stack||err);
+  actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
+ }
 }
-requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+refreshActorContactUI();refreshBoarUI();requestAnimationFrame(frame);void startPhysicsChallenger();
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

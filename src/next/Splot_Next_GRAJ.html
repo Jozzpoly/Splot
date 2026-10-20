@@ -1,9 +1,9 @@
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>Splot Next — żywy świat XYZ</title>
 <style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;color:#e5e7cd;background:#0c1d23}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}button{font:600 12px system-ui;color:#ecedde;background:#193b3e;border:1px solid #54726a;border-radius:10px;min-height:36px;padding:8px 12px;cursor:pointer}button.active{background:#a57248;color:#fff4d8;border-color:#e6b978}button:focus-visible{outline:2px solid #f5d092}#world{width:100%;height:100%;display:block;touch-action:none;image-rendering:pixelated}#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.viewport{position:relative;width:100vw;height:100dvh;overflow:hidden}.header{position:absolute;top:14px;left:17px;z-index:4;pointer-events:none;filter:drop-shadow(0 2px 6px #000)}.header strong{font-size:17px;letter-spacing:.02em;color:#f3e0bf}.header small{display:block;color:#a7cebd;font-size:11px;margin-top:4px}#hud{margin-top:8px;color:#bbd2c1;font:11px ui-monospace,monospace}.rail{position:absolute;right:14px;top:16px;width:201px;z-index:8;display:flex;flex-direction:column;gap:7px;background:#122d30d8;border:1px solid #526f6766;border-radius:14px;padding:11px;max-height:calc(100dvh - 26px);overflow-y:auto;overscroll-behavior:contain}.rail .row{display:flex;gap:5px;flex-wrap:wrap}.rail button{flex:1;min-width:64px}.rail .section{font-size:10px;color:#caac83;letter-spacing:.18em;margin:4px 2px 1px;text-transform:uppercase}.rail p{font-size:11px;line-height:1.5;color:#b7c9bc;margin:0}.bar{position:absolute;bottom:14px;left:16px;right:229px;z-index:2;display:flex;gap:10px;align-items:center;justify-content:space-between;pointer-events:none}#notice,#target{background:#11292bda;padding:8px 11px;max-width:48%;border:1px solid #516f684d;border-radius:10px;font-size:11px;color:#eed9b1;transition:opacity .3s}#target{color:#afcdbb}#notice:not(.show){opacity:.55}#mobile-menu,#active-mode{display:none}.mobile{display:none}a{color:#c9e7c7}@media(max-width:760px), (max-height:500px) and (pointer:coarse){.header{top:calc(8px + env(safe-area-inset-top));left:12px}.header strong{font-size:15px}.header small{font-size:10px;max-width:190px}.rail{top:calc(60px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:min(300px,78vw);max-height:calc(100dvh - 190px);gap:7px;padding:11px;transform:translateX(calc(100% + 22px));transition:transform .16s ease;pointer-events:none}.menu-open .rail{transform:translateX(0);pointer-events:auto;background:#122b30f5}#mobile-menu{display:block;position:absolute;top:calc(9px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:12;width:46px;height:44px;font-size:21px;background:#153238e9}#active-mode{display:block;position:absolute;top:calc(61px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:5;max-width:140px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:11px;background:#153238d9}.rail button{font-size:10px;padding:5px 6px;min-height:32px;min-width:54px}.rail .section,.rail p,.rail #save{display:none}.rail .row{gap:3px}.bar{bottom:calc(137px + env(safe-area-inset-bottom));left:10px;right:10px;justify-content:center}.bar #notice{max-width:80%;font-size:10px}.bar #target{display:none}.mobile{display:flex;position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:calc(12px + env(safe-area-inset-left));right:calc(12px + env(safe-area-inset-right));height:118px;justify-content:space-between;pointer-events:none;z-index:6}.joystick{position:relative;flex:0 0 116px;width:116px;height:116px;border-radius:100%;border:1px solid #91baa67a;background:#153a3baf;box-shadow:inset 0 0 22px #0b1a16;pointer-events:auto;touch-action:none;display:grid;place-items:center}.joystick:before{content:'';width:82px;height:82px;border-radius:100%;border:1px dashed #9db6a68a}.knob{position:absolute;width:50px;height:50px;border-radius:50%;background:linear-gradient(#5b9082,#26504e);border:2px solid #bdd5b6;box-shadow:0 3px 14px #0a201b;pointer-events:none}.touch-action{align-self:flex-end;display:flex;flex-direction:column;gap:8px;pointer-events:auto}.touch-action button{min-width:93px;height:47px;font-size:13px;background:#665039eb;border-color:#ddbd8b}.touch-action button:last-child{background:#173b41ec;border-color:#84b5af}}
+:root{color-scheme:dark;font-family:system-ui,sans-serif;color:#e5e7cd;background:#0c1d23}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}button{font:600 12px system-ui;color:#ecedde;background:#193b3e;border:1px solid #54726a;border-radius:10px;min-height:36px;padding:8px 12px;cursor:pointer}button.active{background:#a57248;color:#fff4d8;border-color:#e6b978}button:disabled{opacity:.45;cursor:not-allowed}.session-state{font:10px/1.45 ui-monospace,monospace;color:#acbfb6;white-space:normal;padding:3px 2px}button:focus-visible{outline:2px solid #f5d092}#world{width:100%;height:100%;display:block;touch-action:none;image-rendering:pixelated}#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.viewport{position:relative;width:100vw;height:100dvh;overflow:hidden}.header{position:absolute;top:14px;left:17px;z-index:4;pointer-events:none;filter:drop-shadow(0 2px 6px #000)}.header strong{font-size:17px;letter-spacing:.02em;color:#f3e0bf}.header small{display:block;color:#a7cebd;font-size:11px;margin-top:4px}#hud{margin-top:8px;color:#bbd2c1;font:11px ui-monospace,monospace}.rail{position:absolute;right:14px;top:16px;width:201px;z-index:8;display:flex;flex-direction:column;gap:7px;background:#122d30d8;border:1px solid #526f6766;border-radius:14px;padding:11px;max-height:calc(100dvh - 26px);overflow-y:auto;overscroll-behavior:contain}.rail .row{display:flex;gap:5px;flex-wrap:wrap}.rail button{flex:1;min-width:64px}.rail .section{font-size:10px;color:#caac83;letter-spacing:.18em;margin:4px 2px 1px;text-transform:uppercase}.rail p{font-size:11px;line-height:1.5;color:#b7c9bc;margin:0}.bar{position:absolute;bottom:14px;left:16px;right:229px;z-index:2;display:flex;gap:10px;align-items:center;justify-content:space-between;pointer-events:none}#notice,#target{background:#11292bda;padding:8px 11px;max-width:48%;border:1px solid #516f684d;border-radius:10px;font-size:11px;color:#eed9b1;transition:opacity .3s}#target{color:#afcdbb}#notice:not(.show){opacity:.55}#mobile-menu,#active-mode{display:none}.mobile{display:none}a{color:#c9e7c7}@media(max-width:760px), (max-height:500px) and (pointer:coarse){.header{top:calc(8px + env(safe-area-inset-top));left:12px}.header strong{font-size:15px}.header small{font-size:10px;max-width:190px}.rail{top:calc(60px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:min(300px,78vw);max-height:calc(100dvh - 190px);gap:7px;padding:11px;transform:translateX(calc(100% + 22px));transition:transform .16s ease;pointer-events:none}.menu-open .rail{transform:translateX(0);pointer-events:auto;background:#122b30f5}#mobile-menu{display:block;position:absolute;top:calc(9px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:12;width:46px;height:44px;font-size:21px;background:#153238e9}#active-mode{display:block;position:absolute;top:calc(61px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:5;max-width:140px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:11px;background:#153238d9}.rail button{font-size:10px;padding:5px 6px;min-height:32px;min-width:54px}.rail .section,.rail p,.rail #save{display:none}.rail .row{gap:3px}.bar{bottom:calc(137px + env(safe-area-inset-bottom));left:10px;right:10px;justify-content:center}.bar #notice{max-width:80%;font-size:10px}.bar #target{display:none}.mobile{display:flex;position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:calc(12px + env(safe-area-inset-left));right:calc(12px + env(safe-area-inset-right));height:118px;justify-content:space-between;pointer-events:none;z-index:6}.joystick{position:relative;flex:0 0 116px;width:116px;height:116px;border-radius:100%;border:1px solid #91baa67a;background:#153a3baf;box-shadow:inset 0 0 22px #0b1a16;pointer-events:auto;touch-action:none;display:grid;place-items:center}.joystick:before{content:'';width:82px;height:82px;border-radius:100%;border:1px dashed #9db6a68a}.knob{position:absolute;width:50px;height:50px;border-radius:50%;background:linear-gradient(#5b9082,#26504e);border:2px solid #bdd5b6;box-shadow:0 3px 14px #0a201b;pointer-events:none}.touch-action{align-self:flex-end;display:flex;flex-direction:column;gap:8px;pointer-events:auto}.touch-action button{min-width:93px;height:47px;font-size:13px;background:#665039eb;border-color:#ddbd8b}.touch-action button:last-child{background:#173b41ec;border-color:#84b5af}}
 </style></head><body><main class="viewport"><canvas id="world" aria-label="Trójwymiarowy świat Splot Next"></canvas><canvas id="overlay" aria-hidden="true"></canvas>
 <header class="header"><strong>SPLOT / NOWY ROZDZIAŁ</strong><small>Świat XYZ · wspólna geometria · realna głębia</small><div id="hud">Uruchamianie…</div></header>
-<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button></div>
+<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="row"><button id="actor-contact" type="button" disabled title="Tryb badawczy Box3D: swobodne mijanie lub miękki impuls">Kontakt: swobodny</button></div><div class="row"><button id="boar-behavior" type="button" disabled title="Tryb badawczy Box3D: jedzenie albo reagowanie na zbliżenie gracza">Dzik: przy jedzeniu</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button></div><div class="section">Sesja badawcza</div><div class="row"><button id="test-toggle" aria-label="Rozpocznij lub zakończ lokalną sesję testową">Zacznij test</button><button id="test-export" disabled aria-label="Pobierz lokalny raport testu">Raport</button></div><div id="test-status" class="session-state" aria-live="off" aria-label="Stan lokalnej sesji Splot">Bez aktywnej rejestracji</div>
 <p>WASD — ruch względem kamery. E — chwyt. Z/X — obrót kamery. Kółko — zoom. Tryb „Płyta”: wskaż dwa punkty, niezależnie zmieniaj części. Q — kolejne trafione powierzchnie. To badawczy rozdział, nie ukończona gra ani silnik.</p></aside>
 <div class="bar"><span id="notice" class="show">Wczytywanie świata…</span><span id="target">Wybierz powierzchnię</span></div>
 <div class="mobile"><div id="joystick" class="joystick"><div id="knob" class="knob"></div></div><div class="touch-action"><button onclick="document.querySelector('#grip').click()">Chwyt</button><button onclick="document.querySelector('#layer').click()">Warstwa</button></div></div></main>
@@ -179,7 +179,6 @@ return {WORLD_FORMAT,createSpatialWorld,insertElement,replaceElement,removeEleme
 const {WORLD_FORMAT,createSpatialWorld,insertElement,replaceElement,removeElement,exportWorld,importWorld,trianglesFor,sceneTriangles,castRay,supportCandidates,clearanceAt,makeCamera,projectPoint,rayFromPixel,pickPixel,occlusionToPoint}=SpatialCore;
 
 const SpatialSim=(()=>{
-
 const near=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function createLiveWorld(){
@@ -273,11 +272,1306 @@ return {createLiveWorld,getBody,moveBody,toggleGrip,stepLive,addCrate};
 })();
 const {createLiveWorld,getBody,moveBody,toggleGrip,stepLive,addCrate}=SpatialSim;
 
+const BoxMath=(()=>{
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function dot3(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function cross3(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+}
+
+function length3(v) {
+  return Math.hypot(v[0], v[1], v[2]);
+}
+
+function lengthXZ(v) {
+  return Math.hypot(v[0], v[2]);
+}
+
+function normalize3(v) {
+  const len = length3(v);
+  if (len < 1e-9) return [0, 0, 0];
+  return [v[0] / len, v[1] / len, v[2] / len];
+}
+
+function add3(a, b) {
+  return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+}
+
+function sub3(a, b) {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+}
+
+function scale3(v, scalar) {
+  return [v[0] * scalar, v[1] * scalar, v[2] * scalar];
+}
+
+function mulMat3Vec3(matrix, v) {
+  return [
+    matrix.cx[0] * v[0] + matrix.cy[0] * v[1] + matrix.cz[0] * v[2],
+    matrix.cx[1] * v[0] + matrix.cy[1] * v[1] + matrix.cz[1] * v[2],
+    matrix.cx[2] * v[0] + matrix.cy[2] * v[1] + matrix.cz[2] * v[2],
+  ];
+}
+
+// Visual convention used by the provisional capsule: local -Z is "forward".
+// Three.js positive yaw rotates local -Z toward world -X, so world +X is -90°.
+function yawFromForwardXZ(direction) {
+  const x = direction[0] ?? 0;
+  const z = direction[2] ?? 0;
+  if (Math.hypot(x, z) < 1e-9) return 0;
+  return Math.atan2(-x, -z);
+}
+
+function quatFromAxisAngle(axis, angle) {
+  const n = normalize3(axis);
+  const half = angle * 0.5;
+  const s = Math.sin(half);
+  return [n[0] * s, n[1] * s, n[2] * s, Math.cos(half)];
+}
+
+function rotateVecByQuat(q, v) {
+  const qv = [q[0], q[1], q[2]];
+  const uv = cross3(qv, v);
+  const uuv = cross3(qv, uv);
+  const twoW = 2 * q[3];
+  return [
+    v[0] + twoW * uv[0] + 2 * uuv[0],
+    v[1] + twoW * uv[1] + 2 * uuv[1],
+    v[2] + twoW * uv[2] + 2 * uuv[2],
+  ];
+}
+
+function inverseRotateVecByQuat(q, v) {
+  return rotateVecByQuat([-q[0], -q[1], -q[2], q[3]], v);
+}
+
+function transformPoint(position, rotation, localPoint) {
+  return add3(position, rotateVecByQuat(rotation, localPoint));
+}
+
+function inverseTransformPoint(position, rotation, worldPoint) {
+  return inverseRotateVecByQuat(rotation, sub3(worldPoint, position));
+}
+
+return {clamp,dot3,cross3,length3,lengthXZ,normalize3,add3,sub3,scale3,mulMat3Vec3,yawFromForwardXZ,quatFromAxisAngle,rotateVecByQuat,inverseRotateVecByQuat,transformPoint,inverseTransformPoint};
+})();
+const {clamp,dot3,cross3,length3,lengthXZ,normalize3,add3,sub3,scale3,mulMat3Vec3,yawFromForwardXZ,quatFromAxisAngle,rotateVecByQuat,inverseRotateVecByQuat,transformPoint,inverseTransformPoint}=BoxMath;
+
+const BoxProfile=(()=>{
+const DONOR_PROFILE_V0 = Object.freeze({
+  radius: 0.36,
+  halfSegment: 0.54,
+  virtualMass: 80,
+  maxSpeed: 5.2,
+  sprintMultiplier: 1.32,
+  groundAcceleration: 31,
+  groundDeceleration: 36,
+  airAcceleration: 7.5,
+  airDeceleration: 1.2,
+  externalGroundDrag: 2.0,
+  externalAirDrag: 0.22,
+  gravity: 20.0,
+  fallGravityMultiplier: 1.22,
+  jumpReleaseGravityMultiplier: 1.75,
+  jumpSpeed: 7.2,
+  coyoteTime: 0.11,
+  jumpBufferTime: 0.12,
+  supportNormalMinY: 0.58,
+});
+
+const DONOR_QUALIFIED_ENVELOPE_V0 = Object.freeze({
+  fixedDt: 1 / 60,
+  substeps: 4,
+  box3dBinding: 'box3d.js@0.1.1',
+  mechanicsSourceStage: 'E2.3',
+  mechanicsBaselineCommit: '02d3528cae47f4b04f594dda4ed0a66727033edd',
+});
+
+// Donor v1 intentionally keeps every qualified feel constant from v0.
+// Its new identity is semantic: E2.3d constraint velocity ownership.
+const DONOR_PROFILE_V1 = Object.freeze({ ...DONOR_PROFILE_V0 });
+
+const DONOR_QUALIFIED_ENVELOPE_V1 = Object.freeze({
+  fixedDt: 1 / 60,
+  substeps: 4,
+  box3dBinding: 'box3d.js@0.1.1',
+  mechanicsSourceStage: 'E2.3d Owner-qualified A‴',
+  mechanicsBaselineCommit: 'bc06ca98e94314af0ba888b74e1c4029429422e5',
+});
+
+return {DONOR_PROFILE_V0,DONOR_QUALIFIED_ENVELOPE_V0,DONOR_PROFILE_V1,DONOR_QUALIFIED_ENVELOPE_V1};
+})();
+const {DONOR_PROFILE_V0,DONOR_QUALIFIED_ENVELOPE_V0,DONOR_PROFILE_V1,DONOR_QUALIFIED_ENVELOPE_V1}=BoxProfile;
+
+const BoxContactMemory=(()=>{
+// Stable donor form of the E2.2c-2 velocity-only dynamic-contact semantics.
+//
+// The controller's full postStep remains authoritative. Dynamic-contact reaction
+// still changes current character velocity and the contacted rigid body. This
+// adapter removes only the extra horizontal persistent target that the legacy
+// controller writes into externalVelocity during that same contact.
+function installVelocityOnlyDynamicContactMemory(character) {
+  const basePostStep = character.postStep.bind(character);
+
+  character.postStep = (dt) => {
+    const externalBeforeContact = [...character.externalVelocity];
+    basePostStep(dt);
+
+    if (character.lastDynamicContacts > 0) {
+      character.externalVelocity[0] = externalBeforeContact[0];
+      character.externalVelocity[2] = externalBeforeContact[2];
+    }
+  };
+
+  return character;
+}
+
+return {installVelocityOnlyDynamicContactMemory};
+})();
+const {installVelocityOnlyDynamicContactMemory}=BoxContactMemory;
+
+const BoxConstraints=(()=>{
+const LINEAR_SLOP = 0.005;
+const FLT_MAX = 3.4e38;
+const MAX_SOLVE_ITERATIONS = 20;
+const HORIZONTAL_NORMAL_MIN = 0.35;
+const VELOCITY_EPSILON = 1e-7;
+
+function bodyTypeValue(type) {
+  return typeof type === 'object' && type !== null && 'value' in type ? type.value : type;
+}
+
+function dot3(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function clonePlane(entry) {
+  return {
+    plane: {
+      normal: [...entry.plane.normal],
+      offset: entry.plane.offset,
+    },
+    pushLimit: entry.pushLimit ?? FLT_MAX,
+    push: 0,
+    clipVelocity: entry.clipVelocity !== false,
+  };
+}
+
+function maxAbsVectorDelta(a, b) {
+  return Math.max(
+    Math.abs(a[0] - b[0]),
+    Math.abs(a[1] - b[1]),
+    Math.abs(a[2] - b[2]),
+  );
+}
+
+// box3d.js@0.1.1 copies collision planes into temporary native vectors for
+// b3SolvePlanes and does not copy solved `push` state back to JavaScript.
+// Reconstruct only that missing state while verifying the solved delta against
+// the native result at the call site.
+function recoverSolvedPlanePushes(targetDelta, inputPlanes) {
+  const planes = inputPlanes.map(clonePlane);
+  const delta = [...targetDelta];
+
+  for (let iteration = 0; iteration < MAX_SOLVE_ITERATIONS; iteration++) {
+    let totalPush = 0;
+    for (const plane of planes) {
+      const separation = dot3(plane.plane.normal, delta) - plane.plane.offset + LINEAR_SLOP;
+      let push = -separation;
+      const accumulated = plane.push;
+      plane.push = Math.min(Math.max(plane.push + push, 0), plane.pushLimit);
+      push = plane.push - accumulated;
+      delta[0] += push * plane.plane.normal[0];
+      delta[1] += push * plane.plane.normal[1];
+      delta[2] += push * plane.plane.normal[2];
+      totalPush += Math.abs(push);
+    }
+    if (totalPush < LINEAR_SLOP) break;
+  }
+
+  return {
+    delta,
+    pushes: planes.map((plane) => plane.push),
+  };
+}
+
+function applyIntentCappedRelativeConstraintVelocity({
+  b3,
+  velocity,
+  desiredVelocity,
+  planes,
+  extras,
+  recoveredPushes,
+  bodyPointVelocity,
+}) {
+  const out = [...velocity];
+  const staticType = bodyTypeValue(b3.b3BodyType.b3_staticBody);
+  const kinematicType = bodyTypeValue(b3.b3BodyType.b3_kinematicBody);
+  let clippedComponents = 0;
+
+  for (let i = 0; i < planes.length; i++) {
+    const plane = planes[i];
+    if (!((recoveredPushes?.[i] ?? 0) > 0) || plane.clipVelocity === false) continue;
+
+    const extra = extras[i];
+    if (!extra?.shapeId) continue;
+    const body = b3.b3Shape_GetBody(extra.shapeId);
+    const type = bodyTypeValue(b3.b3Body_GetType(body));
+    if (type !== staticType && type !== kinematicType) continue;
+
+    const normal = plane.plane.normal;
+    const horizontalLength = Math.hypot(normal[0], normal[2]);
+    if (horizontalLength < HORIZONTAL_NORMAL_MIN) continue;
+    const nx = normal[0] / horizontalLength;
+    const nz = normal[2] / horizontalLength;
+
+    const surfaceVelocity = type === staticType
+      ? [0, 0, 0]
+      : bodyPointVelocity(body, extra.point);
+    const relativeInward = (out[0] - surfaceVelocity[0]) * nx
+      + (out[2] - surfaceVelocity[2]) * nz;
+    const desiredRelativeInward = (desiredVelocity[0] - surfaceVelocity[0]) * nx
+      + (desiredVelocity[2] - surfaceVelocity[2]) * nz;
+    const allowedRelativeInward = Math.min(0, desiredRelativeInward);
+
+    if (relativeInward >= allowedRelativeInward - VELOCITY_EPSILON) continue;
+    const excess = relativeInward - allowedRelativeInward;
+    out[0] -= excess * nx;
+    out[2] -= excess * nz;
+    clippedComponents += 1;
+  }
+
+  return { velocity: out, clippedComponents };
+}
+
+return {maxAbsVectorDelta,recoverSolvedPlanePushes,applyIntentCappedRelativeConstraintVelocity};
+})();
+const {maxAbsVectorDelta,recoverSolvedPlanePushes,applyIntentCappedRelativeConstraintVelocity}=BoxConstraints;
+
+const BoxCharacter=(()=>{
+const FLT_MAX = 3.4e38;
+
+function bodyTypeValue(type) {
+  return typeof type === 'object' && type !== null && 'value' in type ? type.value : type;
+}
+
+function moveToward2(currentX, currentZ, targetX, targetZ, maxDelta) {
+  const dx = targetX - currentX;
+  const dz = targetZ - currentZ;
+  const distance = Math.hypot(dx, dz);
+  if (distance <= maxDelta || distance < 1e-9) return [targetX, targetZ];
+  const scale = maxDelta / distance;
+  return [currentX + dx * scale, currentZ + dz * scale];
+}
+
+class ControllerOwnedCharacter {
+  constructor(b3, world, options = {}) {
+    this.b3 = b3;
+    this.world = world;
+    this.radius = options.radius ?? 0.36;
+    this.halfSegment = options.halfSegment ?? 0.54;
+    this.virtualMass = options.virtualMass ?? 80;
+    this.reciprocityMode = options.reciprocityMode ?? 'normal';
+    if (this.reciprocityMode !== 'normal' && this.reciprocityMode !== 'causal-components') {
+      throw new Error(`Unknown controller reciprocity mode: ${this.reciprocityMode}`);
+    }
+    this.maxSpeed = options.maxSpeed ?? 5.2;
+    this.sprintMultiplier = options.sprintMultiplier ?? 1.32;
+    this.groundAcceleration = options.groundAcceleration ?? 31;
+    this.groundDeceleration = options.groundDeceleration ?? 36;
+    this.airAcceleration = options.airAcceleration ?? 7.5;
+    this.airDeceleration = options.airDeceleration ?? 1.2;
+    this.externalGroundDrag = options.externalGroundDrag ?? 2.0;
+    this.externalAirDrag = options.externalAirDrag ?? 0.22;
+    this.gravity = options.gravity ?? 20.0;
+    this.fallGravityMultiplier = options.fallGravityMultiplier ?? 1.22;
+    this.jumpReleaseGravityMultiplier = options.jumpReleaseGravityMultiplier ?? 1.75;
+    this.jumpSpeed = options.jumpSpeed ?? 7.2;
+    this.coyoteTime = options.coyoteTime ?? 0.11;
+    this.jumpBufferTime = options.jumpBufferTime ?? 0.12;
+    this.supportNormalMinY = options.supportNormalMinY ?? 0.58;
+    this.startPosition = [...(options.startPosition ?? [0, 1.0, 7])];
+
+    this.position = [...this.startPosition];
+    this.velocity = [0, 0, 0];
+    this.externalVelocity = [0, 0, 0];
+    this.desiredSpeed = 0;
+    this.desiredDirection = [0, 0, -1];
+    this.currentSupport = null;
+    this.supportTransportDistance = 0;
+    this.lastContactImpulse = 0;
+    this.lastDynamicContacts = 0;
+    this.lastPlaneCount = 0;
+    this.justLanded = false;
+    this.landingSpeed = 0;
+    this.coyoteRemaining = 0;
+    this.jumpBufferRemaining = 0;
+
+    this.queryFilter = b3.b3DefaultQueryFilter();
+    this.planeScratch = b3.createPlaneResult();
+    this._supportProbe = null;
+    this._bodyPosition = [0, 0, 0];
+    this._bodyRotation = [0, 0, 0, 1];
+    this._bodyLinearVelocity = [0, 0, 0];
+    this._bodyAngularVelocity = [0, 0, 0];
+    this._bodyCenter = [0, 0, 0];
+  }
+
+  get halfHeight() {
+    return this.radius + this.halfSegment;
+  }
+
+  reset(position = this.startPosition) {
+    this.position = [...position];
+    this.velocity = [0, 0, 0];
+    this.externalVelocity = [0, 0, 0];
+    this.desiredSpeed = 0;
+    this.desiredDirection = [0, 0, -1];
+    this.currentSupport = null;
+    this._supportProbe = null;
+    this.supportTransportDistance = 0;
+    this.lastContactImpulse = 0;
+    this.lastDynamicContacts = 0;
+    this.lastPlaneCount = 0;
+    this.justLanded = false;
+    this.landingSpeed = 0;
+    this.coyoteRemaining = 0;
+    this.jumpBufferRemaining = 0;
+  }
+
+  preStep(dt, intent) {
+    this.justLanded = false;
+    this.landingSpeed = 0;
+    this._captureSupportTransport();
+    this._integrateIntent(dt, intent);
+  }
+
+  postStep(dt) {
+    this._applySupportTransport();
+    this._solveMovement(dt);
+  }
+
+  _integrateIntent(dt, intent) {
+    const grounded = Boolean(this.currentSupport);
+    if (grounded) this.coyoteRemaining = this.coyoteTime;
+    else this.coyoteRemaining = Math.max(0, this.coyoteRemaining - dt);
+
+    if (intent.jump) this.jumpBufferRemaining = this.jumpBufferTime;
+    else this.jumpBufferRemaining = Math.max(0, this.jumpBufferRemaining - dt);
+
+    const externalDrag = grounded ? this.externalGroundDrag : this.externalAirDrag;
+    const dragFactor = Math.exp(-externalDrag * dt);
+    this.externalVelocity[0] *= dragFactor;
+    this.externalVelocity[2] *= dragFactor;
+    if (Math.hypot(this.externalVelocity[0], this.externalVelocity[2]) < 0.01) {
+      this.externalVelocity[0] = 0;
+      this.externalVelocity[2] = 0;
+    }
+
+    const forward = intent.forward ?? [0, 0, -1];
+    const right = intent.right ?? [1, 0, 0];
+    let forwardAmount = intent.moveForward ?? 0;
+    let rightAmount = intent.moveRight ?? 0;
+    const inputLength = Math.hypot(forwardAmount, rightAmount);
+    if (inputLength > 1) {
+      forwardAmount /= inputLength;
+      rightAmount /= inputLength;
+    }
+
+    const speedLimit = this.maxSpeed * (intent.sprint ? this.sprintMultiplier : 1);
+    const desiredVelocity = [
+      speedLimit * (forwardAmount * forward[0] + rightAmount * right[0]),
+      0,
+      speedLimit * (forwardAmount * forward[2] + rightAmount * right[2]),
+    ];
+    this.desiredSpeed = lengthXZ(desiredVelocity);
+    if (this.desiredSpeed > 1e-6) {
+      this.desiredDirection = [desiredVelocity[0] / this.desiredSpeed, 0, desiredVelocity[2] / this.desiredSpeed];
+    }
+
+    const targetX = desiredVelocity[0] + this.externalVelocity[0];
+    const targetZ = desiredVelocity[2] + this.externalVelocity[2];
+    const acceleration = grounded
+      ? (this.desiredSpeed > 0.01 ? this.groundAcceleration : this.groundDeceleration)
+      : (this.desiredSpeed > 0.01 ? this.airAcceleration : this.airDeceleration);
+    const [nextX, nextZ] = moveToward2(this.velocity[0], this.velocity[2], targetX, targetZ, acceleration * dt);
+    this.velocity[0] = nextX;
+    this.velocity[2] = nextZ;
+
+    const canJump = grounded || this.coyoteRemaining > 0;
+    if (this.jumpBufferRemaining > 0 && canJump) {
+      const supportVelocity = grounded ? this._supportPointVelocity(this.currentSupport) : [0, 0, 0];
+      this.externalVelocity[0] += supportVelocity[0];
+      this.externalVelocity[2] += supportVelocity[2];
+      this.velocity[0] += supportVelocity[0];
+      this.velocity[1] = Math.max(0, supportVelocity[1]) + this.jumpSpeed;
+      this.velocity[2] += supportVelocity[2];
+      this.currentSupport = null;
+      this._supportProbe = null;
+      this.jumpBufferRemaining = 0;
+      this.coyoteRemaining = 0;
+    }
+
+    let gravityMultiplier = 1;
+    if (this.velocity[1] < -0.05) gravityMultiplier = this.fallGravityMultiplier;
+    else if (this.velocity[1] > 0.05 && !intent.jumpHeld) gravityMultiplier = this.jumpReleaseGravityMultiplier;
+    this.velocity[1] -= this.gravity * gravityMultiplier * dt;
+  }
+
+  _captureSupportTransport() {
+    this._supportProbe = null;
+    const support = this.currentSupport;
+    if (!support || support.type === 'STATIC' || !support.localPoint) return;
+    this.b3.b3Body_GetPosition(this._bodyPosition, support.body);
+    this.b3.b3Body_GetRotation(this._bodyRotation, support.body);
+    const before = transformPoint(this._bodyPosition, this._bodyRotation, support.localPoint);
+    this._supportProbe = { body: support.body, localPoint: [...support.localPoint], before };
+  }
+
+  _applySupportTransport() {
+    this.supportTransportDistance = 0;
+    const probe = this._supportProbe;
+    this._supportProbe = null;
+    if (!probe) return;
+    this.b3.b3Body_GetPosition(this._bodyPosition, probe.body);
+    this.b3.b3Body_GetRotation(this._bodyRotation, probe.body);
+    const after = transformPoint(this._bodyPosition, this._bodyRotation, probe.localPoint);
+    const delta = sub3(after, probe.before);
+    this.position = add3(this.position, delta);
+    this.supportTransportDistance = length3(delta);
+  }
+
+  _collectPlanes(capsule) {
+    const planes = [];
+    const extras = [];
+    this.b3.b3World_CollideMover(this.world, this.position, capsule, this.queryFilter, (shapeId, buffer) => {
+      const count = this.b3.getNumPlaneResults(buffer);
+      for (let i = 0; i < count; i++) {
+        this.b3.getPlaneResultAt(this.planeScratch, buffer, i);
+        const normal = this.planeScratch.plane.normal;
+        planes.push({
+          plane: { normal: [normal[0], normal[1], normal[2]], offset: this.planeScratch.plane.offset },
+          pushLimit: FLT_MAX,
+          push: 0,
+          clipVelocity: true,
+        });
+        extras.push({
+          shapeId,
+          point: [
+            this.position[0] + this.planeScratch.point[0],
+            this.position[1] + this.planeScratch.point[1],
+            this.position[2] + this.planeScratch.point[2],
+          ],
+        });
+      }
+      return true;
+    });
+    return { planes, extras };
+  }
+
+  _solveMovement(dt) {
+    const wasSupported = Boolean(this.currentSupport);
+    const capsule = {
+      center1: [0, -this.halfSegment, 0],
+      center2: [0, this.halfSegment, 0],
+      radius: this.radius,
+    };
+    const target = [
+      this.position[0] + dt * this.velocity[0],
+      this.position[1] + dt * this.velocity[1],
+      this.position[2] + dt * this.velocity[2],
+    ];
+    let lastPlanes = [];
+    let lastExtras = [];
+    const tolerance = 0.002;
+    for (let iteration = 0; iteration < 5; iteration++) {
+      const { planes, extras } = this._collectPlanes(capsule);
+      const solved = this.b3.b3SolvePlanes(sub3(target, this.position), planes);
+      let delta = solved.delta;
+      const fraction = this.b3.b3World_CastMover(this.world, this.position, capsule, delta, this.queryFilter, () => true);
+      delta = scale3(delta, fraction);
+      this.position = add3(this.position, delta);
+      lastPlanes = planes;
+      lastExtras = extras;
+      if (dot3(delta, delta) < tolerance * tolerance) break;
+    }
+
+    this.lastPlaneCount = lastPlanes.length;
+    this._exchangeDynamicContactImpulses(lastPlanes, lastExtras);
+    const preClipVelocity = [...this.velocity];
+    this.velocity = this.b3.b3ClipVector(this.velocity, lastPlanes);
+    this.currentSupport = this._findSupport(lastPlanes, lastExtras, preClipVelocity);
+    if (this.currentSupport && this.velocity[1] < 0) this.velocity[1] = 0;
+
+    if (!wasSupported && this.currentSupport && preClipVelocity[1] < -0.5) {
+      this.justLanded = true;
+      this.landingSpeed = -preClipVelocity[1];
+    }
+    if (this.currentSupport) this.coyoteRemaining = this.coyoteTime;
+  }
+
+  _exchangeDynamicContactImpulses(planes, extras) {
+    this.lastContactImpulse = 0;
+    this.lastDynamicContacts = 0;
+    const invMassA = 1 / this.virtualMass;
+    for (let i = 0; i < planes.length; i++) {
+      const extra = extras[i];
+      if (!extra) continue;
+      const body = this.b3.b3Shape_GetBody(extra.shapeId);
+      const type = bodyTypeValue(this.b3.b3Body_GetType(body));
+      if (type !== bodyTypeValue(this.b3.b3BodyType.b3_dynamicBody)) continue;
+
+      const normal = [-planes[i].plane.normal[0], -planes[i].plane.normal[1], -planes[i].plane.normal[2]];
+      const invMassB = this.b3.b3Body_GetInverseMass(body);
+      const invIB = this.b3.b3Body_GetWorldInverseRotationalInertia(body);
+      this.b3.b3Body_GetWorldCenterOfMass(this._bodyCenter, body);
+      const rB = sub3(extra.point, this._bodyCenter);
+      const rnB = cross3(rB, normal);
+      const kNormal = invMassA + invMassB + dot3(rnB, mulMat3Vec3(invIB, rnB));
+      if (!(kNormal > 0)) continue;
+
+      const pointVelocity = this._bodyPointVelocity(body, extra.point);
+      const relativeVelocity = sub3(this.velocity, pointVelocity);
+      const closingSpeed = dot3(relativeVelocity, normal);
+      if (closingSpeed <= 0) continue;
+
+      const baselineMagnitude = closingSpeed / kNormal;
+      let impulse = scale3(normal, baselineMagnitude);
+      let recordedMagnitude = baselineMagnitude;
+
+      if (this.reciprocityMode === 'causal-components') {
+        const horizontalNormalLength = Math.hypot(normal[0], normal[2]);
+        const horizontalClosing = Math.max(
+          0,
+          relativeVelocity[0] * normal[0] + relativeVelocity[2] * normal[2],
+        );
+        const verticalClosing = Math.max(0, relativeVelocity[1] * normal[1]);
+        const causalClosing = horizontalClosing + verticalClosing;
+        if (causalClosing <= 1e-8) continue;
+
+        const horizontalWeight = horizontalClosing / causalClosing;
+        const verticalWeight = verticalClosing / causalClosing;
+        const direction = [0, 0, 0];
+        if (horizontalNormalLength > 1e-8 && horizontalWeight > 0) {
+          direction[0] = horizontalWeight * normal[0] / horizontalNormalLength;
+          direction[2] = horizontalWeight * normal[2] / horizontalNormalLength;
+        }
+        if (Math.abs(normal[1]) > 1e-8 && verticalWeight > 0) {
+          direction[1] = verticalWeight * Math.sign(normal[1]);
+        }
+        if (length3(direction) <= 1e-8) continue;
+
+        // The mover owns geometric deflection. Reciprocity transfers only the axes of
+        // momentum that actually contributed to closing the contact, so an oblique edge
+        // normal cannot manufacture horizontal character momentum from a vertical fall.
+        // Mixed-axis directions are intentionally not renormalized; the total transfer
+        // cannot exceed the baseline normal-impulse scalar.
+        impulse = scale3(direction, baselineMagnitude);
+        recordedMagnitude = length3(impulse);
+      }
+
+      const reaction = scale3(impulse, -invMassA);
+      this.velocity[0] += reaction[0];
+      this.velocity[1] += reaction[1];
+      this.velocity[2] += reaction[2];
+      this.externalVelocity[0] += reaction[0];
+      this.externalVelocity[2] += reaction[2];
+      this.b3.b3Body_ApplyLinearImpulse(body, impulse, extra.point, true);
+      this.lastContactImpulse += recordedMagnitude;
+      this.lastDynamicContacts += 1;
+    }
+  }
+
+  _findSupport(planes, extras, preClipVelocity) {
+    let bestIndex = -1;
+    let bestUp = this.supportNormalMinY;
+    for (let i = 0; i < planes.length; i++) {
+      const up = planes[i].plane.normal[1];
+      if (up > bestUp) {
+        bestUp = up;
+        bestIndex = i;
+      }
+    }
+    if (bestIndex < 0 || preClipVelocity[1] > 0.18) return null;
+    const extra = extras[bestIndex];
+    if (!extra) return null;
+
+    const body = this.b3.b3Shape_GetBody(extra.shapeId);
+    const typeValue = bodyTypeValue(this.b3.b3Body_GetType(body));
+    let type = 'STATIC';
+    if (typeValue === bodyTypeValue(this.b3.b3BodyType.b3_dynamicBody)) type = 'DYNAMIC';
+    if (typeValue === bodyTypeValue(this.b3.b3BodyType.b3_kinematicBody)) type = 'KINEMATIC';
+
+    let localPoint = null;
+    if (type !== 'STATIC') {
+      this.b3.b3Body_GetPosition(this._bodyPosition, body);
+      this.b3.b3Body_GetRotation(this._bodyRotation, body);
+      localPoint = inverseTransformPoint(this._bodyPosition, this._bodyRotation, extra.point);
+    }
+    return {
+      body,
+      type,
+      point: [...extra.point],
+      localPoint,
+      normal: [...planes[bestIndex].plane.normal],
+    };
+  }
+
+  _bodyPointVelocity(body, worldPoint) {
+    this.b3.b3Body_GetLinearVelocity(this._bodyLinearVelocity, body);
+    this.b3.b3Body_GetAngularVelocity(this._bodyAngularVelocity, body);
+    this.b3.b3Body_GetWorldCenterOfMass(this._bodyCenter, body);
+    return add3(this._bodyLinearVelocity, cross3(this._bodyAngularVelocity, sub3(worldPoint, this._bodyCenter)));
+  }
+
+  _supportPointVelocity(support) {
+    if (!support || support.type === 'STATIC') return [0, 0, 0];
+    return this._bodyPointVelocity(support.body, support.point ?? this.position);
+  }
+
+  telemetry() {
+    return {
+      speed: lengthXZ(this.velocity),
+      externalSpeed: lengthXZ(this.externalVelocity),
+      verticalSpeed: this.velocity[1],
+      desiredSpeed: this.desiredSpeed,
+      grounded: Boolean(this.currentSupport),
+      supportType: this.currentSupport?.type ?? 'NONE',
+      supportTransport: this.supportTransportDistance,
+      dynamicContacts: this.lastDynamicContacts,
+      contactImpulse: this.lastContactImpulse,
+      planeCount: this.lastPlaneCount,
+      virtualMass: this.virtualMass,
+      justLanded: this.justLanded,
+      landingSpeed: this.landingSpeed,
+      coyoteRemaining: this.coyoteRemaining,
+      jumpBufferRemaining: this.jumpBufferRemaining,
+    };
+  }
+}
+
+return {ControllerOwnedCharacter};
+})();
+const {ControllerOwnedCharacter}=BoxCharacter;
+
+const BoxConstraintCharacter=(()=>{
+const SOLVE_EQUIVALENCE_TOLERANCE = 2e-5;
+
+const E23D_BEHAVIOR = Object.freeze({
+  specimen: 'A‴',
+  base: 'A″ / Donor v0 mechanical constants',
+  reciprocity: 'causal-components',
+  dynamicContactMemory: 'velocity-only-contact-consequence',
+  constraintVelocityPolicy: 'intent-capped surface-relative active horizontal static/kinematic normal velocity',
+  status: 'Owner-qualified current-best mechanics; Donor v1 source behavior',
+});
+
+class ConstraintVelocityCharacter extends ControllerOwnedCharacter {
+  constructor(b3, world, options = {}) {
+    super(b3, world, {
+      ...DONOR_PROFILE_V0,
+      ...options,
+      reciprocityMode: 'causal-components',
+    });
+    this.lastConstraintClips = 0;
+    this.lastConstraintSolveError = 0;
+  }
+
+  reset(position = this.startPosition) {
+    super.reset(position);
+    this.lastConstraintClips = 0;
+    this.lastConstraintSolveError = 0;
+  }
+
+  _solveMovement(dt) {
+    const wasSupported = Boolean(this.currentSupport);
+    const capsule = {
+      center1: [0, -this.halfSegment, 0],
+      center2: [0, this.halfSegment, 0],
+      radius: this.radius,
+    };
+    const target = [
+      this.position[0] + dt * this.velocity[0],
+      this.position[1] + dt * this.velocity[1],
+      this.position[2] + dt * this.velocity[2],
+    ];
+
+    let lastPlanes = [];
+    let lastExtras = [];
+    let lastRecoveredPushes = [];
+    this.lastConstraintClips = 0;
+    this.lastConstraintSolveError = 0;
+
+    const tolerance = 0.002;
+    for (let iteration = 0; iteration < 5; iteration++) {
+      const { planes, extras } = this._collectPlanes(capsule);
+      const solveInput = sub3(target, this.position);
+      const solved = this.b3.b3SolvePlanes(solveInput, planes);
+      const recovered = recoverSolvedPlanePushes(solveInput, planes);
+      const solveError = maxAbsVectorDelta(solved.delta, recovered.delta);
+      this.lastConstraintSolveError = Math.max(this.lastConstraintSolveError, solveError);
+      if (solveError > SOLVE_EQUIVALENCE_TOLERANCE) {
+        throw new Error(
+          `E2.3d constraint policy cannot trust recovered plane state: solve delta divergence ${solveError}`,
+        );
+      }
+
+      let delta = solved.delta;
+      const fraction = this.b3.b3World_CastMover(
+        this.world,
+        this.position,
+        capsule,
+        delta,
+        this.queryFilter,
+        () => true,
+      );
+      delta = scale3(delta, fraction);
+      this.position = add3(this.position, delta);
+      lastPlanes = planes;
+      lastExtras = extras;
+      lastRecoveredPushes = recovered.pushes;
+      if (dot3(delta, delta) < tolerance * tolerance) break;
+    }
+
+    this.lastPlaneCount = lastPlanes.length;
+    this._exchangeDynamicContactImpulses(lastPlanes, lastExtras);
+    const preClipVelocity = [...this.velocity];
+    const desiredVelocity = [
+      this.desiredDirection[0] * this.desiredSpeed,
+      0,
+      this.desiredDirection[2] * this.desiredSpeed,
+    ];
+    const constrained = this._applyConstraintVelocityPolicy({
+      velocity: this.velocity,
+      desiredVelocity,
+      planes: lastPlanes,
+      extras: lastExtras,
+      recoveredPushes: lastRecoveredPushes,
+    });
+    this.velocity = constrained.velocity;
+    this.lastConstraintClips = constrained.clippedComponents;
+
+    this.currentSupport = this._findSupport(lastPlanes, lastExtras, preClipVelocity);
+    if (this.currentSupport && this.velocity[1] < 0) this.velocity[1] = 0;
+
+    if (!wasSupported && this.currentSupport && preClipVelocity[1] < -0.5) {
+      this.justLanded = true;
+      this.landingSpeed = -preClipVelocity[1];
+    }
+    if (this.currentSupport) this.coyoteRemaining = this.coyoteTime;
+  }
+
+  _applyConstraintVelocityPolicy({ velocity, desiredVelocity, planes, extras, recoveredPushes }) {
+    return applyIntentCappedRelativeConstraintVelocity({
+      b3: this.b3,
+      velocity,
+      desiredVelocity,
+      planes,
+      extras,
+      recoveredPushes,
+      bodyPointVelocity: (body, point) => this._bodyPointVelocity(body, point),
+    });
+  }
+
+  telemetry() {
+    return {
+      ...super.telemetry(),
+      constraintClips: this.lastConstraintClips,
+      constraintSolveError: this.lastConstraintSolveError,
+    };
+  }
+}
+
+function createConstraintVelocityCharacter(b3, world, options = {}) {
+  const character = new ConstraintVelocityCharacter(b3, world, options);
+  return installVelocityOnlyDynamicContactMemory(character);
+}
+
+return {E23D_BEHAVIOR,ConstraintVelocityCharacter,createConstraintVelocityCharacter};
+})();
+const {E23D_BEHAVIOR,ConstraintVelocityCharacter,createConstraintVelocityCharacter}=BoxConstraintCharacter;
+
+const BoxBasis=(()=>{
+// Pure, testable RH coordinate conversion. Splot XY ground / Z up,
+// Box3D XZ ground / Y up. This is a proper -90° rotation about X,
+// NOT a single-axis mirror (which would reverse angular momentum).
+const splotToBox3D=([x,y,z])=>[x,z,-y];
+const box3DToSplot=([x,y,z])=>[x,-z,y];
+const C=[-Math.SQRT1_2,0,0,Math.SQRT1_2];
+const invC=[Math.SQRT1_2,0,0,Math.SQRT1_2];
+const qmul=(a,b)=>[
+ a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1],
+ a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0],
+ a[3]*b[2]+a[0]*b[1]-a[1]*b[0]+a[2]*b[3],
+ a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2]];
+function panelQuaternionInBox3D(e){
+ const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],dz=e.b[2]-e.a[2];
+ const yaw=Math.atan2(dy,dx),pitch=-Math.atan2(dz,Math.hypot(dx,dy));
+ const sy=Math.sin(yaw/2),cy=Math.cos(yaw/2),sp=Math.sin(pitch/2),cp=Math.cos(pitch/2);
+ return qmul(qmul(C,[-sy*sp,cy*sp,sy*cp,cy*cp]),invC);
+}
+
+return {splotToBox3D,box3DToSplot,qmul,panelQuaternionInBox3D};
+})();
+const {splotToBox3D,box3DToSplot,qmul,panelQuaternionInBox3D}=BoxBasis;
+
+const ActorContact=(()=>{
+// Splot R&D: OPTIONAL compliant contact between two controller-owned actors.
+// This is a symmetric finite impulse on two mover velocities, not a Box3D
+// rigid-body collision, a hard no-overlap constraint, or a finished NPC AI.
+// It preserves the existing ghost/pass-through mode as the default.
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+function compliantActorImpulse(a,b,velocityA,velocityB,dt,{
+ shell=.14,recoveryRate=3.5,maxForce=1250,
+}={}){
+ const none=(gap=null)=>({active:false,impulse:0,ax:0,ay:0,bx:0,by:0,gap,normal:null});
+ if(!a||!b||!(dt>0&&dt<=.05))return none();
+ if(!(a.r>0&&b.r>0&&a.mass>0&&b.mass>0))return none();
+ if(a.z>=b.z+b.h-.001||b.z>=a.z+a.h-.001)return none();
+ const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+ const clearance=a.r+b.r;
+ const gap=d-clearance;
+ if(gap>=shell)return none(gap);
+ // Coincident centers need a deterministic normal. Relative motion takes
+ // priority over an arbitrary global direction.
+ const vx=velocityA[0]-velocityB[0],vy=velocityA[1]-velocityB[1];
+ const rel=Math.hypot(vx,vy);
+ const nx=d>1e-8?dx/d:rel>1e-8?vx/rel:1;
+ const ny=d>1e-8?dy/d:rel>1e-8?vy/rel:0;
+ // World-space velocities, not (X,Y,Z)-engine-dependent vectors.
+ const separationSpeed=(velocityB[0]-velocityA[0])*nx+
+                       (velocityB[1]-velocityA[1])*ny;
+ const penetration=Math.max(0,-gap);
+ const desiredSeparation=penetration*recoveryRate;
+ const effectiveMass=a.mass*b.mass/(a.mass+b.mass);
+ const preContactGain=gap>0?clamp((shell-gap)/shell,0,1):1;
+ const requested=Math.max(0,desiredSeparation-separationSpeed)*effectiveMass*preContactGain;
+ const J=Math.min(maxForce*dt,requested);
+ if(!(J>1e-8))return none(gap);
+ return {active:true,impulse:J,gap,normal:[nx,ny],
+  ax:-J*nx/a.mass,ay:-J*ny/a.mass,bx:J*nx/b.mass,by:J*ny/b.mass};
+}
+
+return {compliantActorImpulse};
+})();
+const {compliantActorImpulse}=ActorContact;
+
+const BoarIntent=(()=>{
+// Splot R&D: tiny local causal behavior, not an NPC architecture.
+// No physics ownership; only chooses a desired movement direction.
+// Existing food-seeking behavior stays the default (forage).
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const normalized=(x,y)=>{const d=Math.hypot(x,y);return d>1e-7?[x/d,y/d]:[0,0];};
+function createBoarIntent({mode='forage'}={}){
+ if(!['forage','responsive'].includes(mode))throw Error('unsupported boar mode');
+ let selected=mode,phase='travel',alertUntil=-Infinity;
+ let transitions=0;
+ function choose({boar,player,food,time=0}){
+  if(!boar||!food)throw Error('boar and food required');
+  const foodDistance=dist(boar,food);
+  const vertical=player&&boar.z<player.z+player.h&&player.z<boar.z+boar.h;
+  const playerDistance=vertical?dist(boar,player):Infinity;
+  let next;
+  if(selected==='responsive'){
+   const trigger=playerDistance<2.4;
+   const maintain=(phase==='wary'&&playerDistance<3.3&&time<alertUntil+5);
+   if(trigger||maintain){
+    alertUntil=Math.max(alertUntil,trigger?time+1.0:alertUntil);
+    next='wary';
+   }else next=foodDistance>.8?'travel':'feeding';
+  }else next=foodDistance>.8?'travel':'feeding';
+  const changed=phase!==next;
+  if(changed){phase=next;transitions++;}
+  let dir=[0,0];
+  if(next==='travel')dir=normalized(food.x-boar.x,food.y-boar.y);
+  if(next==='wary'){
+   let dx=boar.x-player.x,dy=boar.y-player.y;
+   if(Math.hypot(dx,dy)<1e-7){
+    dx=boar.x-food.x;dy=boar.y-food.y;
+    if(Math.hypot(dx,dy)<1e-7){dx=1;dy=0;}
+   }
+   dir=normalized(dx,dy);
+  }
+  return {dir,phase,changed,goal:next==='wary'?'distance-from-player':'food',
+   playerDistance:Number.isFinite(playerDistance)?playerDistance:null,
+   foodDistance,transitions};
+ }
+ return {choose,setMode(next){
+  if(!['forage','responsive'].includes(next))throw Error('unsupported boar mode');
+  selected=next;phase='travel';alertUntil=-Infinity;
+ },get mode(){return selected},get phase(){return phase}};
+}
+
+return {createBoarIntent};
+})();
+const {createBoarIntent}=BoarIntent;
+
+const Box3DBridge=(()=>{
+// RESEARCH CHALLENGER. Frozen Box3D Character Controller Donor v1 mathematics,
+// not a claim that Splot has adopted the Donor's accepted gameplay feel.
+// Physical world: Box3D Y-up; Splot: Z-up. Change of orthonormal basis:
+// Splot (x,y,z) -> Box3D (x,z,-y), preserving handedness.
+// No renderer or editor ownership. DO NOT promote before a real browser run.
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const norm=(x,y)=>Math.hypot(x,y);
+function bodyKey(x){return x.id;}
+function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage'}={}){
+ if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
+ if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
+ let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
+ const boarMind=createBoarIntent({mode:boarMode});
+ if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
+  throw Error('Box3D 0.1.1 mover API unavailable');
+ const wd=b3.b3DefaultWorldDef();
+ wd.gravity=[0,-16,0];
+ const engine=b3.b3CreateWorld(wd);
+ const statics=new Map(),refs=new Map();
+ const state={revision:-1,warning:'',disposed:false};
+ const shapeDef=(density=0)=>{const d=b3.b3DefaultShapeDef();d.density=density;d.baseMaterial.friction=.78;d.baseMaterial.restitution=.02;return d;};
+ const makeFixed=(centerS,halfS,q=null)=>{
+  const bd=b3.b3DefaultBodyDef();bd.position=splotToBox3D(centerS);
+  if(q)bd.rotation=q;
+  const rb=b3.b3CreateBody(engine,bd);
+  // halfS is in Box3D-local axes already when q exists.
+  b3.b3CreateBoxShape(rb,shapeDef(),halfS[0],halfS[1],halfS[2]);
+  return rb;
+ };
+ function makePart(e){
+  if(e.kind==='box'){
+   const p=e.min.map((v,i)=>(v+e.max[i])/2),half=e.min.map((v,i)=>(e.max[i]-v)/2);
+   return makeFixed(p,[half[0],half[2],half[1]]);
+  }
+  const p=e.a.map((v,i)=>(v+e.b[i])/2);p[2]-=e.thickness/2;
+  return makeFixed(p,[
+   Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1],e.b[2]-e.a[2])/2,
+   e.thickness/2,e.width/2],panelQuaternionInBox3D(e));
+ }
+ const ground=makeFixed([w.scene.width/2,w.scene.height/2,-.35],
+  [w.scene.width/2,.35,w.scene.height/2]);
+ function syncStatics(){
+  if(w.scene.revision===state.revision)return;
+  const current=new Map(w.scene.elements.map(e=>[e.id,e]));
+  for(const [id,entry]of statics)if(!current.has(id)||JSON.stringify(current.get(id))!==entry.hash){
+   b3.b3DestroyBody(entry.rb);statics.delete(id);
+  }
+  for(const [id,e]of current)if(!statics.has(id))
+   statics.set(id,{rb:makePart(e),hash:JSON.stringify(e)});
+  state.revision=w.scene.revision;
+  // Editing remains permissive; unresolved deep overlaps are a visible debt.
+  // Never disguise a teleport/reject as a solver feature.
+  for(const a of w.bodies.filter(b=>b.kind!=='crate')){
+   const q=clearanceAt(w.scene,{x:a.x,y:a.y,z:a.z,r:a.r,h:a.h,supportId:a.support});
+   if(!q.free){
+    state.warning='Nieuzgodniony kontakt po edycji: '+a.id;
+    w.events.push({type:'authoring-contact-unresolved',id:a.id,time:w.time,reason:q.contacts.join(',')});
+   }
+  }
+ }
+ function createActor(b){
+  const radius=b.kind==='boar'?Math.min(.28,b.h/2-.015):b.r;
+  const halfSegment=Math.max(.015,b.h/2-radius);
+  const controller=createConstraintVelocityCharacter(b3,engine,{
+   startPosition:splotToBox3D([b.x,b.y,b.z+b.h/2]),radius,halfSegment,
+   virtualMass:b.mass,maxSpeed:b.kind==='boar'?2.6:4.1,
+   gravity:16,fallGravityMultiplier:1,groundAcceleration:31,
+   groundDeceleration:36,airAcceleration:7.5,airDeceleration:1.2
+  });
+  return {kind:'actor',b,controller};
+ }
+ function createCrate(b){
+  const def=b3.b3DefaultBodyDef();
+  def.type=b3.b3BodyType.b3_dynamicBody;
+  def.position=splotToBox3D([b.x,b.y,b.z+b.h/2]);
+  def.linearDamping=.65;def.angularDamping=1.8;
+  // In this parity build the renderer still draws AABB crates.
+  def.motionLocks.angularX=true;def.motionLocks.angularY=true;def.motionLocks.angularZ=true;
+  const rb=b3.b3CreateBody(engine,def),r=b.r;
+  b3.b3CreateBoxShape(rb,shapeDef(Math.max(.1,b.mass/(4*r*r*b.h))),r,b.h/2,r);
+  return {kind:'crate',b,rb};
+ }
+ function syncBodies(){
+  const wanted=new Set(w.bodies.map(b=>b.id));
+  for(const [id,entry]of refs)if(!wanted.has(id)){
+   if(entry.rb)b3.b3DestroyBody(entry.rb);
+   refs.delete(id);
+  }
+  for(const b of w.bodies)if(!refs.has(bodyKey(b)))
+   refs.set(bodyKey(b),b.kind==='crate'?createCrate(b):createActor(b));
+ }
+ const position=[0,0,0],velocity=[0,0,0];
+ function worldSupport(a){
+  return supportCandidates(w.scene,a.x,a.y,{maxZ:31})
+   .find(s=>Math.abs(s.z-a.z)<.12)?.id??null;
+ }
+ syncStatics();syncBodies();
+ function intentFor(vx,vy){
+  const amount=norm(vx,vy),power=Math.min(1,amount),factor=amount?power/amount:0;
+  return {moveForward:vx*factor,moveRight:vy*factor,
+   forward:[1,0,0],right:[0,0,-1],jump:false,jumpHeld:false,sprint:false};
+ }
+ function advance(dt,input=[0,0]){
+  if(w.paused)return;
+  if(!Number.isFinite(dt)||dt<=0||dt>.05)throw Error('invalid-dt');
+  syncStatics();syncBodies();
+  const human=refs.get('human'),boar=refs.get('boar');
+  let humanInput=input;
+  if(gripLaw==='intent-force'&&w.grip&&human){
+   const crate=refs.get(w.grip);
+   if(crate?.kind==='crate'){
+    const dx=human.b.x-crate.b.x,dy=human.b.y-crate.b.y,d=norm(dx,dy);
+    const outward=d>.001?(dx*input[0]+dy*input[1])/d:0;
+    if(outward>0&&d>1.35){
+     // Finite kinematic agency: the player cannot outrun a held body
+     // indefinitely. The physical crate still has to follow by impulse.
+     const fraction=clamp((2.08-d)/.73,0,1);
+     humanInput=[input[0]*fraction,input[1]*fraction];
+    }
+   }
+  }
+  human?.controller.preStep(dt,intentFor(humanInput[0],humanInput[1]));
+  if(norm(...input)>.001&&human)human.b.yaw=Math.atan2(input[1],input[0]);
+  if(boar){
+   const decision=boarMind.choose({boar:boar.b,player:human?.b,food:w.food,time:w.time});
+   boar.controller.preStep(dt,intentFor(decision.dir[0],decision.dir[1]));
+   w.boarIntent={phase:decision.phase,goal:decision.goal,
+    foodDistance:decision.foodDistance,playerDistance:decision.playerDistance,
+    mode:boarMind.mode};
+   if(decision.changed)w.events.push({type:'boar-intent',id:'boar',phase:decision.phase,
+    reason:decision.goal,time:w.time});
+  }
+  // Optional bilateral compliance, using current controller velocities.
+  // This is a physical-intent approximation, not true Box3D rigid-body
+  // collision; the Donor remains authoritative on static/dynamic world casts.
+  if(human&&boar&&contactMode==='compliant'){
+   const v=a=>[a.controller.velocity[0],-a.controller.velocity[2]];
+   const hit=compliantActorImpulse(human.b,boar.b,v(human),v(boar),dt);
+   lastContactImpulse=hit.impulse;
+   if(hit.active){
+    human.controller.velocity[0]+=hit.ax;
+    human.controller.velocity[2]-=hit.ay;
+    boar.controller.velocity[0]+=hit.bx;
+    boar.controller.velocity[2]-=hit.by;
+   }
+   // Hysteresis prevents log spam when the two actors touch.
+   const near=hit.gap!==null&&hit.gap<.03;
+   if(near&&!contactNear){
+    contactStarts++;
+    w.events.push({type:'actor-soft-contact-start',id:'human',with:'boar',gap:hit.gap,impulse:hit.impulse,time:w.time});
+   }else if(contactNear&&(hit.gap===null||hit.gap>.16)){
+    w.events.push({type:'actor-soft-contact-end',id:'human',with:'boar',gap:hit.gap,time:w.time});
+   }
+   if(near)contactNear=true;
+   else if(hit.gap===null||hit.gap>.16)contactNear=false;
+  }else{lastContactImpulse=0;contactNear=false;}
+  // Limited first contact/parity grip. This is NOT imported E17 or E19.
+  if(w.grip&&human){
+   const ref=refs.get(w.grip);
+   if(!ref||ref.kind!=='crate'||Math.abs(ref.b.z-human.b.z)>.7||
+    norm(ref.b.x-human.b.x,ref.b.y-human.b.y)>2.25){
+    w.events.push({type:'release',id:w.grip,reason:'separation',time:w.time});w.grip=null;
+   }else{
+    const dx=human.b.x-ref.b.x,dy=human.b.y-ref.b.y,d=norm(dx,dy);
+    if(d>1.0){
+     b3.b3Body_GetLinearVelocity(velocity,ref.rb);
+     const k=clamp((d-1)*24,0,45)*dt*ref.b.mass;
+     const drag=clamp(4.5*dt,0,1)*ref.b.mass;
+     let impulseS=[dx/d*k-velocity[0]*drag,
+      dy/d*k+velocity[2]*drag,0];
+     if(gripLaw==='intent-force'){
+      // Alternative E17-inspired input grammar: desired anchor velocity,
+      // bounded physical execution and reciprocal player reaction. Still
+      // centre-point and translation-only; deliberately NOT the E17 executor.
+      const playerV=human.controller.velocity;
+      const dirX=dx/d,dirY=dy/d;
+      const desiredRel=clamp((d-1.0)*10,0,8);
+      const desiredVX=playerV[0]+dirX*desiredRel;
+      const desiredVY=-playerV[2]+dirY*desiredRel;
+      const jx=(desiredVX-velocity[0])*ref.b.mass;
+      const jy=(desiredVY+velocity[2])*ref.b.mass;
+      const magnitude=Math.hypot(jx,jy),maxJ=750*dt;
+      const scale=magnitude>maxJ?maxJ/magnitude:1;
+      impulseS=[jx*scale,jy*scale,0];
+     }
+     b3.b3Body_GetPosition(position,ref.rb);
+     b3.b3Body_ApplyLinearImpulse(ref.rb,splotToBox3D(impulseS),[...position],true);
+     // Deliberately limited reciprocal reaction on Donor velocity.
+     human.controller.velocity[0]-=impulseS[0]/human.controller.virtualMass;
+     human.controller.velocity[2]+=impulseS[1]/human.controller.virtualMass;
+    }
+   }
+  }
+  b3.b3World_Step(engine,dt,4);
+  human?.controller.postStep(dt);boar?.controller.postStep(dt);
+  w.time+=dt;
+  for(const [id,ref]of refs){
+   const a=ref.b,old=a.support;
+   if(ref.kind==='crate'){
+    b3.b3Body_GetPosition(position,ref.rb);
+    const p=box3DToSplot(position);a.x=p[0];a.y=p[1];a.z=p[2]-a.h/2;
+   }else{
+    const p=box3DToSplot(ref.controller.position);
+    a.x=p[0];a.y=p[1];a.z=p[2]-a.h/2;
+   }
+   if(Math.abs(a.z)<.035)a.z=0;
+   a.support=worldSupport(a);
+   if(a.support&&!old&&id!=='boar')
+    w.events.push({type:'land',id,on:a.support,time:w.time});
+  }
+  if(w.events.length>80)w.events.splice(0,w.events.length-80);
+ }
+ function dispose(){
+  if(!state.disposed){b3.b3DestroyWorld(engine);state.disposed=true;}
+ }
+ return {engine,advance,dispose,syncStatics,syncBodies,
+  setActorContactMode(mode){
+   if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
+   contactMode=mode;contactNear=false;lastContactImpulse=0;
+   w.events.push({type:'actor-contact-mode',mode,time:w.time});
+  },
+  get actorContactMode(){return contactMode},
+  setBoarMode(next){
+   boarMind.setMode(next);
+   w.events.push({type:'boar-mode',id:'boar',mode:next,time:w.time});
+  },
+  get boarMode(){return boarMind.mode},
+  get warning(){return state.warning},
+  get status(){return {parts:statics.size,bodies:refs.size,gripLaw,
+   actorContact:contactMode,contactStarts,lastContactImpulse,boarMode:boarMind.mode,boarPhase:boarMind.phase,
+   donor:'A-triple-prime derived; research only',events:w.events.slice(-4)}}};
+}
+
+return {createBox3DBridge};
+})();
+const {createBox3DBridge}=Box3DBridge;
+
+const PlaytestJournal=(()=>{
+// Splot research: local-only observation, never networked.
+// A user's explicit session toggle authorizes storing a bounded interaction
+// trace in THIS TAB ONLY. Inferred activity != identity or availability.
+// Untrusted/programmatic events may resemble input: report as "UI input".
+function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().toISOString()}={}){
+ let recording=false,startedAt=null,endedAt=null,startedMs=0;
+ let lastInput=-Infinity,lastInputEvent=-Infinity,lastSample=-Infinity;
+ let previousWorld=null,lastWorldEvent=null,wasNear=false,nearPasses=0;
+ const entries=[];const cap=1500;
+ const num=(x)=>Number.isFinite(x)?Math.round(x*100)/100:null;
+ function append(type,data={}){
+  if(!recording)return;
+  entries.push({sec:num((clock()-startedMs)/1000),type,data});
+  if(entries.length>cap)entries.shift();
+ }
+ function interact(kind){
+  lastInput=clock();
+  if(recording&&lastInput-lastInputEvent>800){
+   append('ui-input',{kind});lastInputEvent=lastInput;
+  }
+ }
+ function start({engine='unknown',scenario='live'}={}){
+  if(recording)return false;
+  recording=true;startedAt=iso();endedAt=null;startedMs=clock();
+  lastInputEvent=-Infinity;lastSample=-Infinity;
+  previousWorld=null;lastWorldEvent=null;wasNear=false;nearPasses=0;entries.length=0;
+  append('session-start',{engine,scenario});
+  return true;
+ }
+ function stop(){
+  if(!recording)return false;
+  append('session-stop');recording=false;endedAt=iso();
+  return true;
+ }
+ function event(type,data={}){
+  // Only compact, self-authored signals; never raw pointer paths or key values.
+  append(type,data);
+ }
+ function observe(world,{engine='unknown',camera=null}={}){
+  if(!recording||!world)return;
+  if(world!==previousWorld){
+   previousWorld=world;lastWorldEvent=null;wasNear=false;
+   append('world-reset',{parts:world.scene?.elements?.length??0,engine});
+  }
+  const events=world.events||[];
+  // The simulation retains only its latest ~80 events. Follow the actual
+  // event object identity, not array.length (which stops changing when full).
+  let first=lastWorldEvent===null?0:events.indexOf(lastWorldEvent)+1;
+  if(lastWorldEvent!==null&&first===0){
+   append('world-event-gap',{reason:'event-buffer-overflow'});first=0;
+  }
+  for(const e of events.slice(first)){
+   append('world-event',{kind:String(e.type||'unknown'),id:e.id??null,
+    reason:e.reason??null,on:e.on??null,with:e.with??null,mode:e.mode??null,
+    phase:e.phase??null,gap:num(e.gap),impulse:num(e.impulse)});
+  }
+  if(events.length)lastWorldEvent=events.at(-1);
+  if(clock()-lastSample<500)return;
+  lastSample=clock();
+  const human=world.bodies?.find(b=>b.id==='human');
+  const boar=world.bodies?.find(b=>b.id==='boar');
+  const crate=world.bodies?.find(b=>b.id==='crate-1');
+  if(!human)return;
+  const point=b=>b?{x:num(b.x),y:num(b.y),z:num(b.z)}:null;
+  let boarGap=null;
+  if(boar){
+   const planar=Math.hypot(human.x-boar.x,human.y-boar.y);
+   const vertical=human.z<boar.z+boar.h&&boar.z<human.z+human.h;
+   boarGap=vertical?num(planar-human.r-boar.r):null;
+   const near=vertical&&planar<human.r+boar.r+.1;
+   if(near&&!wasNear){
+    nearPasses++;
+    append('actor-proximity',{gap:boarGap,engine});
+   }
+   wasNear=near;
+  }
+  append('sample',{engine,t:num(world.time),player:point(human),boar:point(boar),
+   crate:point(crate),boarSurfaceGap:boarGap,grip:world.grip??null,
+   // Intent provenance lets later audits separate a reached objective
+   // from a blocked physics controller. Not evidence of actual NPC perception.
+   camera:camera?{azimuth:num(camera.azimuth),elevation:num(camera.elevation),
+    target:Array.isArray(camera.target)?camera.target.map(num):null}:null,
+   boarIntent:world.boarIntent?{
+    phase:world.boarIntent.phase,goal:world.boarIntent.goal,mode:world.boarIntent.mode,
+    foodDistance:num(world.boarIntent.foodDistance),
+    playerDistance:num(world.boarIntent.playerDistance)
+   }:null,parts:world.scene?.elements?.length??0});
+ }
+ function status({visible=true,focused=true}={}){
+  const ago=clock()-lastInput;
+  const activity=Number.isFinite(ago)&&ago<30000?'interakcje w ostatnich 30 s':
+   Number.isFinite(ago)?'brak świeżych interakcji':'bez zaobserwowanego wejścia';
+  return {recording,activity,secondsSinceInput:Number.isFinite(ago)?Math.floor(ago/1000):null,
+   pageVisible:visible,pageFocused:focused,nearPasses,events:entries.length,
+   // These are page signals, not a claim that the Owner is busy or present.
+   label:(recording?'Test rejestrowany':'Test niezarejestrowany')+' · '+activity+
+    (visible?' · karta widoczna':' · karta w tle')};
+ }
+ function report(){
+  return {format:'splot-playtest-local-v1',source:'Splot Next',startedAt,endedAt,
+   observedAt:iso(),windowSeconds:startedAt!==null?num((clock()-startedMs)/1000):0,
+   inProgress:recording,summary:{nearPasses,eventCount:entries.length},
+   caveats:['Local browser events do not establish user identity or attention',
+    'Sampled actor proximity is not proof of collision or physical impulse',
+    'No telemetry is uploaded automatically'],events:entries.map(e=>({...e}))};
+ }
+ return {interact,start,stop,event,observe,status,report,get recording(){return recording}};
+}
+
+return {createPlaytestJournal};
+})();
+const {createPlaytestJournal}=PlaytestJournal;
+
 const RapierBridge=(()=>{
 // Splot Next: optional Rapier contact challenger in the SAME playable world.
 // R&D only: Z-up, fixed authored structures, kinematic actors, dynamic crates.
 // No camera, renderer, editor or snapshot contract is owned by this adapter.
-
 const norm=(x,y)=>Math.hypot(x,y);
 const HALF_PI=Math.PI/2;
 function panelQuat(e){
@@ -446,7 +1740,6 @@ const {createRapierBridge}=RapierBridge;
 const RenderAdapters=(()=>{
 // Swappable render backend. The scene owns triangles and world coordinates.
 // Neither backend may decide support, collision, pick targets or game state.
-
 const palette={wood:[154,123,82],stone:[113,121,112],steel:[115,149,162],soil:[58,77,68],leaf:[73,111,88],player:[92,182,154],boar:[181,119,97],crate:[190,146,96],skin:[213,173,136],shadow:[35,51,49],mark:[243,197,118]};
 const normalized=v=>{const k=Math.hypot(...v)||1;return v.map(a=>a/k)};
 const LIGHT=normalized([-.4,-.7,1.1]);
@@ -541,19 +1834,78 @@ return {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor};
 })();
 const {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor}=RenderAdapters;
 
-
-
-
-
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
-let bridge=null,rapierLibrary=null,physicsState='legacy',physicsMessage='';
+let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const researchArgs=new URLSearchParams(location.search);
+// Prevent all background stepping while an external WASM module is fetched.
+if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
+const playtest=createPlaytestJournal();
+for(const name of ['pointerdown','keydown','wheel']){
+ document.addEventListener(name,e=>{
+  if(e.isTrusted)playtest.interact(name==='keydown'?'keyboard':name==='wheel'?'wheel':'pointer');
+ },{capture:true,passive:true});
+}
+function refreshActorContactUI(){
+ const btn=$('#actor-contact'),supported=physicsState==='box3d'&&Boolean(bridge?.setActorContactMode);
+ btn.disabled=!supported;
+ const mode=supported?bridge.actorContactMode:box3dOptions.actorContact;
+ btn.textContent=supported?(mode==='compliant'?'Impuls R&D: ON':'Kontakt: swobodny'):'Kontakt: Box3D';
+ btn.classList.toggle('active',supported&&mode==='compliant');
+}
+$('#actor-contact').onclick=()=>{
+ if(physicsState!=='box3d'||!bridge?.setActorContactMode)return;
+ const next=bridge.actorContactMode==='ghost'?'compliant':'ghost';
+ bridge.setActorContactMode(next);box3dOptions.actorContact=next;
+ playtest.event('actor-contact-mode',{mode:next});
+ actionText(next==='compliant'?
+  'Próba impulsu R&D; w testach nadal występuje silne przenikanie. Nie jest to naprawa kolizji.':
+  'Swobodne mijanie aktorów — kontrola.');
+ refreshActorContactUI();
+};
+function refreshBoarUI(){
+ const btn=$('#boar-behavior'),supported=physicsState==='box3d'&&Boolean(bridge?.setBoarMode);
+ btn.disabled=!supported;
+ const mode=supported?bridge.boarMode:box3dOptions.boarMode;
+ btn.textContent=supported?(mode==='responsive'?'Dzik: reaguje':'Dzik: żeruje'):'Dzik: Box3D';
+ btn.classList.toggle('active',supported&&mode==='responsive');
+}
+$('#boar-behavior').onclick=()=>{
+ if(physicsState!=='box3d'||!bridge?.setBoarMode)return;
+ const mode=bridge.boarMode==='forage'?'responsive':'forage';
+ bridge.setBoarMode(mode);box3dOptions.boarMode=mode;
+ playtest.event('boar-behavior-mode',{mode});
+ actionText(mode==='responsive'?
+  'Dzik reaguje na bliskiego gracza, nie otrzymuje twardej kolizji.':
+  'Dzik wraca do jedzenia; przy pokarmie odpoczywa.');
+ refreshBoarUI();
+};
+function updatePlaytestStatus(){
+ $('#test-status').textContent=playtest.status({visible:!document.hidden,focused:document.hasFocus()}).label;
+}
+$('#test-toggle').onclick=()=>{
+ if(playtest.recording){
+  playtest.stop();$('#test-toggle').textContent='Nowy test';
+  actionText('Lokalny test zakończony. Raport pozostaje w tej karcie.');
+ }else{
+  playtest.start({engine:physicsState,scenario:researchArgs.get('probe')?'automated-probe':'free-play'});
+  $('#test-toggle').textContent='Zakończ test';
+  actionText('Rejestrowanie włączone tylko w tej karcie. Bez wysyłania danych.');
+ }
+ $('#test-export').disabled=false;updatePlaytestStatus();
+};
+$('#test-export').onclick=()=>{
+ const report=playtest.report(),blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});
+ const link=document.createElement('a'),url=URL.createObjectURL(blob);
+ link.href=url;link.download='Splot_Sesja_Badawcza.json';link.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+};
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
-function setMode(m){mode=m;startPanel=null;selection=0;selected=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część'}[m]||m);document.body.classList.remove('menu-open');
+function setMode(m){playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część'}[m]||m);document.body.classList.remove('menu-open');
  for(const b of buttons)b.classList.toggle('active',b.dataset.mode===m);
 }
 for(const b of buttons)b.addEventListener('click',()=>setMode(b.dataset.mode));
@@ -561,13 +1913,15 @@ $('#mobile-menu').onclick=()=>document.body.classList.toggle('menu-open');$('#ac
 const rotate=d=>{rot+=d;actionText('Kamera · obrót '+Math.round(rot*180/Math.PI)+'°')};
 $('#turn-left').onclick=()=>rotate(-Math.PI/6);$('#turn-right').onclick=()=>rotate(Math.PI/6);
 $('#pause').onclick=()=>{paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
-$('#grip').onclick=()=>{const r=toggleGrip(world);actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
+$('#grip').onclick=()=>{const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
 $('#layer').onclick=()=>{selection++;refreshSelection();};
-$('#reset').onclick=()=>{if(bridge?.engine?.free)bridge.engine.free();world=createLiveWorld();
- if(rapierLibrary&&physicsState==='rapier'){try{bridge=createRapierBridge(world,rapierLibrary);}catch(e){bridge=null;physicsState='legacy';physicsMessage='Rapier reset failed: '+e.message;}}
- camTarget=[14.5,14,0];setMode('move');actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+$('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();
+ try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
+  if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
+ }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -585,17 +1939,17 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
   const xyz=[...a.point];xyz[2]+=buildHeight;
   if(!startPanel){startPanel=xyz;actionText('Pierwszy koniec ustawiony. Wskaż drugi punkt.');return;}
   const e={id:'part-'+sequence++,kind:'panel',a:startPanel,b:xyz,width:buildWidth,thickness:.26,material:'wood'};
-  const result=insertElement(world.scene,e);startPanel=null;
+  const result=insertElement(world.scene,e);playtest.event('build-panel',{ok:result.ok,id:e.id});startPanel=null;
   actionText(result.ok?'Powstał niezależny element XYZ.':'Odmowa: '+result.reason);return;
  }
  if(mode==='box'){
   const [x,y,z]=a.point,r=insertElement(world.scene,{id:'block-'+sequence++,kind:'box',min:[x-.6,y-.6,z],max:[x+.6,y+.6,z+1.1],material:'stone'});
-  actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
+  playtest.event('build-box',{ok:r.ok});actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
  }
- if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
+ if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
  if(mode==='erase'){
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}
-  const r=removeElement(world.scene,a.id);
+  const r=removeElement(world.scene,a.id);playtest.event('delete-part',{ok:r.ok,id:a.id});
   actionText(r.ok?'Element usunięty; ciała zareagują na utratę podparcia.':'Odmowa: '+r.reason);
  }
 }
@@ -695,38 +2049,50 @@ function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
  const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
  renderer.render(tris,cam);renderOverlay(cam);
- if(t-lastHud>260){const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
+ playtest.observe(world,{engine:physicsState,camera:cam});
+ if(t-lastHud>260){updatePlaytestStatus();const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);
 }
 setMode('move');actionText('Splot Next: ruszaj, pchaj, chwytaj, konstruuj. Wszystko w tej samej przestrzeni XYZ.');
 async function startPhysicsChallenger(){
- if(researchArgs.get('physics')!=='rapier')return;
- physicsState='loading-rapier';actionText('Ładowanie badawczej fizyki Rapier 0.21.0. Nadal możesz grać.');
+ const choice=researchArgs.get('physics');
+ if(choice!=='rapier'&&choice!=='box3d')return;
+ physicsState='loading-'+choice;actionText('Ładowanie '+choice+' · badawcza fizyka, ta sama gra.');
  try{
-  const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
-  const R=module.default||module;
-  if(typeof R.init==='function')await R.init();
-  rapierLibrary=R;bridge=createRapierBridge(world,R);physicsState='rapier';
-  actionText('Rapier aktywny · ta sama gra i grafika · zmieniona warstwa kontaktu (R&D).');
+  if(choice==='rapier'){
+   const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
+   const R=module.default||module;if(typeof R.init==='function')await R.init();
+   rapierLibrary=R;bridge=createRapierBridge(world,R);
+  }else{
+   const module=await import('https://esm.sh/box3d.js@0.1.1/inline?bundle');
+   if(typeof module.default!=='function')throw Error('Box3D inline initializer unavailable');
+   box3dLibrary=await module.default();
+   bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
+  }
+  physicsState=choice;
+  refreshActorContactUI();refreshBoarUI();
+  actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
+   bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
+   world=createLiveWorld(); // identical deterministic setup for every backend
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
    if(probe==='ascent')Object.assign(human,{x:12,y:13,z:0,support:'ground'});
    if(probe==='fall')Object.assign(human,{x:23,y:13,z:2.4,support:'footbridge-deck'});
    if(probe==='grip')Object.assign(human,{x:15.28,y:15.2,z:0,support:'ground'});
-   if(bridge?.engine?.free)bridge.engine.free();
-   bridge=createRapierBridge(world,R);world.paused=false;
+   bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary,box3dOptions);
+   world.paused=false;
    let ok=false,detail='';
    if(probe==='ascent'){
     for(let i=0;i<225;i++)bridge.advance(1/60,[1,0]);
     ok=human.x>19&&human.z>1.8;
-    detail='live ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2);
+    detail='ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2)+' support='+human.support;
    }else if(probe==='fall'){
     removeElement(world.scene,'footbridge-deck');
     for(let i=0;i<140;i++)bridge.advance(1/60,[0,0]);
     ok=human.z<.2&&human.support==='ground';
-    detail='support removal / z='+human.z.toFixed(2)+' on '+human.support;
+    detail='support removal / z='+human.z.toFixed(2)+' support='+human.support;
    }else if(probe==='edit'){
     const part={id:'probe-overlap',kind:'box',
      min:[human.x-.4,human.y-.4,0],max:[human.x+.4,human.y+.4,1.3],material:'stone'};
@@ -734,21 +2100,26 @@ async function startPhysicsChallenger(){
     bridge.syncStatics();bridge.advance(1/60,[0,0]);
     const q=clearanceAt(world.scene,{x:human.x,y:human.y,z:human.z,r:human.r,h:human.h,supportId:human.support});
     ok=placed.ok&&q.free&&world.events.some(e=>e.type==='authoring-contact-resolved');
-    detail='live authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
+    detail='authoring / clearance='+q.free+' events='+world.events.at(-1)?.type;
    }else if(probe==='grip'){
-    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0;
+    const grabbed=toggleGrip(world),before=crate.x;let maxGap=0,releaseAt=-1;
     for(let i=0;i<100;i++){bridge.advance(1/60,[1,0]);
-     maxGap=Math.max(maxGap,Math.hypot(human.x-crate.x,human.y-crate.y));}
+     const gap=Math.hypot(human.x-crate.x,human.y-crate.y);
+     if(world.grip==='crate-1')maxGap=Math.max(maxGap,gap);
+     else if(releaseAt<0)releaseAt=i;}
     ok=grabbed.ok&&human.x>18.5&&crate.x>before+1.8&&world.grip==='crate-1'&&maxGap<1.9;
-    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' max-gap='+maxGap.toFixed(2);
+    detail='grip / human='+human.x.toFixed(2)+' crate='+crate.x.toFixed(2)+' held-max-gap='+maxGap.toFixed(2)+' released-at='+releaseAt;
    }
    paused=true;world.paused=true;
-   physicsMessage=(ok?'PASS':'FAIL')+' / '+detail;actionText(physicsMessage);
+   physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
- }catch(err){bridge=null;physicsState='legacy-fallback';physicsMessage=String(err?.message||err);
-  actionText('Rapier niedostępny. Pozostaje stary solver. '+physicsMessage.slice(0,130));}
+ }catch(err){
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();
+  physicsMessage=String(err?.stack||err);
+  actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
+ }
 }
-requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+refreshActorContactUI();refreshBoarUI();requestAnimationFrame(frame);void startPhysicsChallenger();
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
 
 </script></body></html>

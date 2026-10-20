@@ -32,6 +32,15 @@ W `src/next/perf-metrics.mjs` i `src/next/app.mjs`:
 - w opt-in JSON pozostają historyczne pola median i dochodzą oznaczone `physicsSteps`, `physicsCpuMsPerStep`, `physicsCpuMsPerWallSecond`, `physicsActiveP95CpuMs`, `rafP95` oraz zagregowane przyczyny odmów. Brak automatycznej wysyłki danych.
 - `tests/research/perf-metrics.test.mjs`: kontrolowana emulacja 240 Hz / 60 Hz, pauza i catch-up. Nowy runner CI: https://github.com/Jozzpoly/Splot/actions/runs/39454331288 — **48 unit PASS / 0 fail, z oddzielnymi real Box3D-WASM Chrome scenarios**; nadal **nie jest to test telefoniczny ani gra Ownera**.
 
+## Dodatkowy wykryty defekt: fundament czasu i feel nie są niezależne od FPS
+W `app.mjs:frame(t)` symulacja działa w stałych krokach `1/60`, ale rendering w rytmie `requestAnimationFrame`. Przy `rafP50=4,2 ms` (~238 FPS) trzy z czterech wyświetlonych klatek mogą widzieć identyczną pozycję z ostatniego 60-Hz kroku, ponieważ nie ma jawnego render interpolation między historyczną i aktualną pozycją solvera. To może powodować schodkowy ruch bez widocznego spadku FPS; **jest hipotezą feelingową wynikającą z kodu, a nie potwierdzonym wideo artefaktem tej sesji**.
+
+Kamera ma bezpośrednie `camTarget+=(body-camTarget)*.16` dla XY i `*.10` dla Z **w każdej renderowanej klatce**. Ta sama matematyczna „sprężystość” ma przy 60 Hz stałą czasową ~95,6 ms, a przy 240 Hz ~23,9 ms (dla XY). Tym samym kontrola wizualna może zmienić charakter około 4× zależnie od monitora. To **źródłowo potwierdzona niezmienniczość złamana**, nie wymaga testu subiektywnego, by stwierdzić defekt kontraktu.
+
+Pętla dodatkowo ogranicza `elapsed=Math.min(.08,wallDelta)` i maksymalnie 4 kroki fizyki na wyświetloną klatkę; przy ciężkich hitchach world-time może zwalniać względem wall-time. Profil powinien w przyszłości rejestrować czas *rzeczywisty* vs *symulowany* i przerwane kroki/catch-up debt, nie tylko medianę fizyki.
+
+**Działanie:** najpierw wydzielić jawny kontrakt `fixed simulation tick ↔ render interpolation ↔ camera smoothing in seconds` i testować 60/120/240Hz oraz drop frames. Czasowe wygładzanie kamery i render interpolation mogą być włączone jako A/B zamiast cichej zmiany istniejącego feel. Nie zmieniać defaultu bez próby Ownera.
+
 ## Priorytety wynikające z problemu, nie z rozpędu
 1. **Nie dokładać nowej fizyki.** Najpierw odzyskać wrażenia Ownera po poprawce query; testować materialną konstrukcję wielopoziomową jako pełny vertical slice, nie tylko padanie dwóch obiektów.
 2. Oddzielić render boundary/occlusion od świata brył. Zrobić kontrolowany A/B na tych samych authored IDs: *per-object naive external faces* vs *locally culled hidden internal faces*, z kosztami CPU, GPU i czytelnością na rzeczywistym urządzeniu. Najpierw jeden proof, nie monolityczny CSG.

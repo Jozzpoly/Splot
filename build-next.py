@@ -12,6 +12,7 @@ modules=[
  ('BoxConstraintCharacter','box3d-donor/constraint-velocity-character.js',['E23D_BEHAVIOR','ConstraintVelocityCharacter','createConstraintVelocityCharacter']),
  ('BoxBasis','box3d-basis.mjs',['splotToBox3D','box3DToSplot','qmul','panelQuaternionInBox3D']),
  ('ActorContact','actor-contact.mjs',['compliantActorImpulse']),
+ ('BoarIntent','boar-intent.mjs',['createBoarIntent']),
  ('Box3DBridge','box3d-live.mjs',['createBox3DBridge']),
  ('PlaytestJournal','playtest-journal.mjs',['createPlaytestJournal']),
  ('RapierBridge','rapier-live.mjs',['createRapierBridge']),

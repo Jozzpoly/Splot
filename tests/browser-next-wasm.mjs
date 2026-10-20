@@ -255,6 +255,15 @@ try{
   });
   assert.equal(cameraState.mode,'seconds');
   assert.ok(cameraState.rafFrames>0);
+  const prevBuilds=await cameraPage.evaluate(()=>window.__splotNext.visualStats.staticBuilds);
+  await cameraPage.waitForTimeout(320);
+  assert.equal(await cameraPage.evaluate(()=>window.__splotNext.visualStats.staticBuilds),prevBuilds,
+   'static authored geometry must not rebuild just because Chrome draws more frames');
+  const revisionEdit=await cameraPage.evaluate(()=>window.__splotNext.build({
+   id:'cache-invalidation-check',kind:'box',min:[6,7,1],max:[7,8,2],material:'wood'
+  }));
+  assert.ok(revisionEdit.ok);
+  await cameraPage.waitForFunction(prev=>window.__splotNext.visualStats.staticBuilds>prev,prevBuilds,{timeout:5000});
   assert.ok(cameraState.cam.every(Number.isFinite));
   assert.deepEqual(cameraErrors,[]);
   console.log('PASS REAL CHROME CAMERA A/B: opt-in seconds mode enabled on live Box3D scene');

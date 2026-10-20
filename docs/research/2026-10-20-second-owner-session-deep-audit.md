@@ -41,6 +41,11 @@ Pętla dodatkowo ogranicza `elapsed=Math.min(.08,wallDelta)` i maksymalnie 4 kro
 
 **Działanie:** najpierw wydzielić jawny kontrakt `fixed simulation tick ↔ render interpolation ↔ camera smoothing in seconds` i testować 60/120/240Hz oraz drop frames. Czasowe wygładzanie kamery i render interpolation mogą być włączone jako A/B zamiast cichej zmiany istniejącego feel. Nie zmieniać defaultu bez próby Ownera.
 
+## Authoring reality check — the current builder is not an editor
+The UI has `box`, `panel`, `crate`, `erase`, `material`, `move` (character), and a fixed height selector. It does **not** support direct manipulation of an already-authored part's transform, rotation/resize, reliable undo/redo or JSON import. Editing a structure generally means deleting and rebuilding pieces. The `256` authored-element cap is already >50% consumed in the new 132-part session, but raising the cap without a rendering/query benchmark would again hide architectural cost. This is direct player-workflow debt, not polish.
+
+**Product consequence:** the Owner invested 125 authored insertions into a world that can be exported but not resumed in the same UI, with no non-destructive means to repair most placed parts. That discontinuity should be addressed before another month of novel physics. R&D can use a deliberately simple, versioned, non-backwards-compatible experimental scene loader, as long as it accurately discloses fresh solver initialization vs exact resume. A permanent asset-library or Jaskinia persistence service is not needed to solve this immediate problem.
+
 ## Priorytety wynikające z problemu, nie z rozpędu
 1. **Nie dokładać nowej fizyki.** Najpierw odzyskać wrażenia Ownera po poprawce query; testować materialną konstrukcję wielopoziomową jako pełny vertical slice, nie tylko padanie dwóch obiektów.
 2. Oddzielić render boundary/occlusion od świata brył. Zrobić kontrolowany A/B na tych samych authored IDs: *per-object naive external faces* vs *locally culled hidden internal faces*, z kosztami CPU, GPU i czytelnością na rzeczywistym urządzeniu. Najpierw jeden proof, nie monolityczny CSG.

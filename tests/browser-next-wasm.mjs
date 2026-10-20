@@ -55,5 +55,54 @@ try{
   else console.log('PASS real Chromium / Box3D WASM',probe);
   await page.close();
  }
+ // Real UI path: the Owner's editor tools and canvas pointer picking,
+ // not debug API mutation nor a pre-authored fixture.
+ const page=await context.newPage();
+ const runtimeErrors=[];
+ page.on('pageerror',e=>runtimeErrors.push(String(e)));
+ console.log('\nRUN manual-ui: build elevated box → click to release → click to reanchor');
+ await page.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ const canvas=page.locator('#world');
+ const clickProjected=async(p)=>{
+  const projected=await page.evaluate(v=>{
+   const c=window.__splotNext.camera;
+   const projected=projectPoint(c,v);
+   const el=document.querySelector('#world');
+   const rect=el.getBoundingClientRect();
+   return {x:rect.left+(projected.x/el.width)*rect.width,
+    y:rect.top+(projected.y/el.height)*rect.height};
+  },p);
+  await page.mouse.click(projected.x,projected.y);
+  return projected;
+ };
+ try {
+  await page.locator('[data-mode="box"]').click();
+  await page.locator('#height').click();
+  await page.locator('#height').click(); // 2.4 m above picked ground
+  const hit=await clickProjected([10.5,17.2,0]);
+  const block=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'));
+  assert.ok(block&&block.kind==='box','editor click must create block-10');
+  assert.ok(block.min[2]>2.3,'editor height selector must elevate actual world geometry');
+  await page.locator('[data-mode="material"]').click();
+  await clickProjected([(block.min[0]+block.max[0])/2,(block.min[1]+block.max[1])/2,block.max[2]]);
+  await page.waitForFunction(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.motionType==='dynamic',null,{timeout:3000});
+  await page.waitForFunction(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.min[2]<.15,null,{timeout:6000});
+  const landed=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'));
+  await clickProjected([(landed.min[0]+landed.max[0])/2,(landed.min[1]+landed.max[1])/2,landed.max[2]]);
+  await page.waitForFunction(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.motionType==='anchored',null,{timeout:3000});
+  const final=await page.evaluate(()=>({part:window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'),
+   engine:window.__splotNext.physics,mode:window.__splotNext.mode}));
+  console.log('PASS real pointer/editor Box3D:',JSON.stringify({screen:hit,part:final.part,engine:final.engine}));
+ }catch(e){
+  failures++;console.error('FAIL real pointer/editor Box3D:',String(e));
+  console.error('UI snapshot:',await page.evaluate(()=>({mode:window.__splotNext?.mode,
+    physics:window.__splotNext?.physics,
+    notice:document.querySelector('#notice')?.textContent,
+    parts:window.__splotNext?.world?.scene?.elements?.filter(x=>x.id.startsWith('block-'))})));
+  if(runtimeErrors.length)console.error('JS ERRORS',runtimeErrors);
+  await page.screenshot({path:'/tmp/splot-manual-ui-FAIL.png'}).catch(()=>{});
+ }
+ await page.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

@@ -93,7 +93,15 @@ try{
   await page.waitForFunction(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.motionType==='anchored',null,{timeout:3000});
   const final=await page.evaluate(()=>({part:window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'),
    engine:window.__splotNext.physics,mode:window.__splotNext.mode}));
-  console.log('PASS real pointer/editor Box3D:',JSON.stringify({screen:hit,part:final.part,engine:final.engine}));
+  const [download]=await Promise.all([
+   page.waitForEvent('download'),page.locator('#save').click()
+  ]);
+  const saved=JSON.parse(await readFile(await download.path(),'utf8'));
+  const savedBox=saved.scene?.elements?.find(e=>e.id==='block-10');
+  assert.ok(savedBox&&savedBox.motionType==='anchored','saved authoring must preserve final lifecycle');
+  assert.ok(Math.abs(savedBox.min[2]-final.part.min[2])<.03,'saved pose must match live anchored geometry');
+  console.log('PASS real pointer/editor Box3D + exported scene JSON:',
+   JSON.stringify({screen:hit,part:final.part,engine:final.engine,saveFormat:saved.format}));
  }catch(e){
   failures++;console.error('FAIL real pointer/editor Box3D:',String(e));
   console.error('UI snapshot:',await page.evaluate(()=>({mode:window.__splotNext?.mode,

@@ -1,0 +1,38 @@
+name: Splot Next research checks
+
+on:
+  push:
+    branches:
+      - research/material-part-lifecycle-2026-10-20
+    paths:
+      - 'src/next/**'
+      - 'build-next.py'
+      - 'tests/research/**'
+      - 'tests/verify-next.sh'
+      - 'tests/check-next-bundle.mjs'
+      - '.github/workflows/splot-next-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: splot-next-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deterministic-next:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check standalone and Next contracts
+        run: bash tests/verify-next.sh

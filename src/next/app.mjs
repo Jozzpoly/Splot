@@ -9,12 +9,14 @@ import {crateTriangles} from './crate-visual.mjs';
 import {summarizePerfFrames} from './perf-metrics.mjs';
 import {restoreResearchWorld,nextAuthoringSequence} from './scene-restore.mjs';
 import {createEditHistory,translatedElement,screenOnHeightPlane} from './authoring-editor.mjs';
+import {advanceCameraTarget} from './camera-timing.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const editHistory=createEditHistory();let editSelectedId=null,editDrag=null;
 const researchArgs=new URLSearchParams(location.search);
+const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
 const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
@@ -356,12 +358,13 @@ function keyDirection(){let dx=Number(keys.has('d')||keys.has('arrowright'))-Num
 // Read-only rolling diagnostic. Rendering cost measures CPU submission;
 // rAF frame spacing is not a GPU timestamp and not an isolated physics rate.
 const frameMetrics=[];let prevMetricFrame=0,latestPerf=null;
-function profile(){return {...summarizePerfFrames(frameMetrics),renderer:renderer.mode};}
+function profile(){return {...summarizePerfFrames(frameMetrics),renderer:renderer.mode,cameraMode:timeCamera?'seconds':'legacy'};}
 function frame(t){
  const rafMs=prevMetricFrame?t-prevMetricFrame:NaN;prevMetricFrame=t;
  let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  const info=viewport(),p=getBody(world,'human');
- camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;
+ if(timeCamera)camTarget=advanceCameraTarget(camTarget,[p.x,p.y,p.z+.7],elapsed);
+ else {camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;}
  cam=makeCamera({target:camTarget,azimuth:rot,elevation:1.03,...info});
  const physicsStart=performance.now();
  let physicsSteps=0;

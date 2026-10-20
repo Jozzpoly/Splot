@@ -266,6 +266,34 @@ try{
    buffer:Buffer.from(JSON.stringify(mobileSaved))});
   await phone.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',null,{timeout:8000});
   assert.equal(await phone.evaluate(()=>window.__splotNext.world.scene.elements.length),8);
+  // Actual Chromium native touch sequence, not DOM-dispatched PointerEvents:
+  // touching a built anchored part while in Edit must drag its original ID.
+  await phone.locator('#mobile-menu').tap();
+  await phone.locator('[data-mode="box"]').tap();
+  await mobileTapWorld([11.5,18.7,0]);
+  const anchoredMobile=await phone.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='block-11')));
+  assert.ok(anchoredMobile&&anchoredMobile.kind==='box');
+  await phone.locator('#mobile-menu').tap();
+  await phone.locator('[data-mode="edit"]').tap();
+  const [touchStart,touchEnd]=await phone.evaluate(e=>{
+   const c=window.__splotNext.camera,canvas=document.querySelector('#world'),r=canvas.getBoundingClientRect();
+   const xyz=[(e.min[0]+e.max[0])/2,(e.min[1]+e.max[1])/2,e.max[2]];
+   const project=p=>{const a=projectPoint(c,p);return {x:r.left+a.x/canvas.width*r.width,y:r.top+a.y/canvas.height*r.height};};
+   return [project(xyz),project([xyz[0]+.7,xyz[1],xyz[2]])];
+  },anchoredMobile);
+  const session=await mobile.newCDPSession(phone);
+  const finger=(x,y)=>[{x,y,id:9}];
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:finger(touchStart.x,touchStart.y)});
+  for(let step=1;step<=5;step++){
+   const t=step/5;
+   await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:finger(
+    touchStart.x+(touchEnd.x-touchStart.x)*t,touchStart.y+(touchEnd.y-touchStart.y)*t)});
+  }
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  const draggedMobile=await phone.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-11'));
+  assert.ok(Math.abs(draggedMobile.min[0]-anchoredMobile.min[0]-.7)<.12,
+   'native mobile pointer drag must move an existing anchored part');
+  console.log('PASS synthetic native mobile TOUCH DRAG / stable authored ID:',draggedMobile.id);
   console.log('PASS synthetic mobile touch / Box3D edit → save download → native file picker → paused restore');
  }catch(e){
   failures++;console.error('FAIL synthetic mobile:',String(e));

@@ -11,6 +11,7 @@ on:
       - 'tests/verify-next.sh'
       - 'tests/check-next-bundle.mjs'
       - 'tests/browser-next-wasm.mjs'
+      - 'tests/browser-next-perf.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -43,3 +44,5 @@ jobs:
         run: |
           command -v google-chrome || command -v chromium
           node tests/browser-next-wasm.mjs
+      - name: Research CPU and rAF performance A/B
+        run: node tests/browser-next-perf.mjs

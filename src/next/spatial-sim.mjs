@@ -82,7 +82,14 @@ export function stepLive(w,dt,input=[0,0]){
  for(const b of w.bodies)gravityStep(w,b,dt);
  if(w.events.length>80)w.events=w.events.slice(-80);
 }
-export function addCrate(w,x,y,z=0){const i=w.bodies.filter(b=>b.kind==='crate').length+1;
+export function addCrate(w,x,y,z=0){
+ // IDs are identities, not counts. Restored worlds may contain sparse crate
+ // numbers; count+1 could collide with an existing body and corrupt Box3D refs.
+ let i=1;
+ for(const b of w.bodies)if(b.kind==='crate'){
+  const n=Number(b.id.slice('crate-'.length));
+  if(Number.isSafeInteger(n)&&n>=i)i=n+1;
+ }
  const p={id:'crate-'+i,kind:'crate',x,y,z,r:.43,h:.86,mass:36,support:null,vz:0,yaw:0};
  if(!clearanceAt(w.scene,{x,y,z,r:p.r,h:p.h}).free)return {ok:false,reason:'occupied'};
  w.bodies.push(p);return {ok:true,id:p.id};

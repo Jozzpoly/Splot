@@ -11,7 +11,7 @@ let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNo
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const researchArgs=new URLSearchParams(location.search);
 // Prevent all background stepping while an external WASM module is fetched.
-if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
+if(['ascent','fall','edit','grip','material'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
 const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
@@ -266,7 +266,7 @@ async function startPhysicsChallenger(){
   refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
-  if(['ascent','fall','edit','grip'].includes(probe)){
+  if(['ascent','fall','edit','grip','material'].includes(probe)){
    bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
    world=createLiveWorld(); // identical deterministic setup for every backend
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
@@ -276,7 +276,31 @@ async function startPhysicsChallenger(){
    bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary,box3dOptions);
    world.paused=false;
    let ok=false,detail='';
-   if(probe==='ascent'){
+   if(probe==='material'){
+    if(choice==='box3d'){
+     const id='research-falling-block';
+     insertElement(world.scene,{id,kind:'box',min:[9,6,4],max:[10.2,7.2,5.1],material:'wood'});
+     bridge.syncStatics();
+     for(let i=0;i<60;i++)bridge.advance(1/60,[0,0]);
+     const initial=world.scene.elements.find(e=>e.id===id),stationary=initial?.min[2];
+     const oldRevision=world.scene.revision;
+     const released=setBoxMotion(world.scene,id,'dynamic');bridge.syncStatics();
+     const editRevision=world.scene.revision;
+     for(let i=0;i<180;i++)bridge.advance(1/60,[0,0]);
+     const moved=world.scene.elements.find(e=>e.id===id);
+     const bottom=moved?.min[2],stableId=moved?.id===id;
+     const postPhysicsRevision=world.scene.revision;
+     const anchored=setBoxMotion(world.scene,id,'anchored');bridge.syncStatics();
+     const anchoredBottom=world.scene.elements.find(e=>e.id===id)?.min[2];
+     for(let i=0;i<60;i++)bridge.advance(1/60,[0,0]);
+     const finalBottom=world.scene.elements.find(e=>e.id===id)?.min[2];
+     ok=released.ok&&anchored.ok&&stableId&&Math.abs(stationary-4)<.001&&
+      Math.abs(bottom)<.10&&Math.abs(anchoredBottom-finalBottom)<.02&&
+      editRevision===oldRevision+1&&postPhysicsRevision===editRevision;
+     detail='static-z='+stationary?.toFixed(2)+' fall-z='+bottom?.toFixed(2)+
+      ' reanchor-z='+finalBottom?.toFixed(2)+' id='+stableId+' auth-revision='+postPhysicsRevision;
+    }else{ok=false;detail='material lifecycle unsupported by Rapier';}
+   }else if(probe==='ascent'){
     for(let i=0;i<225;i++)bridge.advance(1/60,[1,0]);
     ok=human.x>19&&human.z>1.8;
     detail='ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2)+' support='+human.support;

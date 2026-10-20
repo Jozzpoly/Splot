@@ -18,7 +18,7 @@ test('responsive policy reacts to close player but not separate height',()=>{
  assert.ok(r.dir[0]>0);
  r=mind.choose({boar,player:{...near,x:32},food,time:2.5});
  assert.equal(r.phase,'wary','a short separation should not cause state chatter');
- r=mind.choose({boar,player,time:6});
+ r=mind.choose({boar,player,food,time:6});
  assert.equal(r.phase,'feeding');
  r=mind.choose({boar,player:{...near,z:5},food,time:7});
  assert.equal(r.phase,'feeding','height overlap should matter');

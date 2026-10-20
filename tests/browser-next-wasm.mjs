@@ -100,6 +100,39 @@ try{
   const savedBox=saved.scene?.elements?.find(e=>e.id==='block-10');
   assert.ok(savedBox&&savedBox.motionType==='anchored','saved authoring must preserve final lifecycle');
   assert.ok(Math.abs(savedBox.min[2]-final.part.min[2])<.03,'saved pose must match live anchored geometry');
+  // Direct manipulation: an anchored authored block should MOVE rather
+  // than create a replacement. Undo/redo and vertical change must preserve
+  // the exact same ID and the Box3D anchored body.
+  await page.locator('[data-mode="edit"]').click();
+  const first=await page.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')));
+  const [from,to]=await page.evaluate(e=>{
+   const camera=window.__splotNext.camera,canvas=document.querySelector('#world');
+   const r=canvas.getBoundingClientRect(),point=[
+    (e.min[0]+e.max[0])/2,(e.min[1]+e.max[1])/2,e.max[2]];
+   const pixel=pos=>{
+    const p=projectPoint(camera,pos);
+    return {x:r.left+p.x/canvas.width*r.width,y:r.top+p.y/canvas.height*r.height};
+   };
+   return [pixel(point),pixel([point[0]+1.1,point[1],point[2]])];
+  },first);
+  await page.mouse.move(from.x,from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x,to.y,{steps:6});
+  await page.mouse.up();
+  const afterDrag=await page.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')));
+  assert.ok(Math.abs(afterDrag.min[0]-first.min[0]-1.1)<.10,'pointer drag must move same part by approx 1.1m');
+  assert.equal(afterDrag.id,first.id);
+  await page.locator('#undo').click();
+  const undone=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'));
+  assert.deepEqual(undone,first,'undo must restore original geometry');
+  await page.locator('#redo').click();
+  const redone=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'));
+  assert.deepEqual(redone,afterDrag,'redo must restore moved geometry');
+  await page.locator('#edit-up').click();
+  const raised=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'));
+  assert.ok(Math.abs(raised.min[2]-redone.min[2]-.25)<1e-8,'height nudge changes same part Z');
+  assert.equal(raised.id,first.id);
+  console.log('PASS REAL DESKTOP DIRECT EDIT: anchored box drag → undo → redo → raise with same identity');
   console.log('PASS real pointer/editor Box3D + exported scene JSON:',
    JSON.stringify({screen:hit,part:final.part,engine:final.engine,saveFormat:saved.format}));
  }catch(e){

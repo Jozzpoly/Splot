@@ -44,3 +44,12 @@ test('reject unsupported types instead of silently fabricating structural physic
  assert.equal(setBoxMotion(scene,'not-found','dynamic').reason,'not-found');
  assert.equal(scene.revision,rev);
 });
+
+test('reject invalid motion types',()=>{
+ const scene=fresh(),rev=scene.revision;
+ const invalid={id:'bad-box',kind:'box',min:[3,3,1],max:[4,4,2],motionType:'flying'};
+ assert.equal(insertElement(scene,invalid).reason,'unsupported-motion-type');
+ const panel={id:'bad-panel',kind:'panel',a:[3,3,0],b:[7,3,2],width:2,thickness:.2,motionType:'dynamic'};
+ assert.equal(insertElement(scene,panel).reason,'unsupported-motion-type');
+ assert.equal(scene.revision,rev);
+});

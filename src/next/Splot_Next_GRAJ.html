@@ -1493,7 +1493,7 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
   // Only compact, self-authored signals; never raw pointer paths or key values.
   append(type,data);
  }
- function observe(world,{engine='unknown'}={}){
+ function observe(world,{engine='unknown',camera=null}={}){
   if(!recording||!world)return;
   if(world!==previousWorld){
    previousWorld=world;lastWorldEvent=null;wasNear=false;
@@ -1535,6 +1535,8 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
    crate:point(crate),boarSurfaceGap:boarGap,grip:world.grip??null,
    // Intent provenance lets later audits separate a reached objective
    // from a blocked physics controller. Not evidence of actual NPC perception.
+   camera:camera?{azimuth:num(camera.azimuth),elevation:num(camera.elevation),
+    target:Array.isArray(camera.target)?camera.target.map(num):null}:null,
    boarIntent:world.boarIntent?{
     phase:world.boarIntent.phase,goal:world.boarIntent.goal,mode:world.boarIntent.mode,
     foodDistance:num(world.boarIntent.foodDistance),
@@ -1553,6 +1555,7 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
  }
  function report(){
   return {format:'splot-playtest-local-v1',source:'Splot Next',startedAt,endedAt,
+   observedAt:iso(),windowSeconds:startedAt!==null?num((clock()-startedMs)/1000):0,
    inProgress:recording,summary:{nearPasses,eventCount:entries.length},
    caveats:['Local browser events do not establish user identity or attention',
     'Sampled actor proximity is not proof of collision or physical impulse',
@@ -2046,7 +2049,7 @@ function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
  const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
  renderer.render(tris,cam);renderOverlay(cam);
- playtest.observe(world,{engine:physicsState});
+ playtest.observe(world,{engine:physicsState,camera:cam});
  if(t-lastHud>260){updatePlaytestStatus();const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);

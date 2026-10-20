@@ -19,6 +19,7 @@ node --test \
  tests/research/scene-restore.test.mjs \
  tests/research/authoring-editor.test.mjs \
  tests/research/camera-timing.test.mjs \
+ tests/research/scene-visual-cache.test.mjs \
  tests/research/box3d-basis.test.mjs \
  tests/research/material-part-lifecycle.test.mjs \
  tests/research/playtest-journal.test.mjs

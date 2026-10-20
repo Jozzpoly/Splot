@@ -25,7 +25,7 @@ const context=await browser.newContext({viewport:{width:1280,height:820}});
 const rootUrl=`http://127.0.0.1:${port}/src/next/Splot_Next_GRAJ.html`;
 let failures=0;
 try{
- for(const probe of ['material','ascent','fall']){
+ for(const probe of ['material','material-stack','ascent','fall']){
   const page=await context.newPage();
   const jsErrors=[],networkErrors=[];
   page.on('pageerror',e=>jsErrors.push(String(e).slice(0,700)));

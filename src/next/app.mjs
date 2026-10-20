@@ -219,7 +219,7 @@ function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
  const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
  renderer.render(tris,cam);renderOverlay(cam);
- playtest.observe(world,{engine:physicsState});
+ playtest.observe(world,{engine:physicsState,camera:cam});
  if(t-lastHud>260){updatePlaytestStatus();const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);

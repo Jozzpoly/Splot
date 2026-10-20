@@ -7,6 +7,7 @@ import {createPlaytestJournal} from './playtest-journal.mjs';
 import {partMotionMode,setBoxMotion} from './part-lifecycle.mjs';
 import {crateTriangles} from './crate-visual.mjs';
 import {summarizePerfFrames} from './perf-metrics.mjs';
+import {restoreResearchWorld,nextAuthoringSequence} from './scene-restore.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
@@ -105,6 +106,43 @@ $('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.d
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+};
+// A local exported JSON restarts PHYSICS from these positions, not velocities.
+// Create the new physics while the previous world is still owned. A malformed
+// file or constructor failure cannot destroy an active Owner experiment.
+$('#load').onclick=()=>$('#load-file').click();
+$('#load-file').onchange=async()=>{
+ const file=$('#load-file').files?.[0];
+ if(!file)return;
+ try{
+  if(file.size>8*1024*1024)throw Error('Plik większy niż 8 MB; nie wczytano.');
+  if(physicsState.startsWith('loading-'))throw Error('Poczekaj na załadowanie fizyki.');
+  const nextWorld=restoreResearchWorld(await file.text());
+  let nextBridge=null;
+  if(physicsState==='box3d'){
+   if(!box3dLibrary)throw Error('Box3D nie jest gotowy.');
+   nextBridge=createBox3DBridge(nextWorld,box3dLibrary,box3dOptions);
+  }else if(physicsState==='rapier'){
+   if(!rapierLibrary)throw Error('Rapier nie jest gotowy.');
+   nextBridge=createRapierBridge(nextWorld,rapierLibrary);
+  }
+  const old=bridge;bridge=nextBridge;world=nextWorld;
+  old?.dispose?.();if(old?.engine?.free)old.engine.free();
+  sequence=nextAuthoringSequence(world);
+  acc=0;last=performance.now();frameMetrics.length=0;prevMetricFrame=0;latestPerf=null;
+  const human=getBody(world,'human');
+  camTarget=[human.x,human.y,human.z+.7];
+  keys.clear();stick.x=0;stick.y=0;stick.active=null;look.id=null;
+  selected=null;cursor=null;selection=0;startPanel=null;
+  paused=true;world.paused=true;$('#pause').textContent='Uruchom';
+  setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
+  playtest.event('scene-loaded',{parts:world.scene.elements.length,bodies:world.bodies.length,
+   mode:'fresh-physics-paused'});
+  actionText('Wczytano '+world.scene.elements.length+' części i '+world.bodies.length+
+   ' ciał. Świat zatrzymany — fizyka ruszy od nowa po „Uruchom”.');
+ }catch(err){
+  actionText('Nie wczytano świata: '+String(err.message||err).slice(0,190));
+ }finally{$('#load-file').value='';}
 };
 function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.x)/r.width*canvas.width,y:(e.clientY-r.y)/r.height*canvas.height};}
 let cursor=null;

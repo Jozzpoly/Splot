@@ -242,6 +242,24 @@ try{
   await resumedPage.screenshot({path:'/tmp/splot-restore-FAIL.png'}).catch(()=>{});
  }
  await resumedPage.close();
+ // The opt-in camera mode must resolve in the SAME playable WASM game.
+ const cameraPage=await context.newPage(),cameraErrors=[];
+ cameraPage.on('pageerror',e=>cameraErrors.push(String(e)));
+ await cameraPage.goto(rootUrl+'?physics=box3d&camera=seconds',{waitUntil:'domcontentloaded'});
+ try{
+  await cameraPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await cameraPage.waitForTimeout(250);
+  const cameraState=await cameraPage.evaluate(()=>{
+   const g=window.__splotNext;
+   return {mode:g.profile().cameraMode,rafFrames:g.profile().frames,cam:g.camera.target};
+  });
+  assert.equal(cameraState.mode,'seconds');
+  assert.ok(cameraState.rafFrames>0);
+  assert.ok(cameraState.cam.every(Number.isFinite));
+  assert.deepEqual(cameraErrors,[]);
+  console.log('PASS REAL CHROME CAMERA A/B: opt-in seconds mode enabled on live Box3D scene');
+ }catch(e){failures++;console.error('FAIL CAMERA A/B',String(e));}
+ await cameraPage.close();
  // Synthetic touch is NOT a physical phone acceptance. It catches the
  // easier but costly failures: hidden tools, pointer ownership, view clipping.
  const mobile=await browser.newContext({viewport:{width:393,height:852},

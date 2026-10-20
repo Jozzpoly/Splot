@@ -1927,7 +1927,7 @@ let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNo
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const researchArgs=new URLSearchParams(location.search);
 // Prevent all background stepping while an external WASM module is fetched.
-if(['ascent','fall','edit','grip','material'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
+if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
 const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
@@ -2182,7 +2182,7 @@ async function startPhysicsChallenger(){
   refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
-  if(['ascent','fall','edit','grip','material'].includes(probe)){
+  if(['ascent','fall','edit','grip','material','material-stack'].includes(probe)){
    bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
    world=createLiveWorld(); // identical deterministic setup for every backend
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
@@ -2192,7 +2192,38 @@ async function startPhysicsChallenger(){
    bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary,box3dOptions);
    world.paused=false;
    let ok=false,detail='';
-   if(probe==='material'){
+   if(probe==='material-stack'){
+    if(choice==='box3d'){
+     // Falsifies a falling-only "success": one player-authored object
+     // must support another, then lose that support when removed.
+     const baseId='stack-base',topId='stack-top';
+     const lower=insertElement(world.scene,{id:baseId,kind:'box',
+      min:[9,6,1],max:[10.2,7.2,2],material:'stone'});
+     const upper=insertElement(world.scene,{id:topId,kind:'box',
+      min:[9,6,4],max:[10.2,7.2,5.1],material:'wood'});
+     bridge.syncStatics();
+     for(let i=0;i<30;i++)bridge.advance(1/60,[0,0]);
+     const up=setBoxMotion(world.scene,topId,'dynamic');bridge.syncStatics();
+     for(let i=0;i<180;i++)bridge.advance(1/60,[0,0]);
+     const held=world.scene.elements.find(e=>e.id===topId),onBase=held?.min[2];
+     const removed=removeElement(world.scene,baseId);bridge.syncStatics();
+     for(let i=0;i<180;i++)bridge.advance(1/60,[0,0]);
+     const falling=world.scene.elements.find(e=>e.id===topId),onGround=falling?.min[2];
+     const groundedSupport=supportCandidates(world.scene,9.6,6.6)
+      .some(h=>h.id===topId&&Math.abs(h.z-1.1)<.12);
+     const stop=setBoxMotion(world.scene,topId,'anchored');bridge.syncStatics();
+     const fixedBottom=world.scene.elements.find(e=>e.id===topId)?.min[2];
+     for(let i=0;i<60;i++)bridge.advance(1/60,[0,0]);
+     const finalBottom=world.scene.elements.find(e=>e.id===topId)?.min[2];
+     ok=lower.ok&&upper.ok&&up.ok&&removed.ok&&stop.ok&&
+      Math.abs(onBase-2)<.12&&Math.abs(onGround)<.12&&
+      groundedSupport&&Math.abs(fixedBottom-finalBottom)<.02;
+     detail='stack-top-on-base='+onBase?.toFixed(2)+
+      ' after-support-removal='+onGround?.toFixed(2)+
+      ' reanchor='+finalBottom?.toFixed(2)+
+      ' shared-support-query='+groundedSupport;
+    }else{ok=false;detail='material-stack unsupported by Rapier';}
+   }else if(probe==='material'){
     if(choice==='box3d'){
      const id='research-falling-block';
      insertElement(world.scene,{id,kind:'box',min:[9,6,4],max:[10.2,7.2,5.1],material:'wood'});

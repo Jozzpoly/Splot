@@ -24,6 +24,7 @@ modules = [
  ("ActorContact","actor-contact.mjs",["compliantActorImpulse"]),
  ("BoarIntent","boar-intent.mjs",["createBoarIntent"]),
  ("PartLifecycle","part-lifecycle.mjs",["partMotionMode","setBoxMotion","boxCenter","translateBoxToCenter","boxVolume"]),
+ ("CrateVisual","crate-visual.mjs",["crateTriangles"]),
  ("Box3DBridge","box3d-live.mjs",["createBox3DBridge"]),
  ("PlaytestJournal","playtest-journal.mjs",["createPlaytestJournal"]),
  ("RapierBridge","rapier-live.mjs",["createRapierBridge"]),

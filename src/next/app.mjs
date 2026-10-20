@@ -4,6 +4,7 @@ import {createRenderer} from './render.mjs';
 import {createRapierBridge} from './rapier-live.mjs';
 import {createBox3DBridge} from './box3d-live.mjs';
 import {createPlaytestJournal} from './playtest-journal.mjs';
+import {partMotionMode,setBoxMotion} from './part-lifecycle.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
@@ -19,6 +20,13 @@ for(const name of ['pointerdown','keydown','wheel']){
  document.addEventListener(name,e=>{
   if(e.isTrusted)playtest.interact(name==='keydown'?'keyboard':name==='wheel'?'wheel':'pointer');
  },{capture:true,passive:true});
+}
+function refreshMaterialUI(){
+ const btn=document.querySelector('[data-mode="material"]');
+ const can=physicsState==='box3d'&&!!bridge?.syncStatics;
+ btn.disabled=!can;
+ btn.title=can?'Wskaż bryłę, aby uwolnić lub zakotwiczyć w bieżącym położeniu':'Dostępne tylko w Box3D R&D';
+ if(!can&&mode==='material')setMode('move');
 }
 function refreshActorContactUI(){
  const btn=$('#actor-contact'),supported=physicsState==='box3d'&&Boolean(bridge?.setActorContactMode);
@@ -75,7 +83,7 @@ $('#test-export').onclick=()=>{
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
-function setMode(m){playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część'}[m]||m);document.body.classList.remove('menu-open');
+function setMode(m){if(m==='material'&&physicsState!=='box3d'){actionText('Uwalnianie brył wymaga Box3D R&D.');return;}playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część',material:'Kotwica / uwolnij bryłę'}[m]||m);document.body.classList.remove('menu-open');
  for(const b of buttons)b.classList.toggle('active',b.dataset.mode===m);
 }
 for(const b of buttons)b.addEventListener('click',()=>setMode(b.dataset.mode));
@@ -91,7 +99,7 @@ $('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.d
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
- camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -116,6 +124,20 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
   const [x,y,z]=a.point,r=insertElement(world.scene,{id:'block-'+sequence++,kind:'box',min:[x-.6,y-.6,z],max:[x+.6,y+.6,z+1.1],material:'stone'});
   playtest.event('build-box',{ok:r.ok});actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
  }
+ if(mode==='material'){
+  if(!bridge?.syncStatics){actionText('Fizyka części wymaga aktywnego Box3D.');return;}
+  const e=world.scene.elements.find(x=>x.id===a.id);
+  if(!e||e.kind!=='box'){
+   actionText('Na tym etapie można uwolnić tylko bryłę. Płyty wymagają modelu rotacji i momentu.');return;
+  }
+  const old=partMotionMode(e),next=old==='dynamic'?'anchored':'dynamic';
+  const r=setBoxMotion(world.scene,e.id,next);
+  if(r.ok){bridge.syncStatics();playtest.event('part-motion-change',{id:e.id,from:old,to:next});
+   actionText(next==='dynamic'?'Uwolniono bryłę. Box3D prowadzi grawitację i kontakt; obrót jest świadomie zablokowany.':
+    'Zakotwiczono bryłę w aktualnym miejscu.');}
+  else actionText('Błąd zmiany stanu: '+r.reason);
+  return;
+ }
  if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
  if(mode==='erase'){
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}
@@ -138,7 +160,7 @@ window.addEventListener('keydown',e=>{
  if(k==='e')$('#grip').click();else if(k==='q')$('#layer').click();
  else if(k==='z')$('#turn-left').click();else if(k==='x')$('#turn-right').click();
  else if(k===' '){$('#pause').click()}else if(k==='r')$('#reset').click();
- else if('12345'.includes(k))setMode(['move','panel','box','crate','erase'][Number(k)-1]);
+ else if('123456'.includes(k))setMode(['move','panel','box','crate','erase','material'][Number(k)-1]);
  else keys.add(k);
 });
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
@@ -241,7 +263,7 @@ async function startPhysicsChallenger(){
    bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
   }
   physicsState=choice;
-  refreshActorContactUI();refreshBoarUI();
+  refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
@@ -284,10 +306,10 @@ async function startPhysicsChallenger(){
    physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
  }catch(err){
-  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   physicsMessage=String(err?.stack||err);
   actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
  }
 }
-refreshActorContactUI();refreshBoarUI();requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok)bridge.syncStatics();return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

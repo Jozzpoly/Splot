@@ -47,3 +47,10 @@ Remaining facts:
 - The local session journal can include old ring-buffer world events at the recorder's first instant (its initial `sec:0` events predate recorder start). Treat the beginning as a snapshot, not a replay history. `startedAt/endedAt` represent recording window only.
 
 **Next decision:** ask the Owner to test the updated URL organically, ideally with dozens of added authored blocks while hundreds of crates remain. Focus on whether the lag truly disappears and whether visual flicker reduces. If it doesn't, capture profile with the same stage labels to isolate the residual culprit. After that, focus on Splot's severely underdeveloped readability, art/feel and world-authoring ergonomics, without another speculative physics rewrite.
+
+## Additional low-friction observation improvement
+The earlier on-screen `ms CPU` readout only timed renderer CPU submission, misleading anyone during physics-heavy lag. The default HUD no longer claims that value measures total CPU. Adding `&perf=1` enables stage-labeled debug medians (simulation, geometry preparation, GL submission CPU and rAF interval). When an Owner explicitly starts local opt-in playtest recording, compact stage medians are also included every ~500 ms in the JSON sample; no data is sent anywhere automatically. **These metrics still do not include GPU timer queries.**
+
+After this change, [CI run 39447031796](https://github.com/Jozzpoly/Splot/actions/runs/39447031796) passed **44 Node tests, 0 failures, 2 TODO**, all real Box3D Chrome physics probes, desktop editor/export and emulated mobile touch. This is a workflow-integrity result, **not** evidence the Owner's original visual flicker has fully disappeared at 341 crates.
+
+The next Owner test should specifically record the default visual experience and a second `?perf=1` session under a comparable crate/box workload if lag remains. The original private video/JSON remain local to the conversation, not published as CI fixtures.

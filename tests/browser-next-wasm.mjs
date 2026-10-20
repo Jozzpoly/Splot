@@ -116,7 +116,18 @@ try{
    return [pixel(point),pixel([point[0]+1.1,point[1],point[2]])];
   },first);
   await page.mouse.move(from.x,from.y);
+  await page.waitForTimeout(60);
+  const overlayPixels=async()=>page.evaluate(()=>{
+   const c=document.querySelector('#overlay'),p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+   let n=0;for(let i=3;i<p.length;i+=4)if(p[i])n++;
+   return n;
+  });
+  const hoverPixels=await overlayPixels();
   await page.mouse.down();
+  await page.waitForTimeout(60);
+  const selectedPixels=await overlayPixels();
+  assert.ok(selectedPixels>hoverPixels+160,
+   'selecting a part must render a persistent geometry outline beyond the hover marker');
   await page.mouse.move(to.x,to.y,{steps:6});
   await page.mouse.up();
   const afterDrag=await page.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')));

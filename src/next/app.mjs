@@ -334,18 +334,39 @@ function renderOverlay(cam){const ctx=$('#overlay').getContext('2d'),w=$('#overl
  if(selected&&mode!=='move'){const p=projectPoint(cam,selected.point),k=$('#overlay').width/cam.width;
   ctx.beginPath();ctx.arc(p.x*k,p.y*k,9*k,0,Math.PI*2);ctx.strokeStyle='#ffd59e';ctx.lineWidth=2*k;ctx.stroke();
  }
- if(editDrag&&Math.hypot(...editDrag.delta)>.035){
-  const e=translatedElement(editDrag.from,editDrag.delta);
-  const pts=e.kind==='box'?
-   [[e.min[0],e.min[1],e.min[2]],[e.max[0],e.min[1],e.min[2]],[e.max[0],e.max[1],e.min[2]],[e.min[0],e.max[1],e.min[2]],
-    [e.min[0],e.min[1],e.max[2]],[e.max[0],e.min[1],e.max[2]],[e.max[0],e.max[1],e.max[2]],[e.min[0],e.max[1],e.max[2]]]:
-   [e.a,e.b];
-  const edges=e.kind==='box'?[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]:[[0,1]];
+ // A persistent selected-part outline, distinct from the drag's proposed pose.
+ // These are visual cues only: the scene and Box3D collider change on commit.
+ const outline=(e,color,dashed=false)=>{
+  let pts,edges;
+  if(e.kind==='box'){
+   pts=[[e.min[0],e.min[1],e.min[2]],[e.max[0],e.min[1],e.min[2]],
+    [e.max[0],e.max[1],e.min[2]],[e.min[0],e.max[1],e.min[2]],
+    [e.min[0],e.min[1],e.max[2]],[e.max[0],e.min[1],e.max[2]],
+    [e.max[0],e.max[1],e.max[2]],[e.min[0],e.max[1],e.max[2]]];
+   edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  }else{
+   const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],len=Math.hypot(dx,dy);
+   if(len<1e-8)return;
+   const sx=-dy/len*e.width/2,sy=dx/len*e.width/2;
+   pts=[[e.a[0]-sx,e.a[1]-sy,e.a[2]],[e.b[0]-sx,e.b[1]-sy,e.b[2]],
+    [e.b[0]+sx,e.b[1]+sy,e.b[2]],[e.a[0]+sx,e.a[1]+sy,e.a[2]]];
+   edges=[[0,1],[1,2],[2,3],[3,0]];
+  }
   const k=$('#overlay').width/cam.width;
-  ctx.strokeStyle='#d7f4bd';ctx.lineWidth=2*k;ctx.setLineDash([6*k,3*k]);
-  for(const [a,b] of edges){const x=projectPoint(cam,pts[a]),y=projectPoint(cam,pts[b]);ctx.beginPath();ctx.moveTo(x.x*k,x.y*k);ctx.lineTo(y.x*k,y.y*k);ctx.stroke();}
+  ctx.strokeStyle=color;ctx.lineWidth=2*k;
+  ctx.setLineDash(dashed?[6*k,3*k]:[]);
+  for(const [a,b] of edges){
+   const x=projectPoint(cam,pts[a]),y=projectPoint(cam,pts[b]);
+   ctx.beginPath();ctx.moveTo(x.x*k,x.y*k);ctx.lineTo(y.x*k,y.y*k);ctx.stroke();
+  }
   ctx.setLineDash([]);
+ };
+ if(mode==='edit'&&editSelectedId){
+  const e=world.scene.elements.find(p=>p.id===editSelectedId);
+  if(e)outline(e,'#ffd59e');
  }
+ if(editDrag&&Math.hypot(...editDrag.delta)>.035)
+  outline(translatedElement(editDrag.from,editDrag.delta),'#d7f4bd',true);
  if(startPanel){const p=projectPoint(cam,startPanel),k=$('#overlay').width/cam.width;ctx.beginPath();ctx.arc(p.x*k,p.y*k,7*k,0,Math.PI*2);ctx.strokeStyle='#d6e3bf';ctx.stroke();}
 }
 function viewport(){const r=canvas.getBoundingClientRect(),gl=renderer.mode==='webgl-depth';const ratio=gl?Math.min(window.devicePixelRatio||1,2):Math.min(.75,Math.max(.46,.70/(Math.max(1,(r.width*r.height)/(970*700)))));

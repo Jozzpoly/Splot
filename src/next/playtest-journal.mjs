@@ -36,7 +36,7 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
   // Only compact, self-authored signals; never raw pointer paths or key values.
   append(type,data);
  }
- function observe(world,{engine='unknown',camera=null}={}){
+ function observe(world,{engine='unknown',camera=null,performance:perf=null}={}){
   if(!recording||!world)return;
   if(world!==previousWorld){
    previousWorld=world;lastWorldEvent=null;wasNear=false;
@@ -85,7 +85,15 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
     foodDistance:num(world.boarIntent.foodDistance),
     playerDistance:num(world.boarIntent.playerDistance)
    }:null,parts:world.scene?.elements?.length??0,
-   dynamicParts:world.scene?.elements?.filter(e=>e.motionType==='dynamic').length??0});
+   dynamicParts:world.scene?.elements?.filter(e=>e.motionType==='dynamic').length??0,
+   // Optional and opt-in per-sample stage medians: not GPU time or a
+   // measure of Owner's attention. Do not record raw event timing paths.
+   perf:perf?{
+    rafP50:num(perf.rafMs?.median),simCpuP50:num(perf.simulationCpuMs?.median),
+    geometryCpuP50:num(perf.geometryCpuMs?.median),
+    submitCpuP50:num(perf.drawSubmissionCpuMs?.median),
+    triangles:num(perf.triangles?.median)
+   }:null});
  }
  function status({visible=true,focused=true}={}){
   const ago=clock()-lastInput;

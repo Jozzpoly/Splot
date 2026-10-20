@@ -205,7 +205,7 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
   }
   const old=partMotionMode(e),next=old==='dynamic'?'anchored':'dynamic';
   const r=setBoxMotion(world.scene,e.id,next);
-  if(r.ok){bridge.syncStatics();playtest.event('part-motion-change',{id:e.id,from:old,to:next});
+  if(r.ok){editHistory.invalidateId(e.id);refreshEditButtons();bridge.syncStatics();playtest.event('part-motion-change',{id:e.id,from:old,to:next});
    actionText(next==='dynamic'?'Uwolniono bryłę. Box3D prowadzi grawitację i kontakt; obrót jest świadomie zablokowany.':
     'Zakotwiczono bryłę w aktualnym miejscu.');}
   else actionText('Błąd zmiany stanu: '+r.reason);
@@ -216,7 +216,9 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
  if(mode==='erase'){
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}
   const e=world.scene.elements.find(x=>x.id===a.id);
-  const r=e?.kind==='box'&&e.motionType==='dynamic'?removeElement(world.scene,a.id):editHistory.apply(world.scene,e||null,null);
+  const external=e?.kind==='box'&&e.motionType==='dynamic';
+  const r=external?removeElement(world.scene,a.id):editHistory.apply(world.scene,e||null,null);
+  if(r.ok&&external)editHistory.invalidateId(a.id);
   refreshEditButtons();playtest.event('delete-part',{ok:r.ok,id:a.id});
   actionText(r.ok?'Element usunięty; ciała zareagują na utratę podparcia.':'Odmowa: '+r.reason);
  }
@@ -510,4 +512,4 @@ async function startPhysicsChallenger(){
  }
 }
 refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok)bridge.syncStatics();return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

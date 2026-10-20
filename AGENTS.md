@@ -1,5 +1,7 @@
 # Splot — kontrakt pracy agentów
 
+> **Przed nowym runem na Splot Next:** odzyskaj [docs/START_NEXT_SESSION_2026-10-21.md](docs/START_NEXT_SESSION_2026-10-21.md). To stan badawczy, nie zastępcza lista implementacji ani zgoda na awans do main.
+
 1. **Owner-observed FAIL ma veto** nad PASS kernela, estetyki lub syntetycznej przeglądarki. Nie usprawiedliwiaj gorszej gry czystszą geometrią.
 2. **Nie promuj laboratorium do następcy gry.** K3 ma dawstwo geometrii, ale nie odziedziczył chwytu, dzika, autorstwa, świata ani języka obrazu — Owner odrzucił go jako grę.
 3. Zmiana substytutu może wyrzucić cały stary kod. Musi jednak jawnie porównać realne możliwości: ruch, chwyt, pchanie, porzucanie, edycję w kilku regionach, autonomię, zapis, kadr i telefon. Zastępuj możliwości czymś lepszym, nie licz linijek.

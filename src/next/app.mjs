@@ -5,6 +5,7 @@ import {createRapierBridge} from './rapier-live.mjs';
 import {createBox3DBridge} from './box3d-live.mjs';
 import {createPlaytestJournal} from './playtest-journal.mjs';
 import {partMotionMode,setBoxMotion} from './part-lifecycle.mjs';
+import {crateTriangles} from './crate-visual.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
@@ -195,18 +196,7 @@ function box(x,y,z,rx,ry,h,material){return trianglesFor({kind:'box',id:'visual-
 function actorsMesh(){let out=[];
  for(const b of world.bodies){
   if(b.kind==='crate'){
-   // Previous visual base and lid had coincident outward-facing top surfaces.
-   // Keep a single exterior face and omit both sealed interior faces.
-   // Solver shape, center and contact geometry are deliberately unchanged.
-   const lid=.07;
-   const base=trianglesFor({kind:'box',id:b.id,
-    min:[b.x-b.r,b.y-b.r,b.z],
-    max:[b.x+b.r,b.y+b.r,b.z+b.h-lid]});
-   const cap=trianglesFor({kind:'box',id:b.id,
-    min:[b.x-b.r-.018,b.y-b.r-.018,b.z+b.h-lid],
-    max:[b.x+b.r+.018,b.y+b.r+.018,b.z+b.h]});
-   out.push(...base.filter(t=>t.face!=='top').map(t=>({...t,material:'crate'})),
-            ...cap.filter(t=>t.face!=='bottom').map(t=>({...t,material:'wood'})));
+   out.push(...crateTriangles(b));
   }else if(b.kind==='boar'){
    out.push(...box(b.x,b.y,b.z+.15,.42,.3,.55,'boar'));
    out.push(...box(b.x+.32,b.y,b.z+.25,.25,.24,.28,'skin'));

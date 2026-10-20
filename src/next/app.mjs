@@ -231,16 +231,38 @@ function keyDirection(){let dx=Number(keys.has('d')||keys.has('arrowright'))-Num
  const right=cam.right,up=cam.up;let vx=right[0]*dx+up[0]*dy,vy=right[1]*dx+up[1]*dy;
  const len=Math.hypot(vx,vy),power=Math.min(1,Math.hypot(dx,dy));return len?[vx/len*power,vy/len*power]:[0,0];
 }
-function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
+// Read-only rolling diagnostic. Rendering cost measures CPU submission;
+// rAF frame spacing is not a GPU timestamp and not an isolated physics rate.
+const frameMetrics=[];let prevMetricFrame=0;
+function profile(){
+ const metrics=frameMetrics.slice(),vals=k=>metrics.map(x=>x[k]).filter(Number.isFinite).sort((a,b)=>a-b);
+ const quant=(v,q)=>v.length?v[Math.min(v.length-1,Math.floor((v.length-1)*q))]:null;
+ const out={frames:metrics.length,renderer:renderer.mode};
+ for(const key of ['rafMs','simulationCpuMs','geometryCpuMs','drawSubmissionCpuMs','triangles']){
+  const values=vals(key);out[key]={median:quant(values,.5),p95:quant(values,.95)};
+ }
+ return out;
+}
+function frame(t){
+ const rafMs=prevMetricFrame?t-prevMetricFrame:NaN;prevMetricFrame=t;
+ let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  const info=viewport(),p=getBody(world,'human');
  camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;
  cam=makeCamera({target:camTarget,azimuth:rot,elevation:1.03,...info});
+ const physicsStart=performance.now();
  if(!paused){let iter=0;while(acc>=1/60&&iter<4){
   if(bridge)bridge.advance(1/60,keyDirection());else stepLive(world,1/60,keyDirection());
   acc-=1/60;iter++;}}
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
+ const simulationCpuMs=performance.now()-physicsStart;
+ const geometryStart=performance.now();
  const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
+ const geometryCpuMs=performance.now()-geometryStart;
+ const drawStart=performance.now();
  renderer.render(tris,cam);renderOverlay(cam);
+ const drawSubmissionCpuMs=performance.now()-drawStart;
+ frameMetrics.push({rafMs,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
+ if(frameMetrics.length>180)frameMetrics.shift();
  playtest.observe(world,{engine:physicsState,camera:cam});
  if(t-lastHud>260){updatePlaytestStatus();const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
@@ -367,4 +389,4 @@ async function startPhysicsChallenger(){
  }
 }
 refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok)bridge.syncStatics();return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok)bridge.syncStatics();return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

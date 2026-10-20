@@ -36,7 +36,7 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
   // Only compact, self-authored signals; never raw pointer paths or key values.
   append(type,data);
  }
- function observe(world,{engine='unknown'}={}){
+ function observe(world,{engine='unknown',camera=null}={}){
   if(!recording||!world)return;
   if(world!==previousWorld){
    previousWorld=world;lastWorldEvent=null;wasNear=false;
@@ -78,6 +78,8 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
    crate:point(crate),boarSurfaceGap:boarGap,grip:world.grip??null,
    // Intent provenance lets later audits separate a reached objective
    // from a blocked physics controller. Not evidence of actual NPC perception.
+   camera:camera?{azimuth:num(camera.azimuth),elevation:num(camera.elevation),
+    target:Array.isArray(camera.target)?camera.target.map(num):null}:null,
    boarIntent:world.boarIntent?{
     phase:world.boarIntent.phase,goal:world.boarIntent.goal,mode:world.boarIntent.mode,
     foodDistance:num(world.boarIntent.foodDistance),
@@ -96,6 +98,7 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
  }
  function report(){
   return {format:'splot-playtest-local-v1',source:'Splot Next',startedAt,endedAt,
+   observedAt:iso(),windowSeconds:startedAt!==null?num((clock()-startedMs)/1000):0,
    inProgress:recording,summary:{nearPasses,eventCount:entries.length},
    caveats:['Local browser events do not establish user identity or attention',
     'Sampled actor proximity is not proof of collision or physical impulse',

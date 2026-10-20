@@ -255,8 +255,10 @@ function frame(t){
  const drawStart=performance.now();
  renderer.render(tris,cam);renderOverlay(cam);
  const drawSubmissionCpuMs=performance.now()-drawStart;
- frameMetrics.push({rafMs,physicsSteps,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
- if(frameMetrics.length>180)frameMetrics.shift();
+ frameMetrics.push({frameTimeMs:t,rafMs,physicsSteps,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
+ // A fixed number of frames meant 0.75 s at 240 Hz, 3 s at 60 Hz.
+ // Keep a time-based ~2 s window; bound memory even under odd clocks.
+ while(frameMetrics.length&&(frameMetrics[0].frameTimeMs<t-2000||frameMetrics.length>1000))frameMetrics.shift();
  // Profile is derived twice per second, not sorted once per render frame.
  if(t-lastHud>260)latestPerf=profile();
  playtest.observe(world,{engine:physicsState,camera:cam,performance:latestPerf});

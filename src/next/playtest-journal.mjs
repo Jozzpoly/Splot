@@ -92,7 +92,13 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
     rafP50:num(perf.rafMs?.median),simCpuP50:num(perf.simulationCpuMs?.median),
     geometryCpuP50:num(perf.geometryCpuMs?.median),
     submitCpuP50:num(perf.drawSubmissionCpuMs?.median),
-    triangles:num(perf.triangles?.median)
+    triangles:num(perf.triangles?.median),
+    // Step-aware measurements: avoid the misleading zero median at 240Hz.
+    physicsSteps:num(perf.physics?.steps),
+    physicsCpuMsPerStep:num(perf.physics?.cpuMsPerStep),
+    physicsCpuMsPerWallSecond:num(perf.physics?.cpuMsPerWallSecond),
+    physicsWindowMs:num(perf.physics?.windowWallMs),
+    physicsActiveFrames:num(perf.physics?.framesWithSteps)
    }:null});
  }
  function status({visible=true,focused=true}={}){

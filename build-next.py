@@ -27,6 +27,7 @@ modules = [
  ("CrateVisual","crate-visual.mjs",["crateTriangles"]),
  ("PerfMetrics","perf-metrics.mjs",["summarizePerfFrames"]),
  ("AuthoringEditor","authoring-editor.mjs",["createEditHistory","translatedElement","screenOnHeightPlane"]),
+ ("CameraTiming","camera-timing.mjs",["followGainForSeconds","advanceCameraTarget"]),
  ("SceneRestore","scene-restore.mjs",["restoreResearchWorld","nextAuthoringSequence"]),
  ("Box3DBridge","box3d-live.mjs",["createBox3DBridge"]),
  ("PlaytestJournal","playtest-journal.mjs",["createPlaytestJournal"]),

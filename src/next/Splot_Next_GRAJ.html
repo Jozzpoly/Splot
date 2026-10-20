@@ -1326,6 +1326,8 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
    // on authored replaceElement. Never recreate every tick.
    if(!e||partMotionMode(e)!=='dynamic'||entry.element!==e){
     b3.b3DestroyBody(entry.rb);dynamicParts.delete(id);
+    if(e&&partMotionMode(e)==='anchored')
+     w.events.push({type:'part-anchored',id,time:w.time});
    }
   }
   for(const [id,e]of current){
@@ -1623,7 +1625,8 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
     phase:world.boarIntent.phase,goal:world.boarIntent.goal,mode:world.boarIntent.mode,
     foodDistance:num(world.boarIntent.foodDistance),
     playerDistance:num(world.boarIntent.playerDistance)
-   }:null,parts:world.scene?.elements?.length??0});
+   }:null,parts:world.scene?.elements?.length??0,
+   dynamicParts:world.scene?.elements?.filter(e=>e.motionType==='dynamic').length??0});
  }
  function status({visible=true,focused=true}={}){
   const ago=clock()-lastInput;

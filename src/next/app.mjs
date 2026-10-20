@@ -11,7 +11,7 @@ let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physi
 const researchArgs=new URLSearchParams(location.search);
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost'};
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();
@@ -36,6 +36,23 @@ $('#actor-contact').onclick=()=>{
   'Próba impulsu R&D; w testach nadal występuje silne przenikanie. Nie jest to naprawa kolizji.':
   'Swobodne mijanie aktorów — kontrola.');
  refreshActorContactUI();
+};
+function refreshBoarUI(){
+ const btn=$('#boar-behavior'),supported=physicsState==='box3d'&&Boolean(bridge?.setBoarMode);
+ btn.disabled=!supported;
+ const mode=supported?bridge.boarMode:box3dOptions.boarMode;
+ btn.textContent=supported?(mode==='responsive'?'Dzik: reaguje':'Dzik: żeruje'):'Dzik: Box3D';
+ btn.classList.toggle('active',supported&&mode==='responsive');
+}
+$('#boar-behavior').onclick=()=>{
+ if(physicsState!=='box3d'||!bridge?.setBoarMode)return;
+ const mode=bridge.boarMode==='forage'?'responsive':'forage';
+ bridge.setBoarMode(mode);box3dOptions.boarMode=mode;
+ playtest.event('boar-behavior-mode',{mode});
+ actionText(mode==='responsive'?
+  'Dzik reaguje na bliskiego gracza, nie otrzymuje twardej kolizji.':
+  'Dzik wraca do jedzenia; przy pokarmie odpoczywa.');
+ refreshBoarUI();
 };
 function updatePlaytestStatus(){
  $('#test-status').textContent=playtest.status({visible:!document.hidden,focused:document.hasFocus()}).label;
@@ -74,7 +91,7 @@ $('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.d
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
- camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -224,7 +241,7 @@ async function startPhysicsChallenger(){
    bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
   }
   physicsState=choice;
-  refreshActorContactUI();
+  refreshActorContactUI();refreshBoarUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
   if(['ascent','fall','edit','grip'].includes(probe)){
@@ -267,10 +284,10 @@ async function startPhysicsChallenger(){
    physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
  }catch(err){
-  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();
   physicsMessage=String(err?.stack||err);
   actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
  }
 }
-refreshActorContactUI();requestAnimationFrame(frame);void startPhysicsChallenger();
+refreshActorContactUI();refreshBoarUI();requestAnimationFrame(frame);void startPhysicsChallenger();
 window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

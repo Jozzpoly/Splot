@@ -112,6 +112,77 @@ try{
   await page.screenshot({path:'/tmp/splot-manual-ui-FAIL.png'}).catch(()=>{});
  }
  await page.close();
+ // Browser-level scene restore. ~132 authored parts and 59 crates are
+ // synthetic but match the SHAPE/SCALE of the Owner's private exported world.
+ // Do not commit the private raw save into a public test fixture.
+ const resumedPage=await context.newPage();
+ const reloadErrors=[];resumedPage.on('pageerror',e=>reloadErrors.push(String(e)));
+ await resumedPage.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await resumedPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const snapshot=await resumedPage.evaluate(()=>{
+   const w=window.__splotNext.world;
+   const saved={format:'splot-next-live-research-1',scene:JSON.parse(JSON.stringify(w.scene)),
+    bodies:JSON.parse(JSON.stringify(w.bodies)),time:204.43};
+   for(let i=0;i<125;i++){
+    const z=i===124?4:0, x=3+(i%12)*2.6,y=3+Math.floor(i/12)*2.4;
+    saved.scene.elements.push({id:'block-'+(i+10),kind:'box',
+     min:[x,y,z],max:[x+1.2,y+1.2,z+1.1],material:'stone',
+     ...(i===124?{motionType:'dynamic'}:{})});
+   }
+   saved.scene.revision=133;
+   for(let i=2;i<=59;i++)saved.bodies.push({id:'crate-'+i,kind:'crate',
+    x:2.5+(i%11)*2.2,y:2.5+Math.floor(i/11)*2.3,z:0,r:.43,h:.86,
+    mass:36,support:'ground',vz:0,yaw:0});
+   saved.bodies.find(b=>b.id==='human').x=21;
+   saved.bodies.find(b=>b.id==='human').y=16;
+   return saved;
+  });
+  await resumedPage.locator('#load-file').setInputFiles({name:'Splot_Nowy_Rozdzial.json',
+   mimeType:'application/json',buffer:Buffer.from(JSON.stringify(snapshot))});
+  await resumedPage.waitForFunction(()=>window.__splotNext?.world?.scene?.elements.length===132,null,{timeout:20000});
+  const initial=await resumedPage.evaluate(()=>{
+   const g=window.__splotNext;return {parts:g.world.scene.elements.length,
+    bodies:g.world.bodies.length,revision:g.world.scene.revision,
+    time:g.world.time,dynamic:g.challenger.status.dynamicParts,
+    mode:document.querySelector('#pause')?.textContent,
+    freshVelocity:g.world.bodies.find(b=>b.id==='human').vz};
+  });
+  assert.equal(initial.parts,132);assert.equal(initial.bodies,61);
+  assert.equal(initial.dynamic,1);assert.equal(initial.revision,133);
+  assert.equal(initial.mode,'Uruchom');assert.equal(initial.freshVelocity,0);
+  await resumedPage.locator('#pause').click();
+  await resumedPage.waitForFunction(()=>window.__splotNext?.world?.time>204.46,null,{timeout:8000});
+  await resumedPage.locator('#pause').click();
+  await resumedPage.locator('[data-mode="box"]').click();
+  const xy=await resumedPage.evaluate(v=>{
+   const c=window.__splotNext.camera,p=projectPoint(c,v);
+   const el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   return {x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height};
+  },[21,18,0]);
+  await resumedPage.mouse.click(xy.x,xy.y);
+  const built=await resumedPage.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-135'));
+  assert.ok(built,'editor must continue building with no duplicate ID after load');
+  const corrupt={...snapshot,bodies:[...snapshot.bodies,snapshot.bodies[0]]};
+  await resumedPage.locator('#load-file').setInputFiles({name:'broken.json',
+   mimeType:'application/json',buffer:Buffer.from(JSON.stringify(corrupt))});
+  await resumedPage.waitForFunction(()=>document.querySelector('#notice')?.textContent?.includes('Nie wczytano świata'),null,{timeout:5000});
+  assert.equal(await resumedPage.evaluate(()=>window.__splotNext.world.scene.elements.length),133,
+   'malformed import must leave current edited world intact');
+  assert.deepEqual(reloadErrors,[],'no runtime exception in imported play');
+  console.log('PASS REAL CHROME RESTORE: 132 authored + 61 bodies → Box3D fresh paused → resume → edit → unsafe import rejected');
+ }catch(e){
+  failures++;console.error('FAIL browser scene restore:',String(e));
+  console.error('RESTORE SNAPSHOT',await resumedPage.evaluate(()=>({
+   physics:window.__splotNext?.physics,mode:window.__splotNext?.mode,
+   elements:window.__splotNext?.world?.scene?.elements.length,
+   bodies:window.__splotNext?.world?.bodies.length,
+   notice:document.querySelector('#notice')?.textContent,
+   errors:document.querySelector('#hud')?.textContent})));
+  if(reloadErrors.length)console.error('JS ERRORS',reloadErrors);
+  await resumedPage.screenshot({path:'/tmp/splot-restore-FAIL.png'}).catch(()=>{});
+ }
+ await resumedPage.close();
  // Synthetic touch is NOT a physical phone acceptance. It catches the
  // easier but costly failures: hidden tools, pointer ownership, view clipping.
  const mobile=await browser.newContext({viewport:{width:393,height:852},

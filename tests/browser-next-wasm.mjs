@@ -132,6 +132,26 @@ try{
   const raised=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10'));
   assert.ok(Math.abs(raised.min[2]-redone.min[2]-.25)<1e-8,'height nudge changes same part Z');
   assert.equal(raised.id,first.id);
+  // Panel orientation and slope must survive the same gesture: shape
+  // editing is not allowed to flatten the material support topology.
+  const panelBefore=await page.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')));
+  const [panelFrom,panelTo]=await page.evaluate(e=>{
+   const c=window.__splotNext.camera,el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   const pt=[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2,(e.a[2]+e.b[2])/2];
+   const scr=p=>{const v=projectPoint(c,p);return {x:r.left+v.x/el.width*r.width,y:r.top+v.y/el.height*r.height};};
+   return [scr(pt),scr([pt[0],pt[1]+.8,pt[2]])];
+  },panelBefore);
+  await page.mouse.move(panelFrom.x,panelFrom.y);
+  await page.mouse.down();
+  await page.mouse.move(panelTo.x,panelTo.y,{steps:6});
+  await page.mouse.up();
+  const panelAfter=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck'));
+  assert.ok(Math.abs(panelAfter.a[1]-panelBefore.a[1]-.8)<.15,'panel drag must translate source A/B rather than replace topology');
+  assert.ok(Math.abs((panelAfter.b[2]-panelAfter.a[2])-(panelBefore.b[2]-panelBefore.a[2]))<1e-8);
+  await page.locator('#undo').click();
+  assert.deepEqual(await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')),
+   panelBefore,'panel undo must restore existing deck');
+  console.log('PASS REAL DESKTOP PANEL EDIT: translation preserves material shape and undo');
   console.log('PASS REAL DESKTOP DIRECT EDIT: anchored box drag → undo → redo → raise with same identity');
   console.log('PASS real pointer/editor Box3D + exported scene JSON:',
    JSON.stringify({screen:hit,part:final.part,engine:final.engine,saveFormat:saved.format}));

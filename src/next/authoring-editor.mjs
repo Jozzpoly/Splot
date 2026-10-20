@@ -56,6 +56,20 @@ export function createEditHistory(limit=64){
    const c=future[future.length-1],r=applyChange(world,c.from,c.to);
    if(r.ok){future.pop();past.push(c);}return r;
   },
+  // An external solver/lifecycle mutation must not leave stale commands
+  // at the top of the undo stack, blocking other independent construction.
+  // Keep commands on OTHER parts: a free-running crate cannot erase a
+  // valid edit to an unrelated bridge panel.
+  invalidateId(id){
+   let removed=0;
+   for(const stack of [past,future]){
+    for(let i=stack.length-1;i>=0;i--){
+     const c=stack[i];
+     if(c.from?.id===id||c.to?.id===id){stack.splice(i,1);removed++;}
+    }
+   }
+   return removed;
+  },
   clear(){past.length=0;future.length=0;},
   get canUndo(){return past.length>0;},
   get canRedo(){return future.length>0;}

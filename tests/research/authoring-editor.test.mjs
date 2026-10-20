@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSpatialWorld,insertElement} from '../../src/next/spatial-core.mjs';
-import {createEditHistory,translatedElement,screenOnHeightPlane} from '../../src/next/authoring-editor.mjs';
-import {makeCamera,projectPoint} from '../../src/next/spatial-core.mjs';
+import {createEditHistory,translatedElement,screenOnHeightPlane,uniquePartHits} from '../../src/next/authoring-editor.mjs';
+import {makeCamera,projectPoint,castRay} from '../../src/next/spatial-core.mjs';
 const box=(id='a')=>({id,kind:'box',min:[2,3,1],max:[4,5,3],material:'stone'});
 const panel=()=>({id:'p',kind:'panel',a:[4,4,0],b:[8,4,2],width:2,thickness:.22,material:'wood'});
 const world=()=>{const w=createSpatialWorld({width:42,height:32});insertElement(w,box());insertElement(w,panel());return w;};
@@ -91,4 +91,19 @@ test('history invalidation does not resurrect solver-controlled deletions',()=>{
  assert.equal(h.invalidateId('extra'),2);
  assert.equal(h.undo(w).reason,'empty');
  assert.equal(w.elements.some(e=>e.id==='extra'),false);
+});
+
+test('part selection deduplicates front/back faces but keeps raw placement rays',()=>{
+ const w=world(),hits=castRay(w,[3,4,12],[0,0,-1]);
+ assert.deepEqual(hits.map(h=>h.id),['a','a','ground']);
+ const parts=uniquePartHits(hits);
+ assert.deepEqual(parts.map(h=>h.id),['a']);
+ assert.equal(parts[0],hits[0]);
+ assert.equal(hits.length,3);
+});
+test('overlapping authored parts remain individually selectable',()=>{
+ const w=world(),b=box('b');b.min[2]=.5;b.max[2]=1.5;
+ assert.equal(insertElement(w,b).ok,true);
+ assert.deepEqual(uniquePartHits(castRay(w,[3,4,12],[0,0,-1])).map(h=>h.id),['a','b']);
+ assert.deepEqual(uniquePartHits([]),[]);
 });

@@ -26,7 +26,7 @@ modules = [
  ("PartLifecycle","part-lifecycle.mjs",["partMotionMode","setBoxMotion","boxCenter","translateBoxToCenter","boxVolume"]),
  ("CrateVisual","crate-visual.mjs",["crateTriangles"]),
  ("PerfMetrics","perf-metrics.mjs",["summarizePerfFrames"]),
- ("AuthoringEditor","authoring-editor.mjs",["createEditHistory","translatedElement","screenOnHeightPlane"]),
+ ("AuthoringEditor","authoring-editor.mjs",["createEditHistory","translatedElement","screenOnHeightPlane","uniquePartHits"]),
  ("CameraTiming","camera-timing.mjs",["followGainForSeconds","advanceCameraTarget"]),
  ("SceneVisualCache","scene-visual-cache.mjs",["createSceneVisualCache"]),
  ("SceneRestore","scene-restore.mjs",["restoreResearchWorld","nextAuthoringSequence"]),

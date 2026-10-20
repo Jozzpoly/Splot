@@ -328,6 +328,7 @@ try{
   assert.ok(anchoredMobile&&anchoredMobile.kind==='box');
   await phone.locator('#mobile-menu').tap();
   await phone.locator('[data-mode="edit"]').tap();
+  assert.ok(await phone.locator('#target').isVisible(),'mobile must show targeted part/layer');
   const [touchStart,touchEnd]=await phone.evaluate(e=>{
    const c=window.__splotNext.camera,canvas=document.querySelector('#world'),r=canvas.getBoundingClientRect();
    const xyz=[(e.min[0]+e.max[0])/2,(e.min[1]+e.max[1])/2,e.max[2]];

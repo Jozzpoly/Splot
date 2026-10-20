@@ -3,6 +3,15 @@
 import {insertElement,removeElement,replaceElement,rayFromPixel} from './spatial-core.mjs';
 const copy=v=>v===null?null:JSON.parse(JSON.stringify(v));
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+// In material tools, one selectable target per part, not per intersected face.
+// Keep raw face hits in placement tools for intentional support elevation.
+export function uniquePartHits(hits){
+ const seen=new Set();
+ return hits.filter(hit=>{
+  if(!hit||typeof hit.id!=='string'||hit.id==='ground'||seen.has(hit.id))return false;
+  seen.add(hit.id);return true;
+ });
+}
 export function translatedElement(e,[dx,dy,dz]){
  if(!e||!['box','panel'].includes(e.kind))throw Error('unsupported-element');
  if(![dx,dy,dz].every(Number.isFinite))throw Error('invalid-translation');

@@ -8,7 +8,7 @@ import {partMotionMode,setBoxMotion} from './part-lifecycle.mjs';
 import {crateTriangles} from './crate-visual.mjs';
 import {summarizePerfFrames} from './perf-metrics.mjs';
 import {restoreResearchWorld,nextAuthoringSequence} from './scene-restore.mjs';
-import {createEditHistory,translatedElement,screenOnHeightPlane} from './authoring-editor.mjs';
+import {createEditHistory,translatedElement,screenOnHeightPlane,uniquePartHits} from './authoring-editor.mjs';
 import {advanceCameraTarget} from './camera-timing.mjs';
 import {createSceneVisualCache} from './scene-visual-cache.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
@@ -183,9 +183,13 @@ $('#load-file').onchange=async()=>{
 };
 function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.x)/r.width*canvas.width,y:(e.clientY-r.y)/r.height*canvas.height};}
 let cursor=null;
-function refreshSelection(){if(!cam||!cursor)return;const hits=pickPixel(world.scene,cam,cursor.x,cursor.y);
+function refreshSelection(){if(!cam||!cursor)return;
+ const rawHits=pickPixel(world.scene,cam,cursor.x,cursor.y);
+ const partTool=['edit','erase','material'].includes(mode);
+ const hits=partTool?uniquePartHits(rawHits):rawHits;
  selected=hits.length?hits[selection%hits.length]:null;
- const a=selected;$('#target').textContent=a?`${a.id} • ${a.point[2].toFixed(2)} m • warstwa ${selection%hits.length+1}/${hits.length}`:'Brak powierzchni pod kursorem';
+ const a=selected;$('#target').textContent=a?`${a.id} • Z ${a.point[2].toFixed(2)} m • ${partTool?'element':'warstwa'} ${selection%hits.length+1}/${hits.length}`:
+  (partTool?'Brak części pod kursorem':'Brak powierzchni pod kursorem');
 }
 function clickWorld(p){cursor=p;refreshSelection();const a=selected;
  if(mode==='move')return;

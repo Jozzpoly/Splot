@@ -45,4 +45,5 @@ jobs:
           command -v google-chrome || command -v chromium
           node tests/browser-next-wasm.mjs
       - name: Research CPU and rAF performance A/B
+        if: github.event_name == 'workflow_dispatch'
         run: node tests/browser-next-perf.mjs

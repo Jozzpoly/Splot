@@ -105,3 +105,21 @@ test('opt-in trace stores stage performance without claiming GPU speed or presen
  assert.equal(sample.data.perf.triangles,6982);
  j.stop();
 });
+
+test('step-aware opt-in metrics preserve CPU cost even when legacy frame median is zero',()=>{
+ const {journal:j}=mock(),w=scene();
+ j.start({engine:'box3d'});
+ j.observe(w,{engine:'box3d',performance:{
+  rafMs:{median:4.2},simulationCpuMs:{median:0},
+  geometryCpuMs:{median:1.0},drawSubmissionCpuMs:{median:.7},
+  triangles:{median:3354},
+  physics:{steps:42,cpuMsPerStep:.83,cpuMsPerWallSecond:50,
+   windowWallMs:850,framesWithSteps:42}
+ }});
+ const sample=j.report().events.find(e=>e.type==='sample');
+ assert.equal(sample.data.perf.simCpuP50,0);
+ assert.equal(sample.data.perf.physicsSteps,42);
+ assert.equal(sample.data.perf.physicsCpuMsPerStep,.83);
+ assert.equal(sample.data.perf.physicsActiveFrames,42);
+ j.stop();
+});

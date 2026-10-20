@@ -17,6 +17,7 @@ export function summarizePerfFrames(frames){
   steps,
   framesWithSteps:stepping.length,
   medianActiveFrameCpuMs:percentile(active,.5),
+  p95ActiveFrameCpuMs:percentile(active,.95),
   cpuMsPerStep:steps?simMs/steps:null,
   cpuMsPerWallSecond:wallMs>0?simMs*1000/wallMs:null,
   windowWallMs:wallMs,

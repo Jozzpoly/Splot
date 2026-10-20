@@ -17,6 +17,7 @@ node --test \
  tests/research/crate-visual.test.mjs \
  tests/research/perf-metrics.test.mjs \
  tests/research/scene-restore.test.mjs \
+ tests/research/authoring-editor.test.mjs \
  tests/research/box3d-basis.test.mjs \
  tests/research/material-part-lifecycle.test.mjs \
  tests/research/playtest-journal.test.mjs

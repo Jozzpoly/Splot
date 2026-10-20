@@ -60,6 +60,6 @@ test('history bounded, clear drops entries, invalid transforms preserve scene',(
  assert.equal(h.undo(w).reason,'empty');
  h.clear();assert.equal(h.redo(w).reason,'empty');
  const current=structuredClone(w.elements[0]);
- assert.equal(h.apply(w,current,translatedElement(current,[Infinity,0,0])).ok,false);
+ assert.throws(()=>translatedElement(current,[Infinity,0,0]),/invalid-translation/);
  assert.deepEqual(w.elements[0],current);
 });

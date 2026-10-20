@@ -1,4 +1,7 @@
 # Splot — punkt odzyskania po kampanii 19–20.10.2026
+
+> **Aktualizacja po wznowieniu pracy, 20.10.2026, ok. 16:05 czasu polskiego — uzupełnia nocny checkpoint.** Pierwsza poważna bramka jest teraz **zaliczona w rzeczywistym Chrome + Box3D WASM**, nie tylko w mocku. GitHub Actions [39435938142](https://github.com/Jozzpoly/Splot/actions/runs/39435938142) wykonał 4/4 scenariusze fizyczne (uwolnienie/reanchor; górna bryła ląduje na dolnej, po usunięciu podpory spada; rampa; upadek człowieka po usunięciu pomostu), faktyczne kliknięcia desktopowego edytora, pobranie i weryfikację JSON oraz syntetyczny dotyk w emulacji 393×852. Deterministyczne testy Node: **38 PASS, 2 TODO**. Zastrzeżenia starszego checkpointu o *niewykonaniu testu WASM* dotyczą stanu nocnego i są już nieaktualne; **nie** oznacza to fizycznego testu telefonu, akceptacji Ownera, ruchomych podpór pod graczem, obrotów, 1k obiektów ani jakości obrazu.
+
 **Agent-only entrypoint · stan źródłowy: draft PR #5 · bez promocji na main**
 
 **Najkrótsza prawda:** Splot jest projektem grywalnego, żywego, materialnie konsekwentnego świata, a nie laboratorium czystej geometrii. W ciągu tej kampanii przeszliśmy od ślepego limitu K2/painter do odrębnego XYZ + depth + Box3D Donor i pierwszych realnych testów Ownera. To ważna poprawa, ale nowe konstrukcje dynamiczne (PR #5) **nie są jeszcze sprawdzone na realnym Box3D**. K2 pozostaje punktem kontrolnym, a preferencja Ownera to **Box3D**, nie bezwzględny nakaz ani dowód wyższości solvera.

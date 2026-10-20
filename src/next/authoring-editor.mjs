@@ -1,0 +1,63 @@
+// One authored scene transaction per intentional edit, not per drag frame.
+// Box3D owns dynamic poses; history must not overwrite moving solver bodies.
+import {insertElement,removeElement,replaceElement,rayFromPixel} from './spatial-core.mjs';
+const copy=v=>v===null?null:JSON.parse(JSON.stringify(v));
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+export function translatedElement(e,[dx,dy,dz]){
+ if(!e||!['box','panel'].includes(e.kind))throw Error('unsupported-element');
+ if(![dx,dy,dz].every(Number.isFinite))throw Error('invalid-translation');
+ const q=copy(e);
+ const t=p=>p.map((x,i)=>x+[dx,dy,dz][i]);
+ if(q.kind==='box'){q.min=t(q.min);q.max=t(q.max);}
+ else {q.a=t(q.a);q.b=t(q.b);}
+ return q;
+}
+export function screenOnHeightPlane(camera,x,y,z){
+ if(!Number.isFinite(z))return null;
+ const ray=rayFromPixel(camera,x,y);
+ if(Math.abs(ray.direction[2])<1e-8)return null;
+ const dt=(z-ray.origin[2])/ray.direction[2];
+ if(!Number.isFinite(dt)||dt<0)return null;
+ return ray.origin.map((v,i)=>v+dt*ray.direction[i]);
+}
+export function createEditHistory(limit=64){
+ if(!Number.isInteger(limit)||limit<1||limit>500)throw Error('invalid-history-limit');
+ const past=[],future=[];
+ const find=(world,id)=>world.elements.find(e=>e.id===id)||null;
+ // Both expected and target are immutable snapshots. First validate current
+ // authorship identity, then use core's only authoritative scene operations.
+ const applyChange=(world,from,to)=>{
+  const id=to?.id||from?.id;
+  if(!id|| (from&&to&&from.id!==to.id))return {ok:false,reason:'identity-change'};
+  const current=find(world,id);
+  if(!same(current,from))return {ok:false,reason:'stale-part'};
+  if(current?.kind==='box'&&current.motionType==='dynamic')
+   return {ok:false,reason:'dynamic-part'};
+  if(from&&to?.kind==='box'&&to.motionType==='dynamic')
+   return {ok:false,reason:'dynamic-part'};
+  if(same(from,to))return {ok:false,reason:'no-change'};
+  if(!from)return insertElement(world,to);
+  if(!to)return removeElement(world,id);
+  return replaceElement(world,id,to);
+ };
+ return {
+  apply(world,from,to){
+   const initial=copy(from),final=copy(to),r=applyChange(world,initial,final);
+   if(r.ok){past.push({from:initial,to:final});if(past.length>limit)past.shift();future.length=0;}
+   return r;
+  },
+  undo(world){
+   if(!past.length)return {ok:false,reason:'empty'};
+   const c=past[past.length-1],r=applyChange(world,c.to,c.from);
+   if(r.ok){past.pop();future.push(c);}return r;
+  },
+  redo(world){
+   if(!future.length)return {ok:false,reason:'empty'};
+   const c=future[future.length-1],r=applyChange(world,c.from,c.to);
+   if(r.ok){future.pop();past.push(c);}return r;
+  },
+  clear(){past.length=0;future.length=0;},
+  get canUndo(){return past.length>0;},
+  get canRedo(){return future.length>0;}
+ };
+}

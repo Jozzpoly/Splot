@@ -7,14 +7,16 @@ import {createConstraintVelocityCharacter} from './box3d-donor/constraint-veloci
 import {supportCandidates,clearanceAt} from './spatial-core.mjs';
 import {splotToBox3D,box3DToSplot,panelQuaternionInBox3D} from './box3d-basis.mjs';
 import {compliantActorImpulse} from './actor-contact.mjs';
+import {createBoarIntent} from './boar-intent.mjs';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost'}={}){
+export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage'}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
  if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
  let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
+ const boarMind=createBoarIntent({mode:boarMode});
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
   throw Error('Box3D 0.1.1 mover API unavailable');
  const wd=b3.b3DefaultWorldDef();
@@ -126,9 +128,13 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost'}
   human?.controller.preStep(dt,intentFor(humanInput[0],humanInput[1]));
   if(norm(...input)>.001&&human)human.b.yaw=Math.atan2(input[1],input[0]);
   if(boar){
-   const d=norm(w.food.x-boar.b.x,w.food.y-boar.b.y);
-   const dx=d>.8?(w.food.x-boar.b.x)/d:0,dy=d>.8?(w.food.y-boar.b.y)/d:0;
-   boar.controller.preStep(dt,intentFor(dx,dy));
+   const decision=boarMind.choose({boar:boar.b,player:human?.b,food:w.food,time:w.time});
+   boar.controller.preStep(dt,intentFor(decision.dir[0],decision.dir[1]));
+   w.boarIntent={phase:decision.phase,goal:decision.goal,
+    foodDistance:decision.foodDistance,playerDistance:decision.playerDistance,
+    mode:boarMind.mode};
+   if(decision.changed)w.events.push({type:'boar-intent',id:'boar',phase:decision.phase,
+    reason:decision.goal,time:w.time});
   }
   // Optional bilateral compliance, using current controller velocities.
   // This is a physical-intent approximation, not true Box3D rigid-body
@@ -220,8 +226,13 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost'}
    w.events.push({type:'actor-contact-mode',mode,time:w.time});
   },
   get actorContactMode(){return contactMode},
+  setBoarMode(next){
+   boarMind.setMode(next);
+   w.events.push({type:'boar-mode',id:'boar',mode:next,time:w.time});
+  },
+  get boarMode(){return boarMind.mode},
   get warning(){return state.warning},
   get status(){return {parts:statics.size,bodies:refs.size,gripLaw,
-   actorContact:contactMode,contactStarts,lastContactImpulse,
+   actorContact:contactMode,contactStarts,lastContactImpulse,boarMode:boarMind.mode,boarPhase:boarMind.phase,
    donor:'A-triple-prime derived; research only',events:w.events.slice(-4)}}};
 }

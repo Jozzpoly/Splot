@@ -10,6 +10,7 @@ on:
       - 'tests/research/**'
       - 'tests/verify-next.sh'
       - 'tests/check-next-bundle.mjs'
+      - 'tests/browser-next-wasm.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -36,3 +37,9 @@ jobs:
           python-version: '3.12'
       - name: Check standalone and Next contracts
         run: bash tests/verify-next.sh
+      - name: Install browser automation client
+        run: npm install --no-save --no-package-lock playwright-core@1.56.1
+      - name: Run actual Box3D WASM in headless Chrome
+        run: |
+          command -v google-chrome || command -v chromium
+          node tests/browser-next-wasm.mjs

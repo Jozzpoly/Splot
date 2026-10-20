@@ -13,3 +13,12 @@
 
 11. **Mobile input is a product gate:** no positive label from tapping one button in Playwright. Check real pointer movement, hold, second-finger action, cancel, scroll/text selection, menu state and rotation at 320×568, 393×852 and 844×390. A physical Owner phone test remains separate.
 12. **A screen is not an occlusion proof.** Compare geometry, support, ray, actor layering and surface picking. Camera cutaway is a view aid. Do not call it full 2.5D or depth correctness.
+
+## 20.10.2026 — correction after Owner free play and excessive draft churn
+
+- **Do not create another nested draft PR for a minor new mechanic.** Current dependency chain is #3 (spatial reset) → #4 (Box3D) → #5 (material part lifecycle). PR #5 is RESEARCH, not an accepted playable baseline. Consolidate intentionally after a real browser run and Owner gameplay review, not by stacking further branches.
+- Keep **one reproducible Splot Next standalone**: `python3 build-next.py`, then `bash tests/verify-next.sh`. Do not manually splice modules into the shipped HTML. `--check` must be a no-write, byte-identical reproducibility guard.
+- Verification results must identify their evidence level: **pure function**, **mocked adapter**, **real Box3D WASM/browser**, **Owner free play**, **physical mobile**. A unit PASS is not a browser PASS. `tests/research/causal-pressure.test.mjs` deliberately contains known RED controls and is excluded from routine green verification but must remain visible as debt.
+- Each significant campaign delivers one **playable causal scenario**, demonstrates no loss of movement, crate grip, support/removal, camera and authoring, and compares to the previous Owner-accepted behavior. Art/readability counts as product functionality, not polish after physics.
+- When observing via Opera, inspect existing tabs passively; creating/navigating a tab can steal Owner focus. Last-input and blur signals cannot prove identity or availability. Private Owner traces never enter the public repo.
+- Before claiming large-scale material worlds, measure real frame time and Box3D cost on intended devices; document static/active/sleeping bodies, runtime geometry generation, spatial query index and save semantics. Current world is capped at 256 authored elements; a release/anchor toggle **is not** large-scale optimization.

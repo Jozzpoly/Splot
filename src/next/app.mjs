@@ -10,11 +10,13 @@ import {summarizePerfFrames} from './perf-metrics.mjs';
 import {restoreResearchWorld,nextAuthoringSequence} from './scene-restore.mjs';
 import {createEditHistory,translatedElement,screenOnHeightPlane} from './authoring-editor.mjs';
 import {advanceCameraTarget} from './camera-timing.mjs';
+import {createSceneVisualCache} from './scene-visual-cache.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const editHistory=createEditHistory();let editSelectedId=null,editDrag=null;
+const sceneVisual=createSceneVisualCache();
 const researchArgs=new URLSearchParams(location.search);
 const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
 // Prevent all background stepping while an external WASM module is fetched.
@@ -374,7 +376,7 @@ function frame(t){
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
  const simulationCpuMs=performance.now()-physicsStart;
  const geometryStart=performance.now();
- const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
+ const tris=floorGeometry.concat(sceneVisual.triangles(world.scene),actorsMesh());
  const geometryCpuMs=performance.now()-geometryStart;
  const drawStart=performance.now();
  renderer.render(tris,cam);renderOverlay(cam);
@@ -515,4 +517,4 @@ async function startPhysicsChallenger(){
  }
 }
 refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,get visualStats(){return sceneVisual.stats()},clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

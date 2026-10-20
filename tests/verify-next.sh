@@ -13,6 +13,7 @@ node --test \
  tests/research/actor-contact.test.mjs \
  tests/research/actor-contact-pressure.test.mjs \
  tests/research/boar-intent.test.mjs \
+ tests/research/crate-visual.test.mjs \
  tests/research/box3d-basis.test.mjs \
  tests/research/material-part-lifecycle.test.mjs \
  tests/research/playtest-journal.test.mjs

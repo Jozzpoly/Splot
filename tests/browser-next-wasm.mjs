@@ -134,22 +134,28 @@ try{
   assert.equal(raised.id,first.id);
   // Panel orientation and slope must survive the same gesture: shape
   // editing is not allowed to flatten the material support topology.
-  const panelBefore=await page.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')));
+  const panelBefore=await page.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp')));
   const [panelFrom,panelTo]=await page.evaluate(e=>{
    const c=window.__splotNext.camera,el=document.querySelector('#world'),r=el.getBoundingClientRect();
    const pt=[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2,(e.a[2]+e.b[2])/2];
    const scr=p=>{const v=projectPoint(c,p);return {x:r.left+v.x/el.width*r.width,y:r.top+v.y/el.height*r.height};};
    return [scr(pt),scr([pt[0],pt[1]+.8,pt[2]])];
   },panelBefore);
+  console.log('PANEL POINTER TARGET',JSON.stringify(await page.evaluate(q=>{
+   const c=window.__splotNext.camera,el=document.querySelector('#world'),rect=el.getBoundingClientRect();
+   const px=(q.x-rect.left)/rect.width*el.width,py=(q.y-rect.top)/rect.height*el.height;
+   return {screen:q,over:document.elementFromPoint(q.x,q.y)?.id,
+    hits:pickPixel(window.__splotNext.world.scene,c,px,py).slice(0,5).map(x=>x.id)};
+  },panelFrom)));
   await page.mouse.move(panelFrom.x,panelFrom.y);
   await page.mouse.down();
   await page.mouse.move(panelTo.x,panelTo.y,{steps:6});
   await page.mouse.up();
-  const panelAfter=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck'));
+  const panelAfter=await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp'));
   assert.ok(Math.abs(panelAfter.a[1]-panelBefore.a[1]-.8)<.15,'panel drag must translate source A/B rather than replace topology');
   assert.ok(Math.abs((panelAfter.b[2]-panelAfter.a[2])-(panelBefore.b[2]-panelBefore.a[2]))<1e-8);
   await page.locator('#undo').click();
-  assert.deepEqual(await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')),
+  assert.deepEqual(await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp')),
    panelBefore,'panel undo must restore existing deck');
   console.log('PASS REAL DESKTOP PANEL EDIT: translation preserves material shape and undo');
   console.log('PASS REAL DESKTOP DIRECT EDIT: anchored box drag → undo → redo → raise with same identity');

@@ -6,6 +6,7 @@ import {createBox3DBridge} from './box3d-live.mjs';
 import {createPlaytestJournal} from './playtest-journal.mjs';
 import {partMotionMode,setBoxMotion} from './part-lifecycle.mjs';
 import {crateTriangles} from './crate-visual.mjs';
+import {summarizePerfFrames} from './perf-metrics.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
@@ -123,7 +124,7 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
  }
  if(mode==='box'){
   const [x,y,z]=a.point,r=insertElement(world.scene,{id:'block-'+sequence++,kind:'box',min:[x-.6,y-.6,z+buildHeight],max:[x+.6,y+.6,z+buildHeight+1.1],material:'stone'});
-  playtest.event('build-box',{ok:r.ok});actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
+  playtest.event('build-box',{ok:r.ok,reason:r.reason??null});actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
  }
  if(mode==='material'){
   if(!bridge?.syncStatics){actionText('Fizyka części wymaga aktywnego Box3D.');return;}
@@ -139,7 +140,7 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
   else actionText('Błąd zmiany stanu: '+r.reason);
   return;
  }
- if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
+ if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
  if(mode==='erase'){
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}
   const r=removeElement(world.scene,a.id);playtest.event('delete-part',{ok:r.ok,id:a.id});
@@ -234,15 +235,7 @@ function keyDirection(){let dx=Number(keys.has('d')||keys.has('arrowright'))-Num
 // Read-only rolling diagnostic. Rendering cost measures CPU submission;
 // rAF frame spacing is not a GPU timestamp and not an isolated physics rate.
 const frameMetrics=[];let prevMetricFrame=0,latestPerf=null;
-function profile(){
- const metrics=frameMetrics.slice(),vals=k=>metrics.map(x=>x[k]).filter(Number.isFinite).sort((a,b)=>a-b);
- const quant=(v,q)=>v.length?v[Math.min(v.length-1,Math.floor((v.length-1)*q))]:null;
- const out={frames:metrics.length,renderer:renderer.mode};
- for(const key of ['rafMs','simulationCpuMs','geometryCpuMs','drawSubmissionCpuMs','triangles']){
-  const values=vals(key);out[key]={median:quant(values,.5),p95:quant(values,.95)};
- }
- return out;
-}
+function profile(){return {...summarizePerfFrames(frameMetrics),renderer:renderer.mode};}
 function frame(t){
  const rafMs=prevMetricFrame?t-prevMetricFrame:NaN;prevMetricFrame=t;
  let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
@@ -250,9 +243,10 @@ function frame(t){
  camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;
  cam=makeCamera({target:camTarget,azimuth:rot,elevation:1.03,...info});
  const physicsStart=performance.now();
+ let physicsSteps=0;
  if(!paused){let iter=0;while(acc>=1/60&&iter<4){
   if(bridge)bridge.advance(1/60,keyDirection());else stepLive(world,1/60,keyDirection());
-  acc-=1/60;iter++;}}
+  acc-=1/60;iter++;physicsSteps++;}}
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
  const simulationCpuMs=performance.now()-physicsStart;
  const geometryStart=performance.now();
@@ -261,7 +255,7 @@ function frame(t){
  const drawStart=performance.now();
  renderer.render(tris,cam);renderOverlay(cam);
  const drawSubmissionCpuMs=performance.now()-drawStart;
- frameMetrics.push({rafMs,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
+ frameMetrics.push({rafMs,physicsSteps,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
  if(frameMetrics.length>180)frameMetrics.shift();
  // Profile is derived twice per second, not sorted once per render frame.
  if(t-lastHud>260)latestPerf=profile();
@@ -269,7 +263,7 @@ function frame(t){
  if(t-lastHud>260){
   updatePlaytestStatus();const a=getBody(world,'human');
   const debug=researchArgs.get('perf')==='1',m=latestPerf;
-  const suffix=debug&&m?` · sim ${m.simulationCpuMs.median?.toFixed(1)} / geometry ${m.geometryCpuMs.median?.toFixed(1)} / submit ${m.drawSubmissionCpuMs.median?.toFixed(1)} ms CPU · rAF ${m.rafMs.median?.toFixed(1)} ms`:'';
+  const suffix=debug&&m?` · physics ${m.physics.cpuMsPerStep?.toFixed(2)??'n/a'} ms/krok (${m.physics.steps} kroków) · geometry ${m.geometryCpuMs.median?.toFixed(1)} ms/kl · submit ${m.drawSubmissionCpuMs.median?.toFixed(1)} ms/kl · rAF ${m.rafMs.median?.toFixed(1)} ms`:'';
   hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części${suffix}`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);

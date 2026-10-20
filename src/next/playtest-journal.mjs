@@ -98,7 +98,10 @@ export function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new D
     physicsCpuMsPerStep:num(perf.physics?.cpuMsPerStep),
     physicsCpuMsPerWallSecond:num(perf.physics?.cpuMsPerWallSecond),
     physicsWindowMs:num(perf.physics?.windowWallMs),
-    physicsActiveFrames:num(perf.physics?.framesWithSteps)
+    physicsActiveFrames:num(perf.physics?.framesWithSteps),
+    physicsActiveP95CpuMs:num(perf.physics?.p95ActiveFrameCpuMs),
+    rafP95:num(perf.rafMs?.p95),
+    geometryP95CpuMs:num(perf.geometryCpuMs?.p95)
    }:null});
  }
  function status({visible=true,focused=true}={}){

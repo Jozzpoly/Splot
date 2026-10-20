@@ -168,6 +168,25 @@ try{
   await page.locator('#undo').click();
   assert.deepEqual(await page.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp')),
    panelBefore,'panel undo must restore existing deck');
+  // Real Q/layer UI acceptance: overlapping parts should be visited ONCE
+  // each even though a ray pierces multiple faces on each same solid.
+  const fixtures=await page.evaluate(()=>{
+   const g=window.__splotNext;
+   const front=g.build({id:'cycle-front',kind:'box',min:[8,18,1],max:[12,22,3],material:'stone'});
+   const back=g.build({id:'cycle-back',kind:'box',min:[8,18,.5],max:[12,22,1.5],material:'wood'});
+   return [front.ok,back.ok];
+  });
+  assert.deepEqual(fixtures,[true,true]);
+  await clickProjected([10,20,3]);
+  const target1=await page.locator('#target').textContent();
+  assert.match(target1,/cycle-front.*element 1\/2/,'top visible part is first, not each of its faces');
+  await page.locator('#layer').click();
+  const target2=await page.locator('#target').textContent();
+  assert.match(target2,/cycle-back.*element 2\/2/,'Q reaches the occluded second part in one step');
+  await page.locator('#layer').click();
+  assert.match(await page.locator('#target').textContent(),/cycle-front.*element 1\/2/,
+   'Q wraps back to first distinct part');
+  console.log('PASS REAL CHROME LAYER CYCLE: intersecting solids each counted once');
   console.log('PASS REAL DESKTOP PANEL EDIT: translation preserves material shape and undo');
   console.log('PASS REAL DESKTOP DIRECT EDIT: anchored box drag → undo → redo → raise with same identity');
   console.log('PASS real pointer/editor Box3D + exported scene JSON:',

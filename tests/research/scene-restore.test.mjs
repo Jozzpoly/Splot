@@ -53,3 +53,13 @@ test('does not promote untrusted object metadata or save velocities into physics
  assert.equal(r.bodies[0].script,undefined);
  assert.equal(r.bodies[0].vz,0);
 });
+
+test('crate identity continues after restoring a sparse numbered collection',()=>{
+ const w=createLiveWorld();
+ assert.equal(addCrate(w,3,3).id,'crate-2');
+ assert.equal(addCrate(w,5,3).id,'crate-3');
+ w.bodies=w.bodies.filter(b=>b.id!=='crate-2');
+ const restored=restoreResearchWorld(saved(w));
+ assert.equal(addCrate(restored,7,3).id,'crate-4');
+ assert.equal(new Set(restored.bodies.map(b=>b.id)).size,restored.bodies.length);
+});

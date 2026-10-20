@@ -33,6 +33,7 @@ function createSpatialWorld({width=42,height=32}={}) {
 function validElement(w,e){
  if(!e||typeof e!=='object'||Array.isArray(e)||typeof e.id!=='string'||!/^[-_a-zA-Z0-9]{1,64}$/.test(e.id))return 'invalid-id';
  if(!['panel','box'].includes(e.kind))return 'unsupported-kind';
+ if(e.motionType!==undefined&&(e.kind!=='box'||!['anchored','dynamic'].includes(e.motionType)))return 'unsupported-motion-type';
  if(e.material!==undefined&&(typeof e.material!=='string'||!/^[-_a-zA-Z0-9]{1,32}$/.test(e.material)))return 'invalid-material';
  let points=[];
  if(e.kind==='panel'){

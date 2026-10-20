@@ -3,7 +3,7 @@
 :root{color-scheme:dark;font-family:system-ui,sans-serif;color:#e5e7cd;background:#0c1d23}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}button{font:600 12px system-ui;color:#ecedde;background:#193b3e;border:1px solid #54726a;border-radius:10px;min-height:36px;padding:8px 12px;cursor:pointer}button.active{background:#a57248;color:#fff4d8;border-color:#e6b978}button:disabled{opacity:.45;cursor:not-allowed}.session-state{font:10px/1.45 ui-monospace,monospace;color:#acbfb6;white-space:normal;padding:3px 2px}button:focus-visible{outline:2px solid #f5d092}#world{width:100%;height:100%;display:block;touch-action:none;image-rendering:pixelated}#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.viewport{position:relative;width:100vw;height:100dvh;overflow:hidden}.header{position:absolute;top:14px;left:17px;z-index:4;pointer-events:none;filter:drop-shadow(0 2px 6px #000)}.header strong{font-size:17px;letter-spacing:.02em;color:#f3e0bf}.header small{display:block;color:#a7cebd;font-size:11px;margin-top:4px}#hud{margin-top:8px;color:#bbd2c1;font:11px ui-monospace,monospace}.rail{position:absolute;right:14px;top:16px;width:201px;z-index:8;display:flex;flex-direction:column;gap:7px;background:#122d30d8;border:1px solid #526f6766;border-radius:14px;padding:11px;max-height:calc(100dvh - 26px);overflow-y:auto;overscroll-behavior:contain}.rail .row{display:flex;gap:5px;flex-wrap:wrap}.rail button{flex:1;min-width:64px}.rail .section{font-size:10px;color:#caac83;letter-spacing:.18em;margin:4px 2px 1px;text-transform:uppercase}.rail p{font-size:11px;line-height:1.5;color:#b7c9bc;margin:0}.bar{position:absolute;bottom:14px;left:16px;right:229px;z-index:2;display:flex;gap:10px;align-items:center;justify-content:space-between;pointer-events:none}#notice,#target{background:#11292bda;padding:8px 11px;max-width:48%;border:1px solid #516f684d;border-radius:10px;font-size:11px;color:#eed9b1;transition:opacity .3s}#target{color:#afcdbb}#notice:not(.show){opacity:.55}#mobile-menu,#active-mode{display:none}.mobile{display:none}a{color:#c9e7c7}@media(max-width:760px), (max-height:500px) and (pointer:coarse){.header{top:calc(8px + env(safe-area-inset-top));left:12px}.header strong{font-size:15px}.header small{font-size:10px;max-width:190px}.rail{top:calc(60px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:min(300px,78vw);max-height:calc(100dvh - 190px);gap:7px;padding:11px;transform:translateX(calc(100% + 22px));transition:transform .16s ease;pointer-events:none}.menu-open .rail{transform:translateX(0);pointer-events:auto;background:#122b30f5}#mobile-menu{display:block;position:absolute;top:calc(9px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:12;width:46px;height:44px;font-size:21px;background:#153238e9}#active-mode{display:block;position:absolute;top:calc(61px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:5;max-width:140px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:11px;background:#153238d9}.rail button{font-size:10px;padding:5px 6px;min-height:32px;min-width:54px}.rail .section,.rail p,.rail #save{display:none}.rail .row{gap:3px}.bar{bottom:calc(137px + env(safe-area-inset-bottom));left:10px;right:10px;justify-content:center}.bar #notice{max-width:80%;font-size:10px}.bar #target{display:none}.mobile{display:flex;position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:calc(12px + env(safe-area-inset-left));right:calc(12px + env(safe-area-inset-right));height:118px;justify-content:space-between;pointer-events:none;z-index:6}.joystick{position:relative;flex:0 0 116px;width:116px;height:116px;border-radius:100%;border:1px solid #91baa67a;background:#153a3baf;box-shadow:inset 0 0 22px #0b1a16;pointer-events:auto;touch-action:none;display:grid;place-items:center}.joystick:before{content:'';width:82px;height:82px;border-radius:100%;border:1px dashed #9db6a68a}.knob{position:absolute;width:50px;height:50px;border-radius:50%;background:linear-gradient(#5b9082,#26504e);border:2px solid #bdd5b6;box-shadow:0 3px 14px #0a201b;pointer-events:none}.touch-action{align-self:flex-end;display:flex;flex-direction:column;gap:8px;pointer-events:auto}.touch-action button{min-width:93px;height:47px;font-size:13px;background:#665039eb;border-color:#ddbd8b}.touch-action button:last-child{background:#173b41ec;border-color:#84b5af}}
 </style></head><body><main class="viewport"><canvas id="world" aria-label="Trójwymiarowy świat Splot Next"></canvas><canvas id="overlay" aria-hidden="true"></canvas>
 <header class="header"><strong>SPLOT / NOWY ROZDZIAŁ</strong><small>Świat XYZ · wspólna geometria · realna głębia</small><div id="hud">Uruchamianie…</div></header>
-<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="row"><button id="actor-contact" type="button" disabled title="Tryb badawczy Box3D: swobodne mijanie lub miękki impuls">Kontakt: swobodny</button></div><div class="row"><button id="boar-behavior" type="button" disabled title="Tryb badawczy Box3D: jedzenie albo reagowanie na zbliżenie gracza">Dzik: przy jedzeniu</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button><button data-mode="material" disabled title="Badawczo: zmień zakotwiczenie wybranej bryły w świecie Box3D">Kotwica</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button></div><div class="section">Sesja badawcza</div><div class="row"><button id="test-toggle" aria-label="Rozpocznij lub zakończ lokalną sesję testową">Zacznij test</button><button id="test-export" disabled aria-label="Pobierz lokalny raport testu">Raport</button></div><div id="test-status" class="session-state" aria-live="off" aria-label="Stan lokalnej sesji Splot">Bez aktywnej rejestracji</div>
+<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="row"><button id="actor-contact" type="button" disabled title="Tryb badawczy Box3D: swobodne mijanie lub miękki impuls">Kontakt: swobodny</button></div><div class="row"><button id="boar-behavior" type="button" disabled title="Tryb badawczy Box3D: jedzenie albo reagowanie na zbliżenie gracza">Dzik: przy jedzeniu</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button><button data-mode="material" disabled title="Badawczo: zmień zakotwiczenie wybranej bryły w świecie Box3D">Kotwica</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button><button id="load" type="button">Wczytaj JSON</button><input id="load-file" type="file" accept=".json,application/json" hidden></div><div class="section">Sesja badawcza</div><div class="row"><button id="test-toggle" aria-label="Rozpocznij lub zakończ lokalną sesję testową">Zacznij test</button><button id="test-export" disabled aria-label="Pobierz lokalny raport testu">Raport</button></div><div id="test-status" class="session-state" aria-live="off" aria-label="Stan lokalnej sesji Splot">Bez aktywnej rejestracji</div>
 <p>WASD — ruch względem kamery. E — chwyt. Z/X — obrót kamery. Kółko — zoom. Tryb „Płyta”: wskaż dwa punkty, niezależnie zmieniaj części. Q — kolejne trafione powierzchnie. To badawczy rozdział, nie ukończona gra ani silnik.</p></aside>
 <div class="bar"><span id="notice" class="show">Wczytywanie świata…</span><span id="target">Wybierz powierzchnię</span></div>
 <div class="mobile"><div id="joystick" class="joystick"><div id="knob" class="knob"></div></div><div class="touch-action"><button onclick="document.querySelector('#grip').click()">Chwyt</button><button onclick="document.querySelector('#layer').click()">Warstwa</button></div></div></main>
@@ -1337,6 +1337,83 @@ return {summarizePerfFrames};
 })();
 const {summarizePerfFrames}=PerfMetrics;
 
+const SceneRestore=(()=>{
+// Splot research: import an authored scene + body positions from a local JSON
+// export. This is a FRESH PHYSICS INITIALIZATION, not a solver checkpoint.
+// Never mutate the live game before all validation is complete.
+const fmt='splot-next-live-research-1';
+const finite=n=>typeof n==='number'&&Number.isFinite(n);
+const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const fail=m=>{throw Error('Nieprawidłowy zapis Splot: '+m);};
+function restoreResearchWorld(payload){
+ const obj=typeof payload==='string'?JSON.parse(payload):payload;
+ if(!obj||Array.isArray(obj)||typeof obj!=='object'||obj.format!==fmt)
+  fail('oczekiwano Splot_Nowy_Rozdzial.json, nie raportu sesji.');
+ if(!obj.scene||!Array.isArray(obj.scene.elements)||obj.scene.elements.length>256)
+  fail('nieobsługiwane rozmiary sceny (limit badawczy: 256 części).');
+ if(!Array.isArray(obj.bodies)||obj.bodies.length>2000||obj.bodies.length<2)
+  fail('nieobsługiwana liczba ciał (limit badawczy: 2000).');
+ if(!finite(obj.time)||obj.time<0||obj.time>1e9)fail('nieprawidłowy czas świata.');
+ // Only canonical primitive fields enter the physics world. Unknown fields in
+ // external files must never become authoritative runtime data by accident.
+ const sanitized={format:obj.scene.format,width:obj.scene.width,
+  height:obj.scene.height,revision:obj.scene.revision,
+  elements:obj.scene.elements.map(e=>{
+   if(!e||typeof e!=='object')fail('nieprawidłowa część.');
+   if(e.kind==='box')return {id:e.id,kind:e.kind,
+    min:e.min,max:e.max,...(own(e,'material')?{material:e.material}:{}),
+    ...(own(e,'motionType')?{motionType:e.motionType}:{})};
+   if(e.kind==='panel')return {id:e.id,kind:e.kind,a:e.a,b:e.b,
+    width:e.width,thickness:e.thickness,
+    ...(own(e,'material')?{material:e.material}:{})};
+   fail('nieobsługiwany rodzaj części.');
+  })};
+ // importWorld rejects invalid transforms, duplicate IDs, invalid motion,
+ // non-finite geometry and truncated/out-of-bounds content.
+ const scene=importWorld(sanitized);
+ const bodyIds=new Set(),bodies=[];
+ let humanCount=0,boarCount=0;
+ for(const b of obj.bodies){
+  if(!b||typeof b!=='object'||Array.isArray(b))fail('nieprawidłowe ciało.');
+  const kind=b.kind,id=b.id;
+  if(!['human','boar','crate'].includes(kind)||typeof id!=='string'||
+      !/^[-_a-zA-Z0-9]{1,64}$/.test(id))fail('nieobsługiwane ciało.');
+  if((kind==='human'&&id!=='human')||(kind==='boar'&&id!=='boar')||
+     (kind==='crate'&&!/^crate-[1-9][0-9]*$/.test(id)))fail('niespójny identyfikator ciała.');
+  if(bodyIds.has(id))fail('powtarzający się identyfikator ciała.');
+  bodyIds.add(id);
+  if(kind==='human')humanCount++;
+  if(kind==='boar')boarCount++;
+  for(const name of ['x','y','z','r','h','mass','yaw']){
+   if(!finite(b[name]))fail('nieprawidłowe pole ciała: '+name);
+  }
+  if(b.r<.05||b.r>10||b.h<.1||b.h>20||b.mass<.01||b.mass>1e6||
+     b.x< -5||b.x>scene.width+5||b.y< -5||b.y>scene.height+5||
+     b.z< -3||b.z>40)fail('ciało poza obsługiwanymi granicami.');
+  // Old support IDs/velocities are never physically authoritative on reload.
+  bodies.push({id,kind,x:b.x,y:b.y,z:b.z,r:b.r,h:b.h,
+   mass:b.mass,yaw:b.yaw,vz:0,support:null});
+ }
+ if(humanCount!==1||boarCount!==1)fail('wymagane dokładnie po jednej postaci i dziku.');
+ const world=createLiveWorld();
+ world.scene=scene;world.bodies=bodies;world.time=obj.time;
+ world.grip=null;world.events=[];world.paused=true;
+ return world;
+}
+function nextAuthoringSequence(w){
+ const ids=[...w.scene.elements.map(e=>e.id),...w.bodies.map(b=>b.id)];
+ let max=9;
+ for(const id of ids){
+  const m=typeof id==='string'&&id.match(/^(?:block|part|crate)-([0-9]+)$/);
+  if(m){const n=Number(m[1]);if(Number.isSafeInteger(n))max=Math.max(max,n);}
+ }
+ return max+1;
+}
+
+return {restoreResearchWorld,nextAuthoringSequence};
+})();
+const {restoreResearchWorld,nextAuthoringSequence}=SceneRestore;
+
 const Box3DBridge=(()=>{
 // RESEARCH CHALLENGER. Frozen Box3D Character Controller Donor v1 mathematics,
 // not a claim that Splot has adopted the Donor's accepted gameplay feel.
@@ -2118,6 +2195,43 @@ $('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.d
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+};
+// A local exported JSON restarts PHYSICS from these positions, not velocities.
+// Create the new physics while the previous world is still owned. A malformed
+// file or constructor failure cannot destroy an active Owner experiment.
+$('#load').onclick=()=>$('#load-file').click();
+$('#load-file').onchange=async()=>{
+ const file=$('#load-file').files?.[0];
+ if(!file)return;
+ try{
+  if(file.size>8*1024*1024)throw Error('Plik większy niż 8 MB; nie wczytano.');
+  if(physicsState.startsWith('loading-'))throw Error('Poczekaj na załadowanie fizyki.');
+  const nextWorld=restoreResearchWorld(await file.text());
+  let nextBridge=null;
+  if(physicsState==='box3d'){
+   if(!box3dLibrary)throw Error('Box3D nie jest gotowy.');
+   nextBridge=createBox3DBridge(nextWorld,box3dLibrary,box3dOptions);
+  }else if(physicsState==='rapier'){
+   if(!rapierLibrary)throw Error('Rapier nie jest gotowy.');
+   nextBridge=createRapierBridge(nextWorld,rapierLibrary);
+  }
+  const old=bridge;bridge=nextBridge;world=nextWorld;
+  old?.dispose?.();if(old?.engine?.free)old.engine.free();
+  sequence=nextAuthoringSequence(world);
+  acc=0;last=performance.now();frameMetrics.length=0;prevMetricFrame=0;latestPerf=null;
+  const human=getBody(world,'human');
+  camTarget=[human.x,human.y,human.z+.7];
+  keys.clear();stick.x=0;stick.y=0;stick.active=null;look.id=null;
+  selected=null;cursor=null;selection=0;startPanel=null;
+  paused=true;world.paused=true;$('#pause').textContent='Uruchom';
+  setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
+  playtest.event('scene-loaded',{parts:world.scene.elements.length,bodies:world.bodies.length,
+   mode:'fresh-physics-paused'});
+  actionText('Wczytano '+world.scene.elements.length+' części i '+world.bodies.length+
+   ' ciał. Świat zatrzymany — fizyka ruszy od nowa po „Uruchom”.');
+ }catch(err){
+  actionText('Nie wczytano świata: '+String(err.message||err).slice(0,190));
+ }finally{$('#load-file').value='';}
 };
 function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.x)/r.width*canvas.width,y:(e.clientY-r.y)/r.height*canvas.height};}
 let cursor=null;

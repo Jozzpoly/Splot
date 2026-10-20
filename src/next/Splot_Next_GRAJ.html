@@ -1323,6 +1323,7 @@ function summarizePerfFrames(frames){
   steps,
   framesWithSteps:stepping.length,
   medianActiveFrameCpuMs:percentile(active,.5),
+  p95ActiveFrameCpuMs:percentile(active,.95),
   cpuMsPerStep:steps?simMs/steps:null,
   cpuMsPerWallSecond:wallMs>0?simMs*1000/wallMs:null,
   windowWallMs:wallMs,
@@ -1722,7 +1723,10 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
     physicsCpuMsPerStep:num(perf.physics?.cpuMsPerStep),
     physicsCpuMsPerWallSecond:num(perf.physics?.cpuMsPerWallSecond),
     physicsWindowMs:num(perf.physics?.windowWallMs),
-    physicsActiveFrames:num(perf.physics?.framesWithSteps)
+    physicsActiveFrames:num(perf.physics?.framesWithSteps),
+    physicsActiveP95CpuMs:num(perf.physics?.p95ActiveFrameCpuMs),
+    rafP95:num(perf.rafMs?.p95),
+    geometryP95CpuMs:num(perf.geometryCpuMs?.p95)
    }:null});
  }
  function status({visible=true,focused=true}={}){
@@ -2264,8 +2268,10 @@ function frame(t){
  const drawStart=performance.now();
  renderer.render(tris,cam);renderOverlay(cam);
  const drawSubmissionCpuMs=performance.now()-drawStart;
- frameMetrics.push({rafMs,physicsSteps,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
- if(frameMetrics.length>180)frameMetrics.shift();
+ frameMetrics.push({frameTimeMs:t,rafMs,physicsSteps,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
+ // A fixed number of frames meant 0.75 s at 240 Hz, 3 s at 60 Hz.
+ // Keep a time-based ~2 s window; bound memory even under odd clocks.
+ while(frameMetrics.length&&(frameMetrics[0].frameTimeMs<t-2000||frameMetrics.length>1000))frameMetrics.shift();
  // Profile is derived twice per second, not sorted once per render frame.
  if(t-lastHud>260)latestPerf=profile();
  playtest.observe(world,{engine:physicsState,camera:cam,performance:latestPerf});

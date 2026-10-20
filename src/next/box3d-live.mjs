@@ -77,6 +77,8 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
    // on authored replaceElement. Never recreate every tick.
    if(!e||partMotionMode(e)!=='dynamic'||entry.element!==e){
     b3.b3DestroyBody(entry.rb);dynamicParts.delete(id);
+    if(e&&partMotionMode(e)==='anchored')
+     w.events.push({type:'part-anchored',id,time:w.time});
    }
   }
   for(const [id,e]of current){

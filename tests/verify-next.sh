@@ -19,4 +19,4 @@ node --test \
  tests/research/material-part-lifecycle.test.mjs \
  tests/research/playtest-journal.test.mjs
 echo 'PASS: Splot Next deterministic source/build test gate'
-echo 'NOT VERIFIED: real Box3D WASM browser, mobile, gameplay feel, structural forces'
+echo 'Node stage only: real Box3D Chrome gate runs separately. Physical phone, Owner feel and full structural forces remain unverified.'

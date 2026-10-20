@@ -16,6 +16,7 @@ This work adds an explicitly local **Wczytaj JSON** to the existing editor, incl
 ## Evidence — separate classes
 - Unit `tests/research/scene-restore.test.mjs`: validate canonical JSON, dynamic part identity, authored revisions, saved positions, fresh physics defaults, malformed/duplicate rejection, and continued numbering after sparse crate IDs.
 - Actual headless Chrome with actual Box3D WASM: imported a **synthetic** 132-part/61-body JSON mirroring the *scale and format* of the Owner's private file; verified fresh dynamic Body registration, paused inspection, manual resume and continued authoring, and rejection of a corrupt file without discarding the open world. This **did not** transmit or run the exact Owner-provided private 132-part file on GitHub.
+- **Private local format check of the actual two Owner files:** 132-part/61-body (1 dynamic) and 19-part/343-body (2 dynamic) exports satisfy the loader's examined envelope for format, IDs, numeric fields, motion annotations and body limits. This check used local files and an independent Python implementation of the schema checks; it is **not** proof that the exact files have run through the JavaScript importer + WASM browser. Both originals stayed private.
 - Actual Chrome emulating mobile touch: built/released a box, saved via the visible mobile UI, received a browser download, used the browser's file chooser to load the same file and reached paused inspect state. A physical phone/browser is **not** verified.
 
 ## Architectural guardrails

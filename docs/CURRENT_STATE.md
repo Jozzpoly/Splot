@@ -1,5 +1,7 @@
 # Splot / stan roboczy — 18.10.2026
 
+> **Uwaga — dokument historyczny (18.10.2026).** Przed oceną bieżącego Splot Next i łańcucha PR #3–#5 przeczytaj [START_NEXT_SESSION_2026-10-21.md](START_NEXT_SESSION_2026-10-21.md). Stare wyniki K2 poniżej nie dowodzą jakości aktualnego Box3D ani dynamicznych brył.
+
 **LIVE TRUTH:** Splot K2 jest grywalnym punktem odniesienia. Ta gałąź rozwija go, nie zastępuje K3. Nie ma zatwierdzonego nowego core, wybranego silnika ani ostatecznej projekcji 2.5D.
 
 **EVIDENCE:** `node --test tests/*.test.mjs` 72 PASS; `node tests/stress.mjs` 18 000 ticków i 90 000 weryfikacji bez wykrytej przenikalności przy ograniczonych seedach; dodatkowo 9 000 ticków chaosu edycji / 105 474 kontroli brył bez stwierdzonych naruszeń. Browser: `browser_gameplay.py` (desktop, portrait, landscape, real touch CDP + kliknięcia), `browser_view.py` (cutaway nie zmienia snapshotu), `browser_depth.py` (przegląd kadru). UI nadal wymaga Owner testu na prawdziwym urządzeniu.

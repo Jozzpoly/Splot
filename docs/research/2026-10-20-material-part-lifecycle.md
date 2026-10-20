@@ -1,4 +1,7 @@
 # Splot Next — authored construction becomes live material
+
+> **Aktualizacja po wznowieniu pracy, 20.10.2026, ok. 16:05 czasu polskiego — uzupełnia nocny checkpoint.** Pierwsza poważna bramka jest teraz **zaliczona w rzeczywistym Chrome + Box3D WASM**, nie tylko w mocku. GitHub Actions [39435938142](https://github.com/Jozzpoly/Splot/actions/runs/39435938142) wykonał 4/4 scenariusze fizyczne (uwolnienie/reanchor; górna bryła ląduje na dolnej, po usunięciu podpory spada; rampa; upadek człowieka po usunięciu pomostu), faktyczne kliknięcia desktopowego edytora, pobranie i weryfikację JSON oraz syntetyczny dotyk w emulacji 393×852. Deterministyczne testy Node: **38 PASS, 2 TODO**. Zastrzeżenia starszego checkpointu o *niewykonaniu testu WASM* dotyczą stanu nocnego i są już nieaktualne; **nie** oznacza to fizycznego testu telefonu, akceptacji Ownera, ruchomych podpór pod graczem, obrotów, 1k obiektów ani jakości obrazu.
+
 **2026-10-20 | Child research branch of Box3D parity PR #4 | Owner-unapproved, do not merge**
 
 ## Why this, after the first real Owner recording?

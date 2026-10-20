@@ -233,7 +233,7 @@ function keyDirection(){let dx=Number(keys.has('d')||keys.has('arrowright'))-Num
 }
 // Read-only rolling diagnostic. Rendering cost measures CPU submission;
 // rAF frame spacing is not a GPU timestamp and not an isolated physics rate.
-const frameMetrics=[];let prevMetricFrame=0;
+const frameMetrics=[];let prevMetricFrame=0,latestPerf=null;
 function profile(){
  const metrics=frameMetrics.slice(),vals=k=>metrics.map(x=>x[k]).filter(Number.isFinite).sort((a,b)=>a-b);
  const quant=(v,q)=>v.length?v[Math.min(v.length-1,Math.floor((v.length-1)*q))]:null;
@@ -263,8 +263,14 @@ function frame(t){
  const drawSubmissionCpuMs=performance.now()-drawStart;
  frameMetrics.push({rafMs,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
  if(frameMetrics.length>180)frameMetrics.shift();
- playtest.observe(world,{engine:physicsState,camera:cam});
- if(t-lastHud>260){updatePlaytestStatus();const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
+ // Profile is derived twice per second, not sorted once per render frame.
+ if(t-lastHud>260)latestPerf=profile();
+ playtest.observe(world,{engine:physicsState,camera:cam,performance:latestPerf});
+ if(t-lastHud>260){
+  updatePlaytestStatus();const a=getBody(world,'human');
+  const debug=researchArgs.get('perf')==='1',m=latestPerf;
+  const suffix=debug&&m?` · sim ${m.simulationCpuMs.median?.toFixed(1)} / geometry ${m.geometryCpuMs.median?.toFixed(1)} / submit ${m.drawSubmissionCpuMs.median?.toFixed(1)} ms CPU · rAF ${m.rafMs.median?.toFixed(1)} ms`:'';
+  hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części${suffix}`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);
 }

@@ -70,3 +70,22 @@ test('rolling 80-event world buffer remains observable after saturation',()=>{
  assert.equal(kinds.length,102,'do not lose world events when buffer length stays 80');
  assert.equal(kinds[101],'tick-101');
 });
+
+test('source provenance distinguishes reached food from frozen physics and records camera',()=>{
+ const {journal:j,advance}=mock(),w=scene();
+ w.boarIntent={phase:'feeding',goal:'food',mode:'forage',foodDistance:.69,playerDistance:4};
+ j.start({engine:'box3d'});
+ j.observe(w,{engine:'box3d',camera:{azimuth:1.2,elevation:1.03,target:[15,13,.5]}});
+ const report=j.report();
+ const sample=report.events.find(e=>e.type==='sample');
+ assert.equal(sample.data.boarIntent.phase,'feeding');
+ assert.equal(sample.data.boarIntent.foodDistance,.69);
+ assert.equal(sample.data.camera.azimuth,1.2);
+ assert.deepEqual(sample.data.camera.target,[15,13,.5]);
+ assert.equal(report.inProgress,true);
+ assert.equal(report.endedAt,null);
+ assert.equal(report.observedAt,'test-clock-1000');
+ assert.equal(report.windowSeconds,0);
+ advance(1000);
+ assert.equal(j.report().windowSeconds,1);
+});

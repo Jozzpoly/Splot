@@ -63,3 +63,32 @@ test('history bounded, clear drops entries, invalid transforms preserve scene',(
  assert.throws(()=>translatedElement(current,[Infinity,0,0]),/invalid-translation/);
  assert.deepEqual(w.elements[0],current);
 });
+
+test('solver-owned lifecycle invalidates only dependent undo entries',()=>{
+ const w=world(),h=createEditHistory();
+ const originalA=structuredClone(w.elements.find(e=>e.id==='a'));
+ const originalP=structuredClone(w.elements.find(e=>e.id==='p'));
+ const movedA=translatedElement(originalA,[2,0,0]);
+ const movedP=translatedElement(originalP,[0,1,0]);
+ assert.equal(h.apply(w,originalA,movedA).ok,true);
+ assert.equal(h.apply(w,originalP,movedP).ok,true);
+ const a=w.elements.find(e=>e.id==='a');
+ a.motionType='dynamic';
+ assert.equal(h.invalidateId('a'),1);
+ assert.equal(h.undo(w).ok,true,'unrelated panel move stays undoable');
+ assert.deepEqual(w.elements.find(e=>e.id==='p'),originalP);
+ assert.equal(h.undo(w).reason,'empty','stale dynamic edit no longer blocks older history');
+ assert.equal(h.redo(w).ok,true);
+ assert.deepEqual(w.elements.find(e=>e.id==='p'),movedP);
+ assert.equal(w.elements.find(e=>e.id==='a').motionType,'dynamic');
+});
+test('history invalidation does not resurrect solver-controlled deletions',()=>{
+ const w=world(),h=createEditHistory();
+ const extra=box('extra');
+ assert.equal(h.apply(w,null,extra).ok,true);
+ assert.equal(h.apply(w,extra,translatedElement(extra,[1,0,0])).ok,true);
+ w.elements.splice(w.elements.findIndex(e=>e.id==='extra'),1);
+ assert.equal(h.invalidateId('extra'),2);
+ assert.equal(h.undo(w).reason,'empty');
+ assert.equal(w.elements.some(e=>e.id==='extra'),false);
+});

@@ -1,3 +1,11 @@
+## 22 OCT — wejście do pobranego HTML zweryfikowane niezależnie od localhost
+
+**Code head `b9eb06fcf918094b93e79aa031cd90f3d661abf3` | [GREEN Chrome + Box3D CI #39690270288](https://github.com/Jozzpoly/Splot/actions/runs/39690270288)** — 75 Node PASS / 0 FAIL / 2 TODO + wszystkie wcześniejsze testy przeglądarkowe. Bez specjalnych parametrów otwarto ten sam śledzony `src/next/Splot_Next_GRAJ.html` bezpośrednio przez **`file://`** w rzeczywistym Chrome Linux CI, **bez serwera localhost**. Wynik: `physics:box3d`, banner `Box3D · aktywna fizyka badawcza`, brak błędu modułu. Wymagał działającego internetu do pobrania zewnętrznego ESM/WASM; *nie jest offline self-contained physics*, nie potwierdza specyficznych ograniczeń przeglądarek mobilnych, prawdziwego telefonu ani jakości wrażeń Ownera.
+
+**Punkt decyzji:** elementarne bariery prawidłowego wejścia i sterowania są coraz lepiej przetestowane. Nie dokładać bezterminowo testów małych przypadków. Następna kampania powinna mierzyć rzeczywistą jakość złożonego budowania oraz 300+ skrzyń/occlusion/render na docelowym urządzeniu, z jasnym oddzieleniem Chrome CI od Owner feel. Nadal nie scalać DRAFT PR #5 z main i nie ingerować w osobną Jaskinię.
+
+---
+
 ## 22 OCT — zwykłe GRAJ, opóźniony Box3D i czytelność małego telefonu
 
 **Kod gotowy do dalszych prób:** commit `68a52b62e409ae2212ca1af1ee3866a09509cb33`; [GREEN #39689891839](https://github.com/Jozzpoly/Splot/actions/runs/39689891839): deterministyczny standalone, 75 Node PASS / 0 FAIL / 2 TODO i komplet testów w rzeczywistym Chrome + Box3D. PR #5 pozostaje DRAFT; K2 `main` niezmieniony. **To nie jest Owner freeplay ani hardware-phone acceptance.**

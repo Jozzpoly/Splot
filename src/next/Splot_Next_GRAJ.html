@@ -1593,6 +1593,13 @@ function restoreResearchWorld(payload){
    mass:b.mass,yaw:b.yaw,vz:0,support:null});
  }
  if(humanCount!==1||boarCount!==1)fail('wymagane dokładnie po jednej postaci i dziku.');
+ // A world ID identifies one material thing across authored and solver-owned
+ // representations. Allow geometric overlaps, but never identity aliases:
+ // selection, Q, erasure and Box3D lookup must not choose a different object
+ // merely because scene and bodies reused the same name.
+ const authoredIds=new Set(scene.elements.map(e=>e.id));
+ for(const id of bodyIds)if(authoredIds.has(id))
+  fail('powtarzający się identyfikator części i ciała: '+id);
  const world=createLiveWorld();
  world.scene=scene;world.bodies=bodies;world.time=obj.time;
  world.grip=null;world.events=[];world.paused=true;

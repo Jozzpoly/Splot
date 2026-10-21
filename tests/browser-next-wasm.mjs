@@ -40,6 +40,22 @@ try{
  assert.equal(boot.physics,'box3d','plain GRAJ must start actual Box3D by default');
  assert.match(boot.status||'',/Box3D/i,'visible engine indicator must name actual solver');
  await entry.close();
+ // If Box3D CDN is unavailable the page must unmistakably disclose the
+ // legacy FALLBACK, instead of silently pretending to be the intended game.
+ const failed=await context.newPage();
+ await failed.route('**/box3d.js@0.1.1/**',route=>route.abort('failed'));
+ await failed.goto(rootUrl,{waitUntil:'domcontentloaded'});
+ await failed.waitForFunction(()=>window.__splotNext?.physics==='legacy-fallback',null,{timeout:60000});
+ const fallback=await failed.evaluate(()=>({
+  label:document.querySelector('#engine-state')?.textContent,
+  pausedButtonDisabled:document.querySelector('#pause')?.disabled,
+  engine:window.__splotNext.physics
+ }));
+ assert.equal(fallback.engine,'legacy-fallback');
+ assert.match(fallback.label||'',/AWARIA.+legacy|AWARIA.+AWARYJNA/);
+ assert.equal(fallback.pausedButtonDisabled,false,'fallback cannot leave controls permanently locked');
+ console.log('PASS visible failed-Box3D fallback',JSON.stringify(fallback));
+ await failed.close();
  const legacyPage=await context.newPage();
  console.log('\nRUN deliberate comparison: ?physics=legacy');
  await legacyPage.goto(rootUrl+'?physics=legacy',{waitUntil:'domcontentloaded'});

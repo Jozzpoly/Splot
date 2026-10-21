@@ -18,6 +18,8 @@ let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physi
 const editHistory=createEditHistory();let editSelectedId=null,editDrag=null;
 const sceneVisual=createSceneVisualCache();
 const researchArgs=new URLSearchParams(location.search);
+const engineState=$('#engine-state');
+const showEngine=(kind,label)=>{engineState.dataset.state=kind;engineState.textContent=label;};
 const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
@@ -129,8 +131,8 @@ for(const b of buttons)b.addEventListener('click',()=>setMode(b.dataset.mode));
 $('#mobile-menu').onclick=()=>document.body.classList.toggle('menu-open');$('#active-mode').onclick=()=>setMode('move');
 const rotate=d=>{rot+=d;actionText('Kamera · obrót '+Math.round(rot*180/Math.PI)+'°')};
 $('#turn-left').onclick=()=>rotate(-Math.PI/6);$('#turn-right').onclick=()=>rotate(Math.PI/6);
-$('#pause').onclick=()=>{paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
-$('#grip').onclick=()=>{const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
+$('#pause').onclick=()=>{if(physicsState.startsWith('loading-'))return;paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
+$('#grip').onclick=()=>{if(physicsState.startsWith('loading-')){actionText('Fizyka wczytuje się.');return;}const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
 $('#layer').onclick=()=>{selection++;refreshSelection();};
@@ -219,7 +221,7 @@ function refreshSelection(){if(!cam||!cursor)return;
  const a=selected;$('#target').textContent=a?`${a.id} • Z ${a.point[2].toFixed(2)} m • ${partTool?'element':'warstwa'} ${selection%hits.length+1}/${hits.length}`:
   (partTool?'Brak części pod kursorem':'Brak powierzchni pod kursorem');
 }
-function clickWorld(p){cursor=p;refreshSelection();const a=selected;
+function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Ładowanie fizyki — świat jeszcze zatrzymany.');return;}cursor=p;refreshSelection();const a=selected;
  if(mode==='move')return;
  if(!a){actionText('Nie wskazano fizycznej powierzchni.');return;}
  if(mode==='panel'){
@@ -476,9 +478,22 @@ function frame(t){
 }
 setMode('move');actionText('Splot Next: ruszaj, pchaj, chwytaj, konstruuj. Wszystko w tej samej przestrzeni XYZ.');
 async function startPhysicsChallenger(){
- const choice=researchArgs.get('physics');
- if(choice!=='rapier'&&choice!=='box3d')return;
- physicsState='loading-'+choice;actionText('Ładowanie '+choice+' · badawcza fizyka, ta sama gra.');
+ // Box3D is the playable R&D default. Legacy remains deliberately
+ // selectable for A/B, never an accidental alternative interpretation.
+ const requested=researchArgs.get('physics');
+ const choice=requested==='legacy'?'legacy':requested==='rapier'?'rapier':'box3d';
+ if(choice==='legacy'){
+  showEngine('legacy','LEGACY · fizyka porównawcza (wybrana ręcznie)');
+  actionText('Tryb legacy — tylko porównanie. Splot Box3D uruchomisz bez parametru.');
+  return;
+ }
+ const initialPaused=paused,pauseButton=$('#pause');
+ // No unrecorded legacy sim time or movement while fetching WebAssembly.
+ paused=true;world.paused=true;acc=0;
+ pauseButton.disabled=true;pauseButton.textContent='Ładowanie…';
+ physicsState='loading-'+choice;
+ showEngine('loading','Ładowanie '+(choice==='box3d'?'Box3D':'Rapier')+' · świat zatrzymany');
+ actionText('Ładowanie '+choice+' · zaczekaj na właściwą fizykę.');
  try{
   if(choice==='rapier'){
    const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
@@ -491,6 +506,7 @@ async function startPhysicsChallenger(){
    bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
   }
   physicsState=choice;
+  showEngine('ready',(choice==='box3d'?'Box3D':'Rapier')+' · aktywna fizyka badawcza');
   refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
@@ -588,10 +604,17 @@ async function startPhysicsChallenger(){
    paused=true;world.paused=true;
    physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
+  if(!['ascent','fall','edit','grip','material','material-stack'].includes(probe)){
+   paused=initialPaused;world.paused=initialPaused;acc=0;
+  }
+  pauseButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
  }catch(err){
   bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
+  paused=initialPaused;world.paused=initialPaused;acc=0;
+  pauseButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
+  showEngine('fallback','AWARIA '+(choice==='box3d'?'Box3D':'Rapier')+' · starsza fizyka AWARYJNA');
   physicsMessage=String(err?.stack||err);
-  actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
+  actionText('AWARIA '+choice+': uruchomiono fizykę awaryjną (legacy). '+physicsMessage.slice(0,120));
  }
 }
 refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();

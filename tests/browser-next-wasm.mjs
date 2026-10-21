@@ -39,6 +39,45 @@ try{
  console.log('OWNER ENTRYPOINT',JSON.stringify(boot));
  assert.equal(boot.physics,'box3d','plain GRAJ must start actual Box3D by default');
  assert.match(boot.status||'',/Box3D/i,'visible engine indicator must name actual solver');
+ // Creator-facing A/B quality changes are deliberate and reversible;
+ // dynamic Box3D world, authoring identity, and pointer-to-world picking
+ // must survive a resolution switch without loading a different scene.
+ const startWorld=await entry.evaluate(()=>{
+  const g=window.__splotNext;
+  return {canvas:[document.querySelector('#world').width,document.querySelector('#world').height],
+   bodies:g.world.bodies.map(b=>b.id),parts:g.world.scene.elements.map(e=>e.id),scale:g.renderScale};
+ });
+ const expectedSizes={75:[960,615],50:[640,410],100:[1280,820]};
+ for(const percent of [75,50,100]){
+  await entry.locator('#quality').click();
+  await entry.waitForFunction(p=>window.__splotNext?.renderScale===p/100,percent,{timeout:2000});
+  await entry.waitForTimeout(70);
+  const fact=await entry.evaluate(()=>{
+   const g=window.__splotNext,canvas=document.querySelector('#world');
+   return {pixels:[canvas.width,canvas.height],parts:g.world.scene.elements.map(e=>e.id),
+    bodies:g.world.bodies.map(b=>b.id),engine:g.physics,scale:g.renderScale};
+  });
+  console.log('RENDER QUALITY UI',percent,JSON.stringify(fact));
+  assert.deepEqual(fact.pixels,expectedSizes[percent],'real backing buffer must resize in place');
+  assert.deepEqual(fact.parts,startWorld.parts,'render-only quality cannot rebuild authored world');
+  assert.deepEqual(fact.bodies,startWorld.bodies,'render-only quality cannot replace solver bodies');
+  assert.equal(fact.engine,'box3d');
+ }
+ // A reduced-resolution canvas must still pick the correct *world* location,
+ // not a pixel-scaled wrong place behind the visible ground.
+ await entry.locator('#quality').click();
+ await entry.locator('#quality').click(); // now 50%
+ await entry.locator('[data-mode="crate"]').click();
+ const point=await entry.evaluate(()=>{
+  const camera=window.__splotNext.camera,canvas=document.querySelector('#world'),
+   p=projectPoint(camera,[9,10,0]),r=canvas.getBoundingClientRect();
+  return {x:r.x+p.x/canvas.width*r.width,y:r.y+p.y/canvas.height*r.height};
+ });
+ await entry.mouse.click(point.x,point.y);
+ const crate=await entry.evaluate(()=>window.__splotNext.world.bodies.find(b=>b.id==='crate-2'));
+ assert.ok(crate,'world picking must still create a physical crate at 50% image quality');
+ assert.ok(Math.hypot(crate.x-9,crate.y-10)<.2,'new physical crate must match the clicked world point');
+ console.log('PASS in-world render quality A/B 100/75/50 and physical picking',JSON.stringify(crate));
  await entry.close();
  // Real Owner distribution path: a downloaded single HTML file may be
  // opened directly via file://, not via our localhost development server.

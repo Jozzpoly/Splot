@@ -12,12 +12,13 @@ import {createEditHistory,translatedElement,screenOnHeightPlane,uniquePartHits} 
 import {advanceCameraTarget} from './camera-timing.mjs';
 import {createSceneVisualCache} from './scene-visual-cache.mjs';
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
-let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
+let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1,renderScale=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const editHistory=createEditHistory();let editSelectedId=null,editDrag=null;
 const sceneVisual=createSceneVisualCache();
 const researchArgs=new URLSearchParams(location.search);
+renderScale=researchArgs.get('pixels')==='50'?.5:researchArgs.get('pixels')==='75'?.75:1;
 const engineState=$('#engine-state');
 const showEngine=(kind,label)=>{engineState.dataset.state=kind;engineState.textContent=label;};
 const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
@@ -131,6 +132,15 @@ for(const b of buttons)b.addEventListener('click',()=>setMode(b.dataset.mode));
 $('#mobile-menu').onclick=()=>document.body.classList.toggle('menu-open');$('#active-mode').onclick=()=>setMode('move');
 const rotate=d=>{rot+=d;actionText('Kamera · obrót '+Math.round(rot*180/Math.PI)+'°')};
 $('#turn-left').onclick=()=>rotate(-Math.PI/6);$('#turn-right').onclick=()=>rotate(Math.PI/6);
+const quality=$('#quality');
+const labelRenderScale=()=>{quality.textContent='Obraz: '+Math.round(renderScale*100)+'%';};
+labelRenderScale();
+quality.onclick=()=>{
+ renderScale=renderScale===1?.75:renderScale===.75?.5:1;
+ labelRenderScale();
+ playtest.event('render-resolution',{scale:renderScale});
+ actionText('Obraz '+Math.round(renderScale*100)+'% · tylko rozdzielczość; świat i Box3D bez zmian.');
+};
 $('#pause').onclick=()=>{if(physicsState.startsWith('loading-'))return;paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
 $('#grip').onclick=()=>{if(physicsState.startsWith('loading-')){actionText('Fizyka wczytuje się.');return;}const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
@@ -425,7 +435,7 @@ function renderOverlay(cam){const ctx=$('#overlay').getContext('2d'),w=$('#overl
   outline(translatedElement(editDrag.from,editDrag.delta),'#d7f4bd',true);
  if(startPanel){const p=projectPoint(cam,startPanel),k=$('#overlay').width/cam.width;ctx.beginPath();ctx.arc(p.x*k,p.y*k,7*k,0,Math.PI*2);ctx.strokeStyle='#d6e3bf';ctx.stroke();}
 }
-function viewport(){const r=canvas.getBoundingClientRect(),gl=renderer.mode==='webgl-depth';const ratio=gl?Math.min(window.devicePixelRatio||1,2):Math.min(.75,Math.max(.46,.70/(Math.max(1,(r.width*r.height)/(970*700)))));
+function viewport(){const r=canvas.getBoundingClientRect(),gl=renderer.mode==='webgl-depth';const ratio=(gl?Math.min(window.devicePixelRatio||1,2):Math.min(.75,Math.max(.46,.70/(Math.max(1,(r.width*r.height)/(970*700))))))*renderScale;
  const w=Math.max(100,Math.round(r.width*ratio)),h=Math.max(100,Math.round(r.height*ratio));
  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
  const overlay=$('#overlay'),dpr=window.devicePixelRatio||1;
@@ -441,7 +451,7 @@ function keyDirection(){let dx=Number(keys.has('d')||keys.has('arrowright'))-Num
 // Read-only rolling diagnostic. Rendering cost measures CPU submission;
 // rAF frame spacing is not a GPU timestamp and not an isolated physics rate.
 const frameMetrics=[];let prevMetricFrame=0,latestPerf=null;
-function profile(){return {...summarizePerfFrames(frameMetrics),renderer:renderer.mode,cameraMode:timeCamera?'seconds':'legacy'};}
+function profile(){return {...summarizePerfFrames(frameMetrics),renderer:renderer.mode,renderScale,canvasPixels:canvas.width*canvas.height,cameraMode:timeCamera?'seconds':'legacy'};}
 function frame(t){
  const rafMs=prevMetricFrame?t-prevMetricFrame:NaN;prevMetricFrame=t;
  let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
@@ -623,4 +633,4 @@ async function startPhysicsChallenger(){
  }
 }
 refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,get visualStats(){return sceneVisual.stats()},clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get renderScale(){return renderScale},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,get visualStats(){return sceneVisual.stats()},clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};

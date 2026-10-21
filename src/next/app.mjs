@@ -473,7 +473,11 @@ function frame(t){
   updatePlaytestStatus();const a=getBody(world,'human');
   const debug=researchArgs.get('perf')==='1',m=latestPerf;
   const suffix=debug&&m?` · physics ${m.physics.cpuMsPerStep?.toFixed(2)??'n/a'} ms/krok (${m.physics.steps} kroków) · geometry ${m.geometryCpuMs.median?.toFixed(1)} ms/kl · submit ${m.drawSubmissionCpuMs.median?.toFixed(1)} ms/kl · rAF ${m.rafMs.median?.toFixed(1)} ms`:'';
-  hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części${suffix}`;
+  // On a phone, engine identity lives in its own status row. A full
+  // research HUD would obscure the mode/menu controls on a 320px viewport.
+  hud.textContent=window.innerWidth<=760&&!debug?
+   `Z ${a.z.toFixed(1)} m · ${world.scene.elements.length} części`:
+   `Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części${suffix}`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);
 }

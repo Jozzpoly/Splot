@@ -619,6 +619,23 @@ try{
    'vertical touch drag on world canvas should raise view toward top-down');
   assert.ok(elevationAfter<1.48,'vertical camera should not reach invalid projection poles');
   console.log('PASS REAL CHROME touch camera vertical orbit');
+  // The full pitch range must be bounded (not just initial swipe response).
+  // This protects shared render/picking camera projection from singularities.
+  const sweep=async(fromY,toY,id)=>{
+   const from={x:175,y:fromY,id};
+   await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});
+   for(let k=1;k<=12;k++)await session.send('Input.dispatchTouchEvent',
+    {type:'touchMove',touchPoints:[{x:175,y:fromY+(toY-fromY)*k/12,id}]});
+   await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   await pairPage.waitForTimeout(35);
+   return pairPage.evaluate(()=>window.__splotNext.camera.elevation);
+  };
+  const low=await sweep(270,725,86);
+  const high=await sweep(600,165,87);
+  console.log('MOBILE CAMERA LIMITS',JSON.stringify({low,high}));
+  assert.ok(low>=.38-1e-4&&low<=.39,'camera tilt must stop well before horizontal ray singularity');
+  assert.ok(high>=1.42&&high<=1.43+1e-4,'camera tilt must stop before vertical projection pole');
+  console.log('PASS native touch orbit pitch clamps at both extremes');
   // Stronger real-gesture contract: moving with the captured joystick
   // while a second independent finger rotates the live camera.
   const simultaneousBefore=await pairPage.evaluate(()=>{

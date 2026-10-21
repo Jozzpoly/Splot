@@ -2492,7 +2492,8 @@ function refreshSelection(){if(!cam||!cursor)return;
  // Depth-ordered authored hits still allow deliberate deeper Q selection.
  const crateHits=physicsState==='box3d'
   ?mode==='crate'?crateTopHits(world.bodies,cam,cursor.x,cursor.y)
-   :mode==='erase'?crateSurfaceHits(world.bodies,cam,cursor.x,cursor.y):[]
+   :['edit','erase','material'].includes(mode)
+    ?crateSurfaceHits(world.bodies,cam,cursor.x,cursor.y):[]
   :[];
  const ordered=crateHits.length?
   [...rawHits,...crateHits].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)):rawHits;
@@ -2520,7 +2521,9 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
   if(!bridge?.syncStatics){actionText('Fizyka części wymaga aktywnego Box3D.');return;}
   const e=world.scene.elements.find(x=>x.id===a.id);
   if(!e||e.kind!=='box'){
-   actionText('Na tym etapie można uwolnić tylko bryłę. Płyty wymagają modelu rotacji i momentu.');return;
+   actionText(world.bodies.some(b=>b.kind==='crate'&&b.id===a.id)?
+    'Skrzynia już podlega Box3D. Q pozwala wskazać część konstrukcji za nią.':
+    'Na tym etapie można uwolnić tylko bryłę. Płyty wymagają modelu rotacji i momentu.');return;
   }
   const old=partMotionMode(e),next=old==='dynamic'?'anchored':'dynamic';
   const r=setBoxMotion(world.scene,e.id,next);
@@ -2576,7 +2579,11 @@ canvas.addEventListener('pointerdown',e=>{
  if(mode==='edit'){
   cursor=cursorPos(e);refreshSelection();
   const a=selected,part=a&&world.scene.elements.find(p=>p.id===a.id);
-  if(!part){editSelectedId=null;actionText('Wskaż część konstrukcji, nie grunt.');refreshEditButtons();return;}
+  if(!part){editSelectedId=null;
+   actionText(a&&world.bodies.some(b=>b.kind==='crate'&&b.id===a.id)?
+    'Wskazano fizyczną skrzynię. Chwytaj ją lub wybierz Q część za nią.':
+    'Wskaż część konstrukcji, nie grunt.');
+   refreshEditButtons();return;}
   if(part.kind==='box'&&part.motionType==='dynamic'){
    editSelectedId=null;actionText('Część dynamiczną prowadzi Box3D — zakotwicz ją przed edycją.');refreshEditButtons();return;
   }

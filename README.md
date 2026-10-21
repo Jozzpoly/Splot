@@ -1,7 +1,7 @@
 # Splot — living-world research, playable baseline and 2.5D donors
 
 > **SPLOT NEXT — aktualny kandydat do zabawy na badawczej gałęzi PR #5 (nie na `main`).**
-> Pobierz [**Splot_Next_GRAJ.html**](src/next/Splot_Next_GRAJ.html) przez **Download raw** i otwórz w przeglądarce z dostępem do internetu. Fizyczny Box3D jest teraz uruchamiany automatycznie — bez `?physics=box3d`. Mała informacja pod nagłówkiem podaje prawdziwy aktywny silnik; komunikat **AWARIA ... fizyka AWARYJNA** oznacza, że Box3D się nie załadował i nie należy tego traktować jako testu Box3D. `?physics=legacy` pozostaje świadomym trybem porównawczym. To nadal eksperyment; telefon Ownera i swobodny feel nie są zatwierdzone.
+> Pobierz [**Splot_Next_GRAJ.html**](src/next/Splot_Next_GRAJ.html) przez **Download raw** i otwórz w przeglądarce z dostępem do internetu. Fizyczny Box3D jest teraz uruchamiany automatycznie — bez `?physics=box3d`. W narzędziach **Przestrzeń → Obraz: 100%** można przełączyć 75% i 50% jakości obrazu w locie; pełna rozdzielczość pozostaje domyślna, fizyka i konstrukcja nie są resetowane. Mała informacja pod nagłówkiem podaje prawdziwy aktywny silnik; komunikat **AWARIA ... fizyka AWARYJNA** oznacza, że Box3D się nie załadował i nie należy tego traktować jako testu Box3D. `?physics=legacy` pozostaje świadomym trybem porównawczym. To nadal eksperyment; telefon Ownera i swobodny feel nie są zatwierdzone.
 >
 > Sekcja **Start here** poniżej dotyczy historycznego grywalnego K2, nadal obecnego w `main`. Nie pomyl obu uruchamianych światów.
 

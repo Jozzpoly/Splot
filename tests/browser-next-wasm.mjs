@@ -437,6 +437,24 @@ try{
   await pairPage.locator('.touch-action button:first-child').tap();
   assert.equal(await pairPage.evaluate(()=>window.__splotNext.world.grip),null,
    'a single touch must release exactly once, not release+regrab');
+  // Free-look in Ruch mode: camera should turn by swiping the WORLD canvas.
+  // A phone must not require opening the editor rail to inspect a structure.
+  const originalYaw=await pairPage.evaluate(()=>window.__splotNext.camera.azimuth);
+  const pointBefore={x:168,y:410,id:78},pointAfter={x:285,y:410,id:78};
+  const hitTarget=await pairPage.evaluate(p=>document.elementFromPoint(p.x,p.y)?.id,pointBefore);
+  assert.equal(hitTarget,'world','test pointer must really start on live canvas');
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[pointBefore]});
+  for(let n=1;n<=5;n++){
+   const x=pointBefore.x+(pointAfter.x-pointBefore.x)*n/5;
+   await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:pointBefore.y,id:78}]});
+  }
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await pairPage.waitForTimeout(70);
+  const newYaw=await pairPage.evaluate(()=>window.__splotNext.camera.azimuth);
+  console.log('MOBILE CANVAS FREE LOOK',JSON.stringify({originalYaw,newYaw}));
+  assert.ok(Math.abs(newYaw-originalYaw)>.3,
+   'touch drag in movement mode must rotate camera without opening tools');
+  console.log('PASS REAL CHROME native touch free-look over world canvas');
  }catch(e){failures++;console.error('FAIL two-finger:',String(e));
   await pairPage.screenshot({path:'/tmp/splot-two-finger-FAIL.png'}).catch(()=>{});
  }

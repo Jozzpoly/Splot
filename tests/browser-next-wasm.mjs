@@ -434,6 +434,9 @@ try{
   assert.equal(actual.grip,'crate-1','second finger must grip actual crate during joystick hold');
   assert.ok(actual.events>0,'world must register grip in physical sim');
   console.log('PASS REAL CHROME two-finger Box3D joystick + grip');
+  await pairPage.locator('.touch-action button:first-child').tap();
+  assert.equal(await pairPage.evaluate(()=>window.__splotNext.world.grip),null,
+   'a single touch must release exactly once, not release+regrab');
  }catch(e){failures++;console.error('FAIL two-finger:',String(e));
   await pairPage.screenshot({path:'/tmp/splot-two-finger-FAIL.png'}).catch(()=>{});
  }

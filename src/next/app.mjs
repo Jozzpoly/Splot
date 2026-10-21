@@ -134,6 +134,23 @@ $('#grip').onclick=()=>{const r=toggleGrip(world);playtest.event('grip-action',{
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
 $('#layer').onclick=()=>{selection++;refreshSelection();};
+// The second finger on a touch action must fire even while joystick owns
+// the first pointer. Compatibility click may not be generated in multitouch;
+// if generated after touch, it must not toggle the action twice.
+for(const [name,target] of [['grip','#grip'],['layer','#layer']]){
+ const button=$('[data-mobile-action="'+name+'"]');
+ const activate=()=>$(target).click();
+ button.addEventListener('pointerdown',event=>{
+  if(event.pointerType==='touch'||event.pointerType==='pen'){
+   event.preventDefault();
+   activate();
+  }
+ });
+ button.addEventListener('click',event=>{
+  if(event.pointerType==='touch'||event.pointerType==='pen')return;
+  activate();
+ });
+}
 $('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();editHistory.clear();editSelectedId=null;editDrag=null;
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);

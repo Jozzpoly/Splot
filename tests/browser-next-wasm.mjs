@@ -506,5 +506,52 @@ try{
   await stackPage.screenshot({path:'/tmp/splot-crate-top-FAIL.png'}).catch(()=>{});
  }
  await stackPage.close();
+ // Cross-type material test: an authored dynamic Box3D solid must land on the
+ // separately simulated movable crate, then react to that crate's removal.
+ // This specifically challenges "one physical world" beyond crate-on-crate.
+ const contactPage=await context.newPage();
+ console.log('\nRUN authored dynamic part falls onto mobile crate → remove support');
+ await contactPage.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await contactPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const createdPart=await contactPage.evaluate(()=>{
+   const g=window.__splotNext,w=g.world,crate=w.bodies.find(b=>b.id==='crate-1');
+   const min=[crate.x-.3,crate.y-.3,crate.z+2.0],max=[crate.x+.3,crate.y+.3,crate.z+2.55];
+   const built=g.build({id:'physical-workpiece',kind:'box',min,max,material:'wood'});
+   const released=g.partMotion('physical-workpiece','dynamic');
+   return {built,released,first:min[2],crateZ:crate.z};
+  });
+  assert.equal(createdPart.built.ok,true);
+  assert.equal(createdPart.released.ok,true);
+  await contactPage.evaluate(()=>window.__splotNext.step(180));
+  const rested=await contactPage.evaluate(()=>{
+   const w=window.__splotNext.world;
+   const crate=w.bodies.find(b=>b.id==='crate-1');
+   const piece=w.scene.elements.find(e=>e.id==='physical-workpiece');
+   return {pieceBottom:piece.min[2],crateTop:crate.z+crate.h,
+    offsetXY:Math.hypot((piece.min[0]+piece.max[0])/2-crate.x,(piece.min[1]+piece.max[1])/2-crate.y)};
+  });
+  console.log('DYNAMIC MATERIAL / CRATE CONTACT',JSON.stringify(rested));
+  assert.ok(Math.abs(rested.pieceBottom-rested.crateTop)<.20,
+   'dynamic authored material must physically land on independent mobile crate body');
+  assert.ok(rested.offsetXY<.25,'material must stay above actual crate contact');
+  await contactPage.evaluate(()=>{
+   const g=window.__splotNext,w=g.world;
+   const i=w.bodies.findIndex(b=>b.id==='crate-1');
+   w.bodies.splice(i,1);
+   g.challenger.syncBodies();
+   g.step(180);
+  });
+  const afterSupport=await contactPage.evaluate(()=>{
+   const w=window.__splotNext.world;
+   return w.scene.elements.find(e=>e.id==='physical-workpiece').min[2];
+  });
+  assert.ok(afterSupport<rested.pieceBottom-.5,
+   'authored dynamic material must lose support when physical crate is removed');
+  console.log('PASS REAL CHROME cross-type Box3D: authored piece → crate support → released');
+ }catch(e){failures++;console.error('FAIL cross-type physical support:',String(e));
+  await contactPage.screenshot({path:'/tmp/splot-cross-type-FAIL.png'}).catch(()=>{});
+ }
+ await contactPage.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

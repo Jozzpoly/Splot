@@ -495,6 +495,31 @@ try{
    assert.ok(Math.abs(undid-rootZ)<.02,label+' undo must restore material geometry');
   }
   console.log('PASS REAL CHROME camera extreme elevation preserves authored picking and undo');
+  // Disposable intentionally overlapping fixture for visual inspection,
+  // not a replay, asset import or representation of the Owner's saved world.
+  // Screenshots document real browser rendering at two pitch extremes.
+  const visualFixture=await inspect.evaluate(()=>{
+   const g=window.__splotNext;
+   let created=0;
+   for(let i=0;i<80;i++){
+    const x=9.4+(i%10)*.72,y=11.3+Math.floor(i/10)*.75;
+    const z=(i%6)*.26;
+    const result=g.build({id:'visual-inspection-'+i,kind:'box',
+     min:[x,y,z],max:[x+.96,y+.99,z+.88+(i%3)*.25],
+     material:['stone','wood','steel'][i%3]});
+    if(result.ok)created++;
+   }
+   g.challenger.syncStatics();
+   return {created,authored:g.world.scene.elements.length,engine:g.physics};
+  });
+  assert.equal(visualFixture.created,80);
+  await dragLook(575,345);
+  await inspect.waitForTimeout(180);
+  await inspect.screenshot({path:'/tmp/splot-orbit-overhead.png'});
+  await dragLook(290,575);
+  await inspect.waitForTimeout(180);
+  await inspect.screenshot({path:'/tmp/splot-orbit-oblique.png'});
+  console.log('VISUAL FIXTURE SCREENSHOTS',JSON.stringify(visualFixture));
  }catch(e){failures++;console.error('FAIL camera extreme picking:',String(e));
   await inspect.screenshot({path:'/tmp/splot-camera-extremes-FAIL.png'}).catch(()=>{});
  }

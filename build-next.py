@@ -28,6 +28,7 @@ modules = [
  ("PerfMetrics","perf-metrics.mjs",["summarizePerfFrames"]),
  ("AuthoringEditor","authoring-editor.mjs",["createEditHistory","translatedElement","screenOnHeightPlane","uniquePartHits"]),
  ("CameraTiming","camera-timing.mjs",["followGainForSeconds","advanceCameraTarget"]),
+ ("ExteriorBoxes","exterior-boxes.mjs",["exteriorBoxTriangles"]),
  ("SceneVisualCache","scene-visual-cache.mjs",["createSceneVisualCache"]),
  ("SceneRestore","scene-restore.mjs",["restoreResearchWorld","nextAuthoringSequence"]),
  ("Box3DBridge","box3d-live.mjs",["createBox3DBridge"]),

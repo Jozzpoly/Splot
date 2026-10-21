@@ -520,6 +520,40 @@ try{
   await inspect.waitForTimeout(180);
   await inspect.screenshot({path:'/tmp/splot-orbit-oblique.png'});
   console.log('VISUAL FIXTURE SCREENSHOTS',JSON.stringify(visualFixture));
+  // The identical synthetic scene rendered through a derived anchored-AABB
+  // exterior. Save separately for eye-level comparison with the plain view.
+  const ext=await context.newPage();
+  await ext.goto(rootUrl+'?physics=box3d&faces=exterior-boxes',{waitUntil:'domcontentloaded'});
+  await ext.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await ext.locator('#pause').click();
+  const stats=await ext.evaluate(()=>{
+   const g=window.__splotNext;
+   for(let i=0;i<80;i++){
+    const x=9.4+(i%10)*.72,y=11.3+Math.floor(i/10)*.75,z=(i%6)*.26;
+    const q=g.build({id:'visual-inspection-'+i,kind:'box',
+     min:[x,y,z],max:[x+.96,y+.99,z+.88+(i%3)*.25],
+     material:['stone','wood','steel'][i%3]});
+    if(!q.ok)throw Error(q.reason);
+   }
+   g.challenger.syncStatics();
+   return {engine:g.physics,count:g.world.scene.elements.length,exterior:g.visualStats.exteriorBoxes};
+  });
+  assert.equal(stats.exterior,true);
+  // Use natural right-mouse drag: same camera endpoints as the plain shot.
+  const pitchDrag=async(a,b)=>{
+   await ext.mouse.move(430,a);await ext.mouse.down({button:'right'});
+   await ext.mouse.move(430,b,{steps:9});await ext.mouse.up({button:'right'});
+   await ext.waitForTimeout(170);
+  };
+  await pitchDrag(380,190);
+  await ext.screenshot({path:'/tmp/splot-orbit-exterior-overhead.png'});
+  await pitchDrag(305,580);
+  await ext.screenshot({path:'/tmp/splot-orbit-exterior-oblique.png'});
+  const outer=await ext.evaluate(()=>({stats:window.__splotNext.visualStats,
+   engine:window.__splotNext.physics,parts:window.__splotNext.world.scene.elements.length}));
+  console.log('EXTERIOR AABB VISUAL A/B',JSON.stringify({stats,outer,baselineParts:visualFixture.authored}));
+  assert.equal(outer.parts,visualFixture.authored,'visual A/B must preserve same authored count');
+  await ext.close();
  }catch(e){failures++;console.error('FAIL camera extreme picking:',String(e));
   await inspect.screenshot({path:'/tmp/splot-camera-extremes-FAIL.png'}).catch(()=>{});
  }

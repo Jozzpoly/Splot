@@ -56,6 +56,51 @@ try{
  assert.equal(fallback.pausedButtonDisabled,false,'fallback cannot leave controls permanently locked');
  console.log('PASS visible failed-Box3D fallback',JSON.stringify(fallback));
  await failed.close();
+ // CDN latency is real. Verify that starting the new game cannot silently
+ // advance LEGACY physics or accept a build while Box3D is still fetching.
+ const gated=await browser.newContext({viewport:{width:1280,height:820}});
+ const slow=await gated.newPage();
+ let releaseFetch=null;
+ let delayed=false;
+ await slow.route('**/box3d.js@0.1.1/**',async route=>{
+  delayed=true;
+  await new Promise(resolve=>{releaseFetch=resolve});
+  await route.continue();
+ });
+ console.log('\nRUN slow Box3D bootstrap: no legacy steps or edits while loading');
+ try{
+  await slow.goto(rootUrl,{waitUntil:'domcontentloaded'});
+  await slow.waitForFunction(()=>window.__splotNext?.physics==='loading-box3d',null,{timeout:8000});
+  await slow.waitForTimeout(250);
+  assert.ok(delayed,'test MUST intercept actual Box3D network module, not false-positive cache');
+  const before=await slow.evaluate(()=>({
+   paused:document.querySelector('#pause').disabled,
+   physics:window.__splotNext.physics,time:window.__splotNext.world.time,
+   bodies:window.__splotNext.world.bodies.length,
+   parts:window.__splotNext.world.scene.elements.length
+  }));
+  await slow.locator('[data-mode="crate"]').click();
+  await slow.mouse.click(580,520);
+  const during=await slow.evaluate(()=>({
+   time:window.__splotNext.world.time,
+   bodies:window.__splotNext.world.bodies.length,
+   parts:window.__splotNext.world.scene.elements.length
+  }));
+  console.log('BOOTSTRAP HELD',JSON.stringify({before,during}));
+  assert.equal(before.physics,'loading-box3d');
+  assert.equal(before.paused,true);
+  assert.equal(before.time,0,'simulation time may not elapse on unloaded engine');
+  assert.deepEqual(during,{time:0,bodies:before.bodies,parts:before.parts},
+   'held-loading Box3D must not mutate world via simulation or UI building');
+  releaseFetch?.();releaseFetch=null;
+  await slow.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  assert.equal(await slow.locator('#pause').isDisabled(),false,'ready simulation must unlock pause');
+  console.log('PASS slow startup remains world-frozen, then unlocks real Box3D');
+ }catch(e){failures++;console.error('FAIL held bootstrap:',String(e));
+ }finally{
+  releaseFetch?.();
+  await gated.close();
+ }
  const legacyPage=await context.newPage();
  console.log('\nRUN deliberate comparison: ?physics=legacy');
  await legacyPage.goto(rootUrl+'?physics=legacy',{waitUntil:'domcontentloaded'});

@@ -2303,7 +2303,7 @@ return {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor};
 const {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor}=RenderAdapters;
 
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
-let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1,renderScale=1;
+let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,pitch=1.03,zoom=1,renderScale=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const editHistory=createEditHistory();let editSelectedId=null,editDrag=null;
@@ -2316,7 +2316,7 @@ const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
 const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
-const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
+const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0,lastY:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();
 for(const name of ['pointerdown','keydown','wheel']){
@@ -2575,7 +2575,15 @@ function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Łado
  }
 }
 canvas.addEventListener('pointermove',e=>{
- if(look.id===e.pointerId){rotate((e.clientX-look.lastX)*.009);look.lastX=e.clientX;return;}
+ if(look.id===e.pointerId){
+  const dx=e.clientX-look.lastX,dy=e.clientY-look.lastY;
+  rot+=dx*.009;
+  // Drag up to inspect top faces, down to inspect side faces.
+  // Stay clear of invalid camera poles (including ray picking).
+  pitch=Math.max(.38,Math.min(1.43,pitch-dy*.007));
+  look.lastX=e.clientX;look.lastY=e.clientY;
+  return;
+ }
  if(editDrag?.pointerId===e.pointerId){
   const p=cursorPos(e),q=screenOnHeightPlane(cam,p.x,p.y,editDrag.planeZ);
   if(q)editDrag.delta=[q[0]-editDrag.origin[0],q[1]-editDrag.origin[1],0];
@@ -2586,13 +2594,13 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerdown',e=>{
  e.preventDefault();
  if(physicsState.startsWith('loading-')){actionText('Najpierw wczytaj fizykę.');return;}
- if(e.button===2){look.id=e.pointerId;look.lastX=e.clientX;canvas.setPointerCapture(e.pointerId);return;}
+ if(e.button===2){look.id=e.pointerId;look.lastX=e.clientX;look.lastY=e.clientY;canvas.setPointerCapture(e.pointerId);return;}
  // On a phone the free play canvas is the natural camera control.
  // Right-mouse orbit remains intact; authoring touch still targets parts.
  // A captured joystick uses a DIFFERENT pointer on its own element.
  if(mode==='move'&&(e.pointerType==='touch'||e.pointerType==='pen')){
   if(look.id!==null)return;
-  look.id=e.pointerId;look.lastX=e.clientX;
+  look.id=e.pointerId;look.lastX=e.clientX;look.lastY=e.clientY;
   canvas.setPointerCapture(e.pointerId);
   return;
  }
@@ -2749,7 +2757,7 @@ function frame(t){
  const info=viewport(),p=getBody(world,'human');
  if(timeCamera)camTarget=advanceCameraTarget(camTarget,[p.x,p.y,p.z+.7],elapsed);
  else {camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;}
- cam=makeCamera({target:camTarget,azimuth:rot,elevation:1.03,...info});
+ cam=makeCamera({target:camTarget,azimuth:rot,elevation:pitch,...info});
  const physicsStart=performance.now();
  let physicsSteps=0;
  if(!paused){let iter=0;while(acc>=1/60&&iter<4){

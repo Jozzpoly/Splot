@@ -2455,7 +2455,7 @@ function refreshSelection(){if(!cam||!cursor)return;
  const rawHits=pickPixel(world.scene,cam,cursor.x,cursor.y);
  // Authored editing still selects authored identities; ONLY physical
  // crate placement additionally sees other physical crate tops.
- const crateHits=mode==='crate'&&physicsState==='box3d'
+ const crateHits=(mode==='crate'||mode==='erase')&&physicsState==='box3d'
   ?crateTopHits(world.bodies,cam,cursor.x,cursor.y):[];
  const ordered=crateHits.length?
   [...rawHits,...crateHits].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)):rawHits;
@@ -2496,6 +2496,16 @@ function clickWorld(p){cursor=p;refreshSelection();const a=selected;
  if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
  if(mode==='edit'){actionText('Zaznacz i przeciągnij zakotwiczoną część. Pion: przyciski ±0,25 m.');return;}
  if(mode==='erase'){
+  const crateIndex=world.bodies.findIndex(b=>b.kind==='crate'&&b.id===a.id);
+  if(crateIndex!==-1){
+   const [crate]=world.bodies.splice(crateIndex,1);
+   if(world.grip===crate.id)world.grip=null;
+   // Solver owns live crate bodies; prune the removed reference immediately.
+   bridge?.syncBodies?.();
+   playtest.event('delete-crate',{id:crate.id});
+   actionText('Skrzynia usunięta. Pozostałe ciała zachowują własną fizykę.');
+   return;
+  }
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}
   const e=world.scene.elements.find(x=>x.id===a.id);
   const external=e?.kind==='box'&&e.motionType==='dynamic';

@@ -21,7 +21,7 @@ test('adjacent stacked boxes drop BOTH invisible meeting faces, retain identitie
  assert.equal(face(t,'low',2,1).length,0);
  assert.equal(face(t,'top',2,-1).length,0);
  assert.deepEqual([...new Set(t.map(q=>q.owner))].sort(),['low','top']);
- assert.ok(Math.abs(area(t)-32)<1e-8,'exterior surface is 2x2x2 cuboid: 24, not 32');
+ assert.ok(Math.abs(area(t)-24)<1e-8,'exterior surface is 2x2x2 cuboid: 24, not 32');
 });
 test('identical independent AABBs render once by stable author order without merging their data',()=>{
  const a=box('old',[0,0,0],[1,1,1]),b=box('new',[0,0,0],[1,1,1]);

@@ -90,6 +90,39 @@ try{
  if(!counts.restoredDraw||!counts.restoredBuffer||!counts.drawCalls||!counts.uploadCalls)
   throw Error('GPU ablation was not actually performed and reverted');
  const regained=await measure('300_crates_24_anchored_RENDER_RESTORED');
+ // Resolution-pressure A/B after re-enabling unchanged WebGL draw path.
+ // Hold CSS viewport, camera, scene bodies and triangles constant. Override
+ // only the browser's reported DPR to quarter the backing pixel area.
+ const originalDpr=await page.evaluate(()=>window.devicePixelRatio);
+ const lowCanvas=await page.evaluate(()=>{
+  Object.defineProperty(window,'devicePixelRatio',{configurable:true,value:0.5});
+  const c=document.querySelector('#world');
+  return {dpr:window.devicePixelRatio,width:c.width,height:c.height};
+ });
+ const reduced=await measure('300_crates_24_anchored_HALF_DPR');
+ const reducedPixels=await page.evaluate(()=>{
+  const c=document.querySelector('#world');return {width:c.width,height:c.height};
+ });
+ await page.evaluate(dpr=>{
+  Object.defineProperty(window,'devicePixelRatio',{configurable:true,value:dpr});
+ },originalDpr);
+ const afterRestore=await measure('300_crates_24_anchored_FULL_DPR_RESTORED');
+ const restoredPixels=await page.evaluate(()=>{
+  const c=document.querySelector('#world');return {width:c.width,height:c.height};
+ });
+ console.log('RENDER RESOLUTION A/B',JSON.stringify({
+  originalDpr,full:regained.profile.rafMs,halfDpr:reduced.profile.rafMs,
+  restored:afterRestore.profile.rafMs,
+  reducedPixels,restoredPixels,
+  trianglesFull:regained.profile.triangles.median,
+  trianglesReduced:reduced.profile.triangles.median,
+  physicsStepsFull:regained.profile.physics.steps,
+  physicsStepsReduced:reduced.profile.physics.steps
+ }));
+ if(!(reducedPixels.width*reducedPixels.height <restoredPixels.width*restoredPixels.height*.35))
+  throw Error('DPR experiment did not materially reduce render pixels');
+ if(reduced.profile.triangles.median!==regained.profile.triangles.median)
+  throw Error('DPR A/B accidentally changed world scene triangle count');
  console.log('GL ABLATION A/B',JSON.stringify({
   full:anchored.profile.rafMs,
   noDraw:withoutDraw.profile.rafMs,

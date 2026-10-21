@@ -602,6 +602,23 @@ try{
   assert.ok(Math.abs(newYaw-originalYaw)>.3,
    'touch drag in movement mode must rotate camera without opening tools');
   console.log('PASS REAL CHROME native touch free-look over world canvas');
+  // Vertical visual inspection should be as natural as horizontal orbit.
+  // Real CDP finger, not changing any internal camera state from the test.
+  const elevationBefore=await pairPage.evaluate(()=>window.__splotNext.camera.elevation);
+  const tiltStart={x:172,y:388,id:84};
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[tiltStart]});
+  for(let n=1;n<=6;n++){
+   await session.send('Input.dispatchTouchEvent',{type:'touchMove',
+    touchPoints:[{x:tiltStart.x,y:tiltStart.y-19*n,id:84}]});
+  }
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await pairPage.waitForTimeout(70);
+  const elevationAfter=await pairPage.evaluate(()=>window.__splotNext.camera.elevation);
+  console.log('MOBILE CAMERA ELEVATION',JSON.stringify({elevationBefore,elevationAfter}));
+  assert.ok(elevationAfter>elevationBefore+.25,
+   'vertical touch drag on world canvas should raise view toward top-down');
+  assert.ok(elevationAfter<1.48,'vertical camera should not reach invalid projection poles');
+  console.log('PASS REAL CHROME touch camera vertical orbit');
   // Stronger real-gesture contract: moving with the captured joystick
   // while a second independent finger rotates the live camera.
   const simultaneousBefore=await pairPage.evaluate(()=>{

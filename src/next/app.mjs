@@ -5,7 +5,7 @@ import {createRapierBridge} from './rapier-live.mjs';
 import {createBox3DBridge} from './box3d-live.mjs';
 import {createPlaytestJournal} from './playtest-journal.mjs';
 import {partMotionMode,setBoxMotion} from './part-lifecycle.mjs';
-import {crateTriangles} from './crate-visual.mjs';
+import {crateTriangles,crateTopHits} from './crate-visual.mjs';
 import {summarizePerfFrames} from './perf-metrics.mjs';
 import {restoreResearchWorld,nextAuthoringSequence} from './scene-restore.mjs';
 import {createEditHistory,translatedElement,screenOnHeightPlane,uniquePartHits} from './authoring-editor.mjs';
@@ -202,8 +202,14 @@ function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.client
 let cursor=null;
 function refreshSelection(){if(!cam||!cursor)return;
  const rawHits=pickPixel(world.scene,cam,cursor.x,cursor.y);
+ // Authored editing still selects authored identities; ONLY physical
+ // crate placement additionally sees other physical crate tops.
+ const crateHits=mode==='crate'&&physicsState==='box3d'
+  ?crateTopHits(world.bodies,cam,cursor.x,cursor.y):[];
+ const ordered=crateHits.length?
+  [...rawHits,...crateHits].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)):rawHits;
  const partTool=['edit','erase','material'].includes(mode);
- const hits=partTool?uniquePartHits(rawHits):rawHits;
+ const hits=partTool?uniquePartHits(ordered):ordered;
  selected=hits.length?hits[selection%hits.length]:null;
  const a=selected;$('#target').textContent=a?`${a.id} • Z ${a.point[2].toFixed(2)} m • ${partTool?'element':'warstwa'} ${selection%hits.length+1}/${hits.length}`:
   (partTool?'Brak części pod kursorem':'Brak powierzchni pod kursorem');

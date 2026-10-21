@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {crateTriangles} from '../../src/next/crate-visual.mjs';
+import {crateTriangles,crateTopHits} from '../../src/next/crate-visual.mjs';
 test('crate has exactly one exposed top, no coplanar material conflict',()=>{
  const b={id:'crate-17',kind:'crate',x:12.25,y:7,z:2.4,r:.43,h:.86};
  const tris=crateTriangles(b);
@@ -24,4 +24,28 @@ test('hundreds of independent crate surfaces remain finite and unambiguous',()=>
   count+=tris.length;
  }
  assert.equal(count,7000);
+});
+
+import {makeCamera,projectPoint} from '../../src/next/spatial-core.mjs';
+test('ray on the visible crate top selects the real moving body rather than ground behind',()=>{
+ const crate={id:'crate-7',kind:'crate',x:14.2,y:15.2,z:.6,r:.43,h:.86};
+ const camera=makeCamera({target:[14,15,0],width:900,height:560,pixelsPerMeter:32});
+ const top=projectPoint(camera,[crate.x,crate.y,crate.z+crate.h]);
+ const hits=crateTopHits([crate],camera,top.x,top.y);
+ assert.equal(hits.length,1);
+ assert.equal(hits[0].id,crate.id);
+ assert.equal(hits[0].face,'top');
+ assert.ok(Math.abs(hits[0].point[2]-(crate.z+crate.h))<1e-8);
+ const outside=projectPoint(camera,[crate.x+1,crate.y,crate.z+crate.h]);
+ assert.equal(crateTopHits([crate],camera,outside.x,outside.y).length,0);
+ assert.equal(crateTopHits([{...crate,kind:'human'}],camera,top.x,top.y).length,0);
+});
+test('crate surface picking sorts moving support candidates by camera depth',()=>{
+ const a={id:'lower',kind:'crate',x:12,y:11,z:0,r:.43,h:.86};
+ const b={...a,id:'upper',z:.86};
+ const cam=makeCamera({target:[12,11,0],width:720,height:480,pixelsPerMeter:30});
+ const p=projectPoint(cam,[12,11,1.72]);
+ const hits=crateTopHits([a,b],cam,p.x,p.y);
+ assert.equal(hits[0].id,'upper');
+ assert.ok(hits.length>=1);
 });

@@ -576,6 +576,27 @@ try{
   assert.ok(Math.abs(simultaneousAfter.yaw-simultaneousBefore.yaw)>.25,
    'second finger must independently orbit camera while joystick is held');
   console.log('PASS REAL CHROME native 2-finger walk + camera orbit');
+  // A narrow phone still has to SHOW which physics is running without
+  // covering Ruch or menu affordances. Visual overlap is not a feel test.
+  await pairPage.setViewportSize({width:320,height:568});
+  await pairPage.waitForTimeout(360);
+  const narrow=await pairPage.evaluate(()=>{
+   const rect=id=>{
+    const el=document.querySelector(id),r=el.getBoundingClientRect();
+    return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,text:el.textContent.trim()};
+   };
+   return {hud:rect('#hud'),engine:rect('#engine-state'),
+    menu:rect('#mobile-menu'),mode:rect('#active-mode')};
+  });
+  const overlap=(a,b)=>Math.min(a.right,b.right)-Math.max(a.x,b.x)>0&&
+   Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>0;
+  console.log('PHONE 320px HEADER GEOMETRY',JSON.stringify(narrow));
+  assert.equal(overlap(narrow.engine,narrow.mode),false,
+   'mobile active-mode button must not mask visible engine identity');
+  assert.equal(overlap(narrow.hud,narrow.mode),false,
+   'mobile active-mode button must not collide with world HUD');
+  assert.ok(narrow.engine.right<=320,'physics status must remain inside phone viewport');
+  console.log('PASS REAL CHROME 320px engine/mode/HUD legibility contract');
  }catch(e){failures++;console.error('FAIL two-finger:',String(e));
   await pairPage.screenshot({path:'/tmp/splot-two-finger-FAIL.png'}).catch(()=>{});
  }

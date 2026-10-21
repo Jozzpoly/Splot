@@ -2444,7 +2444,7 @@ for(const [name,target] of [['grip','#grip'],['layer','#layer']]){
   activate();
  });
 }
-$('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();editHistory.clear();editSelectedId=null;editDrag=null;
+$('#reset').onclick=()=>{if(physicsState.startsWith('loading-')){actionText('Reset po załadowaniu właściwej fizyki.');return;}playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();editHistory.clear();editSelectedId=null;editDrag=null;
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
@@ -2575,6 +2575,7 @@ canvas.addEventListener('pointermove',e=>{
 });
 canvas.addEventListener('pointerdown',e=>{
  e.preventDefault();
+ if(physicsState.startsWith('loading-')){actionText('Najpierw wczytaj fizykę.');return;}
  if(e.button===2){look.id=e.pointerId;look.lastX=e.clientX;canvas.setPointerCapture(e.pointerId);return;}
  // On a phone the free play canvas is the natural camera control.
  // Right-mouse orbit remains intact; authoring touch still targets parts.
@@ -2778,10 +2779,10 @@ async function startPhysicsChallenger(){
   actionText('Tryb legacy — tylko porównanie. Splot Box3D uruchomisz bez parametru.');
   return;
  }
- const initialPaused=paused,pauseButton=$('#pause');
+ const initialPaused=paused,pauseButton=$('#pause'),resetButton=$('#reset');
  // No unrecorded legacy sim time or movement while fetching WebAssembly.
  paused=true;world.paused=true;acc=0;
- pauseButton.disabled=true;pauseButton.textContent='Ładowanie…';
+ pauseButton.disabled=true;resetButton.disabled=true;pauseButton.textContent='Ładowanie…';
  physicsState='loading-'+choice;
  showEngine('loading','Ładowanie '+(choice==='box3d'?'Box3D':'Rapier')+' · świat zatrzymany');
  actionText('Ładowanie '+choice+' · zaczekaj na właściwą fizykę.');
@@ -2898,11 +2899,11 @@ async function startPhysicsChallenger(){
   if(!['ascent','fall','edit','grip','material','material-stack'].includes(probe)){
    paused=initialPaused;world.paused=initialPaused;acc=0;
   }
-  pauseButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
+  pauseButton.disabled=false;resetButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
  }catch(err){
   bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   paused=initialPaused;world.paused=initialPaused;acc=0;
-  pauseButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
+  pauseButton.disabled=false;resetButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
   showEngine('fallback','AWARIA '+(choice==='box3d'?'Box3D':'Rapier')+' · starsza fizyka AWARYJNA');
   physicsMessage=String(err?.stack||err);
   actionText('AWARIA '+choice+': uruchomiono fizykę awaryjną (legacy). '+physicsMessage.slice(0,120));

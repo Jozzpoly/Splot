@@ -482,6 +482,26 @@ try{
   assert.equal(afterErase.topExists,false,'Erase must remove the selected physical crate, not a scene face behind');
   assert.equal(afterErase.baseExists,true,'Erase must preserve the underlying physical crate');
   console.log('PASS REAL CHROME direct erase of physical crate after stacking');
+  // The visible FRONT/SIDE of the same still-live physical crate must not
+  // click through to ground or an authored structure during Erase.
+  // This is not a whole-scene CSG problem; it is pointer provenance.
+  const crateSide=await stackPage.evaluate(()=>{
+   const w=window.__splotNext.world,c=window.__splotNext.camera,el=document.querySelector('#world');
+   const b=w.bodies.find(x=>x.id==='crate-1');
+   const p=projectPoint(c,[b.x,b.y-b.r,b.z+b.h*.42]),r=el.getBoundingClientRect();
+   return {x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height,
+    target:document.elementFromPoint(r.left+p.x/el.width*r.width,r.top+p.y/el.height*r.height)?.id??null};
+  });
+  console.log('CRATE SIDE PIXEL',JSON.stringify(crateSide));
+  await stackPage.mouse.click(crateSide.x,crateSide.y);
+  const left=await stackPage.evaluate(()=>({
+   crate:window.__splotNext.world.bodies.some(b=>b.id==='crate-1'),
+   parts:window.__splotNext.world.scene.elements.length
+  }));
+  console.log('CRATE SIDE ERASE STATE',JSON.stringify(left));
+  assert.equal(left.crate,false,'visible side of dynamic crate must select its real body for Erase');
+  assert.equal(left.parts,7,'erase side must not accidentally delete authored geometry behind crate');
+  console.log('PASS REAL CHROME crate side selection + erase provenance');
  }catch(e){failures++;console.error('FAIL real crate top:',String(e));
   await stackPage.screenshot({path:'/tmp/splot-crate-top-FAIL.png'}).catch(()=>{});
  }

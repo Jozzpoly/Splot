@@ -441,5 +441,33 @@ try{
   await pairPage.screenshot({path:'/tmp/splot-two-finger-FAIL.png'}).catch(()=>{});
  }
  await pairContext.close();
+ // A crate's VISIBLE upper face should be a selectable placement support
+ // for another physical crate. Static authored solids must NOT be silently
+ // reparented to moving crates by this narrow physical-stacking contract.
+ const stackPage=await context.newPage();
+ console.log('\nRUN physical crate-on-crate placement through ordinary UI pointer');
+ await stackPage.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await stackPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await stackPage.locator('[data-mode="crate"]').click();
+  const pixel=await stackPage.evaluate(()=>{
+   const w=window.__splotNext.world,c=window.__splotNext.camera,el=document.querySelector('#world');
+   const b=w.bodies.find(x=>x.id==='crate-1');
+   const p=projectPoint(c,[b.x,b.y,b.z+b.h]),r=el.getBoundingClientRect();
+   return {x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height};
+  });
+  await stackPage.mouse.click(pixel.x,pixel.y);
+  const created=await stackPage.evaluate(()=>window.__splotNext.world.bodies.find(b=>b.id==='crate-2'));
+  console.log('CRATE TOP CLICK',JSON.stringify({pixel,created}));
+  assert.ok(created,'clicking crate surface must create second physical crate');
+  assert.ok(created.z>.7,'the new physical crate must spawn ON the visible top, not on ground behind');
+  await stackPage.evaluate(()=>window.__splotNext.step(120));
+  const after=await stackPage.evaluate(()=>window.__splotNext.world.bodies.find(b=>b.id==='crate-2'));
+  assert.ok(after.z>.50,'real Box3D contacts must sustain stacked crate after 120 steps');
+  console.log('PASS REAL CHROME crate-on-crate direct placement and physical support');
+ }catch(e){failures++;console.error('FAIL real crate top:',String(e));
+  await stackPage.screenshot({path:'/tmp/splot-crate-top-FAIL.png'}).catch(()=>{});
+ }
+ await stackPage.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

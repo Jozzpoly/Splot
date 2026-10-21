@@ -188,6 +188,10 @@ try{
  };
  const plainFixture=await buildOverlap(page,false);
  const plain=await measure('301_crates_80_overlapping_anchored_PLAIN');
+ const plainVisual=await page.evaluate(()=>window.__splotNext.visualStats);
+ // The original page must STOP rendering before the second page is profiled:
+ // concurrent WebGL instances otherwise confound CPU, scheduling and GPU.
+ await page.close();
  const extPage=await browser.newPage({viewport:{width:1280,height:820}});
  await extPage.goto('http://127.0.0.1:18880/src/next/Splot_Next_GRAJ.html?physics=box3d&faces=exterior-boxes');
  await extPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
@@ -204,7 +208,7 @@ try{
  };
  const exterior=await extMeasure();
  console.log('OVERLAP VISUAL EXTERIOR PERF A/B',JSON.stringify({
-  plainFixture,extFixture,plain:{profile:plain.profile,visual:await page.evaluate(()=>window.__splotNext.visualStats)},
+  plainFixture,extFixture,plain:{profile:plain.profile,visual:plainVisual},
   exterior
  }));
  if(JSON.stringify(plainFixture)!==JSON.stringify(extFixture)||exterior.engine!=='box3d')
@@ -213,7 +217,6 @@ try{
  console.log('SUMMARY',JSON.stringify({baseline:baseline.profile,crates:crates.profile,anchored:anchored.profile,dynamic:dynamic.profile,removed:removed.profile,errors}));
  if(errors.length)throw Error('browser JS errors: '+errors.join(';'));
  if(!removed.profile.frames)throw Error('no frame profiling');
- await page.close();
 }finally{
  await browser.close();
  await new Promise(r=>server.close(r));

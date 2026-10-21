@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {crateTriangles,crateTopHits} from '../../src/next/crate-visual.mjs';
+import {crateTriangles,crateTopHits,crateSurfaceHits} from '../../src/next/crate-visual.mjs';
 test('crate has exactly one exposed top, no coplanar material conflict',()=>{
  const b={id:'crate-17',kind:'crate',x:12.25,y:7,z:2.4,r:.43,h:.86};
  const tris=crateTriangles(b);
@@ -48,4 +48,26 @@ test('crate surface picking sorts moving support candidates by camera depth',()=
  const hits=crateTopHits([a,b],cam,p.x,p.y);
  assert.equal(hits[0].id,'upper');
  assert.ok(hits.length>=1);
+});
+
+
+test('front face of visible moving crate is erasure target, not stacking support',()=>{
+ const b={id:'crate-side',kind:'crate',x:14.2,y:15.2,z:0,r:.43,h:.86};
+ const cam=makeCamera({target:[14,15,0],width:900,height:560,pixelsPerMeter:32});
+ const p=projectPoint(cam,[b.x,b.y-b.r,b.z+b.h*.42]);
+ assert.equal(crateTopHits([b],cam,p.x,p.y).length,0);
+ const hits=crateSurfaceHits([b],cam,p.x,p.y);
+ assert.equal(hits.length,1);
+ assert.equal(hits[0].id,b.id);
+ assert.equal(hits[0].face,'side');
+ assert.ok(Math.abs(hits[0].point[1]-(b.y-b.r))<1e-5);
+ assert.deepEqual(hits[0].normal,[0,-1,0]);
+});
+test('full crate skin picks visible lid but ignores unrelated bodies and empty pixels',()=>{
+ const b={id:'crate',kind:'crate',x:12,y:11,z:0,r:.43,h:.86};
+ const cam=makeCamera({target:[12,11,0],width:720,height:480,pixelsPerMeter:30});
+ const p=projectPoint(cam,[b.x,b.y,b.z+b.h]);
+ assert.equal(crateSurfaceHits([b],cam,p.x,p.y)[0]?.face,'top');
+ assert.equal(crateSurfaceHits([{...b,kind:'boar'}],cam,p.x,p.y).length,0);
+ assert.equal(crateSurfaceHits([b],cam,0,0).length,0);
 });

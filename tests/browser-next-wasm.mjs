@@ -40,6 +40,23 @@ try{
  assert.equal(boot.physics,'box3d','plain GRAJ must start actual Box3D by default');
  assert.match(boot.status||'',/Box3D/i,'visible engine indicator must name actual solver');
  await entry.close();
+ // Real Owner distribution path: a downloaded single HTML file may be
+ // opened directly via file://, not via our localhost development server.
+ // Network is still needed for the external ESM/WASM donor.
+ const localPage=await context.newPage();
+ const fileUrl='file://'+resolve(root,'src/next/Splot_Next_GRAJ.html');
+ console.log('\nRUN downloaded standalone opened via file://',fileUrl);
+ await localPage.goto(fileUrl,{waitUntil:'domcontentloaded'});
+ await localPage.waitForFunction(()=>['box3d','legacy-fallback'].includes(window.__splotNext?.physics),
+  null,{timeout:60000});
+ const local=await localPage.evaluate(()=>({
+  physics:window.__splotNext.physics,
+  banner:document.querySelector('#engine-state')?.textContent,
+  message:window.__splotNext.physicsMessage
+ }));
+ console.log('DOWNLOADED HTML FILE',JSON.stringify(local));
+ assert.equal(local.physics,'box3d','directly opening downloaded standalone must run real Box3D');
+ await localPage.close();
  // If Box3D CDN is unavailable the page must unmistakably disclose the
  // legacy FALLBACK, instead of silently pretending to be the intended game.
  const failed=await context.newPage();

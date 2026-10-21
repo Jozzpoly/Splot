@@ -107,6 +107,25 @@ try{
   Object.defineProperty(window,'devicePixelRatio',{configurable:true,value:dpr});
  },originalDpr);
  const afterRestore=await measure('300_crates_24_anchored_FULL_DPR_RESTORED');
+ // Final product-facing A/B: use the SAME button as the Owner will use,
+ // not the test-only devicePixelRatio override. Default remains full quality.
+ await page.locator('#quality').click();
+ const ui75=await measure('300_crates_24_anchored_UI_75_PERCENT');
+ await page.locator('#quality').click();
+ const ui50=await measure('300_crates_24_anchored_UI_50_PERCENT');
+ await page.locator('#quality').click();
+ const ui100=await measure('300_crates_24_anchored_UI_100_PERCENT_RESTORED');
+ const control=await page.evaluate(()=>({
+  scale:window.__splotNext.renderScale,engine:window.__splotNext.physics,
+  canvas:[document.querySelector('#world').width,document.querySelector('#world').height]
+ }));
+ console.log('IN-GAME QUALITY BUTTON A/B',JSON.stringify({
+  ui100:ui100.profile.rafMs,ui75:ui75.profile.rafMs,ui50:ui50.profile.rafMs,
+  drawTriangles:ui50.profile.triangles.median,
+  physicalEngine:control.engine,restoredScale:control.scale,restoredCanvas:control.canvas
+ }));
+ if(control.engine!=='box3d'||control.scale!==1||control.canvas.join('x')!=='1280x820')
+  throw Error('research quality A/B failed to restore original playable rendering state');
  const restoredPixels=await page.evaluate(()=>{
   const c=document.querySelector('#world');return {width:c.width,height:c.height};
  });

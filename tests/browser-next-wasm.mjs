@@ -389,5 +389,54 @@ try{
   await phone.screenshot({path:'/tmp/splot-mobile-FAIL.png'}).catch(()=>{});
  }
  await mobile.close();
+ // Historical K2 mobile FAIL: one captured joystick finger and a SECOND
+ // touch on Chwyt must produce both actor displacement and real grip.
+ // This uses CDP native multi-touch, not fabricated JS pointer events.
+ const pairContext=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
+ const pairPage=await pairContext.newPage();
+ console.log('\nRUN two-finger Box3D: captured joystick + Chwyt');
+ await pairPage.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await pairPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const fixture=await pairPage.evaluate(()=>{
+   const w=window.__splotNext.world;
+   const saved={format:'splot-next-live-research-1',scene:structuredClone(w.scene),bodies:structuredClone(w.bodies),time:0};
+   Object.assign(saved.bodies.find(b=>b.id==='human'),{x:13.12,y:15.2,z:0,vz:0,support:'ground'});
+   return saved;
+  });
+  await pairPage.locator('#load-file').setInputFiles({name:'two-finger.json',mimeType:'application/json',
+   buffer:Buffer.from(JSON.stringify(fixture))});
+  await pairPage.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',null,{timeout:8000});
+  await pairPage.locator('#mobile-menu').tap();
+  await pairPage.locator('#pause').tap();
+  await pairPage.locator('#mobile-menu').tap();
+  const positions=await pairPage.evaluate(()=>{
+   const center=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};};
+   const stick=center('#joystick'),grip=center('.touch-action button:first-child');
+   return {stick:{x:stick.x+24,y:stick.y},grip};
+  });
+  const initial=await pairPage.evaluate(()=>window.__splotNext.world.bodies.find(b=>b.id==='human').x);
+  const session=await pairContext.newCDPSession(pairPage);
+  const p1={...positions.stick,id:31},p2={...positions.grip,id:32};
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[p1]});
+  await pairPage.waitForTimeout(180);
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[p1,p2]});
+  await pairPage.waitForTimeout(240);
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[p1]});
+  await pairPage.waitForTimeout(100);
+  const actual=await pairPage.evaluate(()=>{
+   const w=window.__splotNext.world;
+   return {x:w.bodies.find(b=>b.id==='human').x,grip:w.grip,events:w.events.filter(e=>e.type==='grip').length};
+  });
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  console.log('TWO-FINGER',JSON.stringify({initial,actual}));
+  assert.ok(actual.x>initial+.02,'first finger must move Box3D human');
+  assert.equal(actual.grip,'crate-1','second finger must grip actual crate during joystick hold');
+  assert.ok(actual.events>0,'world must register grip in physical sim');
+  console.log('PASS REAL CHROME two-finger Box3D joystick + grip');
+ }catch(e){failures++;console.error('FAIL two-finger:',String(e));
+  await pairPage.screenshot({path:'/tmp/splot-two-finger-FAIL.png'}).catch(()=>{});
+ }
+ await pairContext.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

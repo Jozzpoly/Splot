@@ -455,6 +455,36 @@ try{
   assert.ok(Math.abs(newYaw-originalYaw)>.3,
    'touch drag in movement mode must rotate camera without opening tools');
   console.log('PASS REAL CHROME native touch free-look over world canvas');
+  // Stronger real-gesture contract: moving with the captured joystick
+  // while a second independent finger rotates the live camera.
+  const simultaneousBefore=await pairPage.evaluate(()=>{
+   const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+   return {x:h.x,y:h.y,yaw:g.camera.azimuth};
+  });
+  const worldFinger={x:165,y:390,id:83},stickFinger={...positions.stick,id:82};
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[stickFinger]});
+  await pairPage.waitForTimeout(140);
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[stickFinger,worldFinger]});
+  for(let n=1;n<=6;n++){
+   const dragged={...worldFinger,x:worldFinger.x+n*16};
+   await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[stickFinger,dragged]});
+  }
+  await pairPage.waitForTimeout(180);
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[stickFinger]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await pairPage.waitForTimeout(60);
+  const simultaneousAfter=await pairPage.evaluate(()=>{
+   const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+   return {x:h.x,y:h.y,yaw:g.camera.azimuth,engine:g.physics};
+  });
+  console.log('SIMULTANEOUS PHONE WALK + LOOK',JSON.stringify({simultaneousBefore,simultaneousAfter}));
+  assert.equal(simultaneousAfter.engine,'box3d');
+  assert.ok(Math.hypot(simultaneousAfter.x-simultaneousBefore.x,
+   simultaneousAfter.y-simultaneousBefore.y)>.08,
+   'joystick must continue moving physical actor while another finger orbits camera');
+  assert.ok(Math.abs(simultaneousAfter.yaw-simultaneousBefore.yaw)>.25,
+   'second finger must independently orbit camera while joystick is held');
+  console.log('PASS REAL CHROME native 2-finger walk + camera orbit');
  }catch(e){failures++;console.error('FAIL two-finger:',String(e));
   await pairPage.screenshot({path:'/tmp/splot-two-finger-FAIL.png'}).catch(()=>{});
  }

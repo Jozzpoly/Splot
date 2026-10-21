@@ -495,6 +495,7 @@ try{
    assert.ok(Math.abs(undid-rootZ)<.02,label+' undo must restore material geometry');
   }
   console.log('PASS REAL CHROME camera extreme elevation preserves authored picking and undo');
+  await inspect.locator('[data-mode="move"]').click(); // no selected wireframe in A/B captures
   // Disposable intentionally overlapping fixture for visual inspection,
   // not a replay, asset import or representation of the Owner's saved world.
   // Screenshots document real browser rendering at two pitch extremes.
@@ -528,6 +529,8 @@ try{
   await ext.locator('#pause').click();
   const stats=await ext.evaluate(()=>{
    const g=window.__splotNext;
+   const extra=g.build({id:'orbit-inspection-part',kind:'box',min:[11,17,0],max:[12.4,18.4,1.7],material:'wood'});
+   if(!extra.ok)throw Error('missing shared reference part');
    for(let i=0;i<80;i++){
     const x=9.4+(i%10)*.72,y=11.3+Math.floor(i/10)*.75,z=(i%6)*.26;
     const q=g.build({id:'visual-inspection-'+i,kind:'box',

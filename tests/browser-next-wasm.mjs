@@ -634,5 +634,87 @@ try{
   await occlusionPage.screenshot({path:'/tmp/splot-occlusion-FAIL.png'}).catch(()=>{});
  }
  await occlusionPage.close();
+ // Integrated creator loop in ONE uninterrupted Box3D scene, using real UI.
+ // This is a reproducible causal rehearsal, not a human freeplay rating.
+ const loopPage=await context.newPage();
+ console.log('\nRUN integrated creator loop: stack → authored build → edit → undo → release → erase');
+ await loopPage.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await loopPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const pixelFor=async(p)=>loopPage.evaluate(v=>{
+   const camera=window.__splotNext.camera,el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   const pix=projectPoint(camera,v);
+   return {x:r.left+pix.x/el.width*r.width,y:r.top+pix.y/el.height*r.height};
+  },p);
+  const clickAt=async(p)=>{
+   const xy=await pixelFor(p);
+   await loopPage.mouse.click(xy.x,xy.y);
+  };
+  await loopPage.locator('[data-mode="crate"]').click();
+  await clickAt([7,7,0]);
+  const base=await loopPage.evaluate(()=>structuredClone(window.__splotNext.world.bodies.find(b=>b.id==='crate-2')));
+  assert.ok(base,'creator must place real crate on ground using canvas');
+  await clickAt([base.x,base.y,base.z+base.h]);
+  await loopPage.evaluate(()=>window.__splotNext.step(120));
+  const upper=await loopPage.evaluate(()=>structuredClone(window.__splotNext.world.bodies.find(b=>b.id==='crate-3')));
+  assert.ok(upper?.z>.5,'creator must stack a second dynamic crate physically');
+  await loopPage.locator('#height').click();
+  await loopPage.locator('#height').click();
+  await loopPage.locator('[data-mode="box"]').click();
+  await clickAt([10,8,0]);
+  const authored=await loopPage.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')));
+  assert.ok(authored?.min[2]>2.3,'creator must add high authored material');
+  await loopPage.locator('[data-mode="edit"]').click();
+  const cx=(authored.min[0]+authored.max[0])/2,cy=(authored.min[1]+authored.max[1])/2,top=authored.max[2];
+  const begin=await pixelFor([cx,cy,top]),finish=await pixelFor([cx+.72,cy,top]);
+  await loopPage.mouse.move(begin.x,begin.y);
+  await loopPage.mouse.down();
+  await loopPage.mouse.move(finish.x,finish.y,{steps:7});
+  await loopPage.mouse.up();
+  const moved=await loopPage.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10').min[0]);
+  assert.ok(moved>authored.min[0]+.45,'direct drag must move SAME authored part');
+  await loopPage.locator('#undo').click();
+  const undone=await loopPage.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10').min[0]);
+  assert.ok(Math.abs(undone-authored.min[0])<.02,'undo must restore the original part transform');
+  await loopPage.locator('[data-mode="material"]').click();
+  await clickAt([cx,cy,top]);
+  const dynamic=await loopPage.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.motionType);
+  assert.equal(dynamic,'dynamic','UI Kotwica must release authored part into real Box3D');
+  await loopPage.evaluate(()=>window.__splotNext.step(180));
+  const fallen=await loopPage.evaluate(()=>window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')?.min[2]);
+  assert.ok(fallen<.2,'released authored part must physically fall');
+  await loopPage.locator('[data-mode="erase"]').click();
+  const fallenTop=await loopPage.evaluate(()=>{
+   const e=window.__splotNext.world.scene.elements.find(e=>e.id==='block-10');
+   return [(e.min[0]+e.max[0])/2,(e.min[1]+e.max[1])/2,e.max[2]];
+  });
+  await clickAt(fallenTop);
+  assert.equal(await loopPage.evaluate(()=>window.__splotNext.world.scene.elements.some(e=>e.id==='block-10')),
+   false,'creator must delete dynamic authored object with scene edit tool');
+  const remaining=await loopPage.evaluate(()=>{
+   const b=window.__splotNext.world.bodies.find(b=>b.id==='crate-3');
+   return [b.x,b.y,b.z+b.h];
+  });
+  await clickAt(remaining);
+  assert.equal(await loopPage.evaluate(()=>window.__splotNext.world.bodies.some(b=>b.id==='crate-3')),
+   false,'creator must erase upper physical crate');
+  const lastTop=await loopPage.evaluate(()=>{
+   const b=window.__splotNext.world.bodies.find(b=>b.id==='crate-2');
+   return [b.x,b.y,b.z+b.h];
+  });
+  await clickAt(lastTop);
+  const end=await loopPage.evaluate(()=>{
+   const w=window.__splotNext.world;
+   return {engine:window.__splotNext.physics,parts:w.scene.elements.length,
+    crates:w.bodies.filter(b=>b.kind==='crate').map(b=>b.id)};
+  });
+  assert.deepEqual(end.crates,['crate-1'],'same world must retain original crate only');
+  assert.equal(end.parts,7,'all temporary authored material must be cleaned');
+  console.log('PASS REAL CHROME uninterrupted creator loop',JSON.stringify({base:base.id,upper:upper.id,moved,undone,fallen,end}));
+ }catch(e){
+  failures++;console.error('FAIL integrated creator loop:',String(e));
+  await loopPage.screenshot({path:'/tmp/splot-integrated-FAIL.png'}).catch(()=>{});
+ }
+ await loopPage.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

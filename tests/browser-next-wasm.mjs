@@ -601,5 +601,38 @@ try{
   await contactPage.screenshot({path:'/tmp/splot-cross-type-FAIL.png'}).catch(()=>{});
  }
  await contactPage.close();
+ // Perceptual provenance: a moving crate in front of an authored part must
+ // be the FIRST target for Popraw. Q deliberately reaches the obscured part.
+ // The fixture is permissively overlapping, as in the Owner's real builds.
+ const occlusionPage=await context.newPage();
+ console.log('\nRUN authored edit occluded by physical crate: visible first, Q deeper');
+ await occlusionPage.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await occlusionPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await occlusionPage.locator('#pause').click(); // don't displace fixtures through contact
+  const fixture=await occlusionPage.evaluate(()=>{
+   const g=window.__splotNext,b=g.world.bodies.find(x=>x.id==='crate-1');
+   const result=g.build({id:'behind-crate',kind:'box',min:[b.x-.4,b.y-.2,-.10],
+    max:[b.x+.4,b.y+.35,1.20],material:'stone'});
+   const p=projectPoint(g.camera,[b.x,b.y-b.r,b.z+.42]);
+   const el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   return {result,pixel:{x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height}};
+  });
+  assert.equal(fixture.result.ok,true);
+  await occlusionPage.locator('[data-mode="edit"]').click();
+  await occlusionPage.mouse.move(fixture.pixel.x,fixture.pixel.y);
+  const visible=await occlusionPage.locator('#target').textContent();
+  console.log('OCCLUDED TARGET BEFORE Q',JSON.stringify({fixture,visible}));
+  assert.ok(visible.includes('crate-1'),
+   'visible physical crate must be foreground target before hidden authored part');
+  await occlusionPage.locator('#layer').click();
+  const revealed=await occlusionPage.locator('#target').textContent();
+  assert.ok(revealed.includes('behind-crate'),
+   'explicit Q should reveal hidden authored part without erasing creator freedom');
+  console.log('PASS REAL CHROME visible crate occlusion + deliberate deeper authored selection');
+ }catch(e){failures++;console.error('FAIL occlusion provenance:',String(e));
+  await occlusionPage.screenshot({path:'/tmp/splot-occlusion-FAIL.png'}).catch(()=>{});
+ }
+ await occlusionPage.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

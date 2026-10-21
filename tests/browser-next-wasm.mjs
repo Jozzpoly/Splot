@@ -25,6 +25,31 @@ const context=await browser.newContext({viewport:{width:1280,height:820}});
 const rootUrl=`http://127.0.0.1:${port}/src/next/Splot_Next_GRAJ.html`;
 let failures=0;
 try{
+ // Owner's natural entrypoint must not silently enter a different engine
+ // than the one this R&D line qualifies. No special query string required.
+ const entry=await context.newPage();
+ console.log('\nRUN owner entrypoint: standalone GRAJ without physics query');
+ await entry.goto(rootUrl,{waitUntil:'domcontentloaded'});
+ await entry.waitForFunction(()=>['box3d','legacy-fallback','legacy'].includes(window.__splotNext?.physics),null,{timeout:60000});
+ const boot=await entry.evaluate(()=>({
+  physics:window.__splotNext.physics,
+  status:document.querySelector('#engine-state')?.textContent?.trim(),
+  notice:document.querySelector('#notice')?.textContent?.trim()
+ }));
+ console.log('OWNER ENTRYPOINT',JSON.stringify(boot));
+ assert.equal(boot.physics,'box3d','plain GRAJ must start actual Box3D by default');
+ assert.match(boot.status||'',/Box3D/i,'visible engine indicator must name actual solver');
+ await entry.close();
+ const legacyPage=await context.newPage();
+ console.log('\nRUN deliberate comparison: ?physics=legacy');
+ await legacyPage.goto(rootUrl+'?physics=legacy',{waitUntil:'domcontentloaded'});
+ const legacy=await legacyPage.evaluate(()=>({
+  physics:window.__splotNext?.physics,
+  status:document.querySelector('#engine-state')?.textContent?.trim()
+ }));
+ assert.equal(legacy.physics,'legacy','legacy must be opt-in and testable');
+ assert.match(legacy.status||'',/legacy|starsz/i,'legacy mode must be labeled as comparison');
+ await legacyPage.close();
  for(const probe of ['material','material-stack','ascent','fall']){
   const page=await context.newPage();
   const jsErrors=[],networkErrors=[];

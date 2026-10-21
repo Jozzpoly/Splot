@@ -1,3 +1,18 @@
+## 21 OCT EVENING — playable-first reopening
+
+**Checked live 21 Oct evening:** PR #5 is still DRAFT at e6f403e before this note. The most recent executable green run belongs to 9e636c4 (70 Node PASS, 0 FAIL, 2 TODO, real Chrome Box3D), not to documentation-only e6f403e. K2 remains on main. No new physical Owner phone or spontaneous freeplay acceptance.
+
+**External-context correction:** Opus has published PRIVATE Jaskinia v6.4 with Ruch and Multi_World 2P. Public Jaskinia still shows v6.3. The statement below that Ruch is only local is stale. Studio/Medium/ReflexBrain are potential donors, never blocking dependencies for Splot.
+
+**Important opening trap:** app.mjs activates Box3D only with `?physics=box3d`; without the query, Splot Next runs legacy physics. Box3D loads an external module and can fall back. Any comparative session must explicitly capture active engine, renderer and URL. Otherwise the Owner might evaluate an unintended build.
+
+**Revised priority:** recover one genuinely enjoyable, unbroken loop of BUILD → RELEASE / CONTACT → GRAB / MOVE → CORRECT → EXPLORE. Begin with free interaction, not an artificially heroic fixture. Use K2 as an experiential comparator; scripted probes then explain failures, never substitute for fun.
+
+**First RED probes:** (a) historical K2 simultaneous-joystick-and-Chwyt failure: Next mobile wrapper still forwards `onclick` while joystick owns `pointerdown`; reproduce with real native CDP multitouch and assert both moving actor and a physical grip event. (b) Visible dynamic crates in world.bodies are absent from scene-only ray picking: distinguish static authoring targets from crate-placing/actor interaction before indiscriminately merging hits. (c) Naive coplanar surfaces, full-frame GPU upload and locked angular motion require scoped A/B, not unconditional CSG or early big rewrite.
+
+**Decision after tests:** If failure is local, repair and re-run real Chrome; if actor/world/render/editor truths are structurally contradictory, isolate the smallest substrate challenger. The real Owner's freeplay and phone have veto over machine PASS. Avoid another nested PR, integrating all ecosystem tools, resuscitating disposable saved worlds, or promising 1k/10k scaling.
+
+---
 ## 21 OCT — cross-project red-team checkpoint / no product promotion
 
 > **Decision-grade finding (research, not a new implementation order).** This line deliberately looked outside Splot: Owner's K2 mobile FAIL, Jaskinia/Opus, Feniks Studio/Astra, ReflexBrain and Medium. The shared issue is not an absent universal renderer/SDK: it is the gap between intended action, the thing actually selected, a material consequence, what is visible, and what can later be independently re-used. **Do not merge these autonomous projects or copy their architectures by analogy.** Jaskinia remains the Owner's single Home; Splot remains its own physically playable R&D project.

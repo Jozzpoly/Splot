@@ -65,7 +65,7 @@ try{
  await slow.route('**/box3d.js@0.1.1/**',async route=>{
   delayed=true;
   await new Promise(resolve=>{releaseFetch=resolve});
-  await route.continue();
+  await route.abort('failed');
  });
  console.log('\nRUN slow Box3D bootstrap: no legacy steps or edits while loading');
  try{
@@ -81,21 +81,26 @@ try{
   }));
   await slow.locator('[data-mode="crate"]').click();
   await slow.mouse.click(580,520);
+  await slow.locator('#reset').evaluate(el=>el.click());
+  await slow.waitForTimeout(220);
   const during=await slow.evaluate(()=>({
    time:window.__splotNext.world.time,
    bodies:window.__splotNext.world.bodies.length,
-   parts:window.__splotNext.world.scene.elements.length
+   parts:window.__splotNext.world.scene.elements.length,
+   resetDisabled:document.querySelector('#reset').disabled
   }));
   console.log('BOOTSTRAP HELD',JSON.stringify({before,during}));
   assert.equal(before.physics,'loading-box3d');
   assert.equal(before.paused,true);
+  assert.equal(during.resetDisabled,true,'Reset must be disabled during engine loading');
   assert.equal(before.time,0,'simulation time may not elapse on unloaded engine');
-  assert.deepEqual(during,{time:0,bodies:before.bodies,parts:before.parts},
+  assert.deepEqual({time:during.time,bodies:during.bodies,parts:during.parts},{time:0,bodies:before.bodies,parts:before.parts},
    'held-loading Box3D must not mutate world via simulation or UI building');
   releaseFetch?.();releaseFetch=null;
-  await slow.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
-  assert.equal(await slow.locator('#pause').isDisabled(),false,'ready simulation must unlock pause');
-  console.log('PASS slow startup remains world-frozen, then unlocks real Box3D');
+  await slow.waitForFunction(()=>window.__splotNext?.physics==='legacy-fallback',null,{timeout:12000});
+  assert.equal(await slow.locator('#pause').isDisabled(),false,'explicit failed fetch must unlock pause');
+  assert.match(await slow.locator('#engine-state').textContent(),/AWARIA/);
+  console.log('PASS slow startup remained frozen, then disclosed CDN failure');
  }catch(e){failures++;console.error('FAIL held bootstrap:',String(e));
  }finally{
   releaseFetch?.();

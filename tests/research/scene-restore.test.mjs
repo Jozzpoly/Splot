@@ -63,3 +63,14 @@ test('crate identity continues after restoring a sparse numbered collection',()=
  assert.equal(addCrate(restored,7,3).id,'crate-4');
  assert.equal(new Set(restored.bodies.map(b=>b.id)).size,restored.bodies.length);
 });
+
+
+test('no authored part can impersonate a live actor or crate ID on scene restore',()=>{
+ const w=createLiveWorld(),base=JSON.parse(saved(w));
+ for(const id of ['crate-1','human','boar']){
+  const forged={...base,scene:{...base.scene,elements:[...base.scene.elements,
+   {id,kind:'box',min:[3,3,0],max:[4,4,1],material:'wood'}]}};
+  assert.throws(()=>restoreResearchWorld(forged),/identyfikator|powtarzający się/,
+   'a visible scene element must never alias solver-owned body '+id);
+ }
+});

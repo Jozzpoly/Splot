@@ -58,6 +58,45 @@ try{
   return {ids,elapsed};
  });
  const anchored=await measure('300_crates_24_anchored_stack');
+ // Controlled GPU-submission ablation, scoped to this disposable Chrome page.
+ // Same simulation, same scene and same CPU triangle preparation, but no
+ // WebGL draw call. Next disable the per-frame vertex buffer upload as well.
+ // rAF is not GPU time: this only identifies which stage deserves research.
+ const ablation=await page.evaluate(()=>{
+  const gl=document.querySelector('#world').getContext('webgl2');
+  if(!gl)throw Error('no WebGL2 context for ablation');
+  const record={draw:gl.drawArrays,buffer:gl.bufferData,drawCalls:0,uploadCalls:0};
+  window.__splotPerfGL=record;
+  gl.drawArrays=(...args)=>{record.drawCalls++;};
+  if(gl.drawArrays===record.draw)throw Error('cannot intercept drawArrays');
+  return {intercepted:true};
+ });
+ console.log('ABLATION',JSON.stringify(ablation));
+ const withoutDraw=await measure('300_crates_24_anchored_SKIP_DRAW');
+ await page.evaluate(()=>{
+  const gl=document.querySelector('#world').getContext('webgl2');
+  const record=window.__splotPerfGL;
+  gl.bufferData=(...args)=>{record.uploadCalls++;};
+  if(gl.bufferData===record.buffer)throw Error('cannot intercept bufferData');
+ });
+ const withoutDrawUpload=await measure('300_crates_24_anchored_SKIP_DRAW_AND_UPLOAD');
+ const counts=await page.evaluate(()=>{
+  const gl=document.querySelector('#world').getContext('webgl2'),r=window.__splotPerfGL;
+  gl.drawArrays=r.draw;gl.bufferData=r.buffer;
+  return {drawCalls:r.drawCalls,uploadCalls:r.uploadCalls,
+   restoredDraw:gl.drawArrays===r.draw,restoredBuffer:gl.bufferData===r.buffer};
+ });
+ console.log('GL ABLATION COUNTS',JSON.stringify(counts));
+ if(!counts.restoredDraw||!counts.restoredBuffer||!counts.drawCalls||!counts.uploadCalls)
+  throw Error('GPU ablation was not actually performed and reverted');
+ const regained=await measure('300_crates_24_anchored_RENDER_RESTORED');
+ console.log('GL ABLATION A/B',JSON.stringify({
+  full:anchored.profile.rafMs,
+  noDraw:withoutDraw.profile.rafMs,
+  noDrawUpload:withoutDrawUpload.profile.rafMs,
+  restored:regained.profile.rafMs,
+  uploadStageMs:anchored.profile.drawSubmissionCpuMs
+ }));
  console.log('EDIT_TIMES_MS',JSON.stringify(perInsert.elapsed.map(x=>+x.toFixed(3))));
  const release=await page.evaluate(ids=>{
   const g=window.__splotNext,t=performance.now();

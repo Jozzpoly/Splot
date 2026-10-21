@@ -1,3 +1,15 @@
+## 22 OCT — zwykłe GRAJ, opóźniony Box3D i czytelność małego telefonu
+
+**Kod gotowy do dalszych prób:** commit `68a52b62e409ae2212ca1af1ee3866a09509cb33`; [GREEN #39689891839](https://github.com/Jozzpoly/Splot/actions/runs/39689891839): deterministyczny standalone, 75 Node PASS / 0 FAIL / 2 TODO i komplet testów w rzeczywistym Chrome + Box3D. PR #5 pozostaje DRAFT; K2 `main` niezmieniony. **To nie jest Owner freeplay ani hardware-phone acceptance.**
+
+- **Zwykłe otwarcie** standalone wchodziło do `legacy`, więc właściciel mógł oceniać *inny silnik niż Box3D*. [RED #39688216392](https://github.com/Jozzpoly/Splot/actions/runs/39688216392) → [GREEN #39688494865](https://github.com/Jozzpoly/Splot/actions/runs/39688494865). Domyślny Box3D, jawny wskaźnik silnika, `?physics=legacy` jako porównanie, jawny fallback przy braku CDN. Po stronie repo nadal jest osobny K2; nie mylić `index.html` z `src/next/Splot_Next_GRAJ.html`.
+- **Wyścig podczas ładowania**: wstrzymany import Box3D zatrzymywał czas świata, ale Reset obchodził blokadę i uruchamiał `stepLive` (world.time ≈0,23 s). [RED #39689123050](https://github.com/Jozzpoly/Splot/actions/runs/39689123050) → [GREEN #39689315305](https://github.com/Jozzpoly/Splot/actions/runs/39689315305). Przed ukończeniem importu zablokowane: kroki symulacji, kliknięcia budujące, gesty edycji, Pauza i Reset. Przy celowo nieudanym pobieraniu widoczny fallback, bez utknięcia w loading.
+- **320 px mobilnie**: HUD i silnik zajmowały x=12..320, kolidując z Ruch x=194..310. [RED #39689626440](https://github.com/Jozzpoly/Splot/actions/runs/39689626440) → [GREEN #39689891839](https://github.com/Jozzpoly/Splot/actions/runs/39689891839). HUD/status teraz x=12..172, Ruch x=194..310; jawny silnik nadal czytelny, bez zlania obszarów. Dotychczasowy dwupalczasty ruch, chwyt, kamera oraz zintegrowany cykl budowania wciąż zielone.
+
+**Następna kampania:** dostęp i autentyczny start Ownera bez ryzyka gry na złej wersji, swobodny gameplay i czytelność reprezentacji części, potem profilowanie ciężkich scen. Nie promować zmian do main lub Jaskini przed nieudawanym testem; synthetic Chrome i 320px geometria nie potwierdzają subiektywnego wyglądu ani rzeczywistego telefonu.
+
+---
+
 ## 22 OCT — material selection + mobile look (executed continuity)
 
 **Active code truth:** prior to this documentation note, PR #5 DRAFT code HEAD `a684b3da5ea45bdaa33ee84cbf45e167e128ca41`. Latest fully green [CI #39686091953](https://github.com/Jozzpoly/Splot/actions/runs/39686091953): 77 Node tests = **75 PASS, 0 FAIL, 2 TODO**, reproducible standalone (146610 chars), real Chrome/Box3D editor, actual finite bodies and synthetic native mobile touch. K2 main and parent PRs remain unchanged; physical Owner phone and subjective freeplay still UNVERIFIED.

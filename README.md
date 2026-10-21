@@ -1,5 +1,10 @@
 # Splot — living-world research, playable baseline and 2.5D donors
 
+> **SPLOT NEXT — aktualny kandydat do zabawy na badawczej gałęzi PR #5 (nie na `main`).**
+> Pobierz [**Splot_Next_GRAJ.html**](src/next/Splot_Next_GRAJ.html) przez **Download raw** i otwórz w przeglądarce z dostępem do internetu. Fizyczny Box3D jest teraz uruchamiany automatycznie — bez `?physics=box3d`. Mała informacja pod nagłówkiem podaje prawdziwy aktywny silnik; komunikat **AWARIA ... fizyka AWARYJNA** oznacza, że Box3D się nie załadował i nie należy tego traktować jako testu Box3D. `?physics=legacy` pozostaje świadomym trybem porównawczym. To nadal eksperyment; telefon Ownera i swobodny feel nie są zatwierdzone.
+>
+> Sekcja **Start here** poniżej dotyczy historycznego grywalnego K2, nadal obecnego w `main`. Nie pomyl obu uruchamianych światów.
+
 > **Research state update (20.10.2026):** for the active but unpromoted Splot Next work, begin at [next-session entrypoint](docs/START_NEXT_SESSION_2026-10-21.md). K2 below remains the `main` baseline; PR #3→#4→#5 are *dependent draft experiments*, not released updates. The deterministic Next gate is `bash tests/verify-next.sh` on the PR #5 branch; gameplay/mobile approval remains pending.
 
 **Status (2026-10-18): experimental / Owner review pending.** This public repository holds a reproducible **playable baseline** and a separate, **non-promoted** construction-geometry research donor. It is not a validated game engine, not the canonical geometry system for Feniks Studio, and not a replacement for Jaskinia.

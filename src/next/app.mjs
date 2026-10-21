@@ -280,6 +280,15 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerdown',e=>{
  e.preventDefault();
  if(e.button===2){look.id=e.pointerId;look.lastX=e.clientX;canvas.setPointerCapture(e.pointerId);return;}
+ // On a phone the free play canvas is the natural camera control.
+ // Right-mouse orbit remains intact; authoring touch still targets parts.
+ // A captured joystick uses a DIFFERENT pointer on its own element.
+ if(mode==='move'&&(e.pointerType==='touch'||e.pointerType==='pen')){
+  if(look.id!==null)return;
+  look.id=e.pointerId;look.lastX=e.clientX;
+  canvas.setPointerCapture(e.pointerId);
+  return;
+ }
  if(mode==='edit'){
   cursor=cursorPos(e);refreshSelection();
   const a=selected,part=a&&world.scene.elements.find(p=>p.id===a.id);

@@ -446,6 +446,59 @@ try{
   console.log('PASS REAL CHROME CAMERA A/B: opt-in seconds mode enabled on live Box3D scene');
  }catch(e){failures++;console.error('FAIL CAMERA A/B',String(e));}
  await cameraPage.close();
+ // Real desktop pointer + shared picking at both camera elevation limits.
+ // The authored part remains distinct from Box3D physical contacts; camera
+ // changes must not corrupt selection or per-part undo history.
+ const inspect=await context.newPage();
+ console.log('\nRUN orbit camera extreme elevation → pick/edit/undo in one world');
+ await inspect.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await inspect.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await inspect.locator('#pause').click();
+  const r=await inspect.evaluate(()=>{
+   return window.__splotNext.build({id:'orbit-inspection-part',kind:'box',
+    min:[11,17,0],max:[12.4,18.4,1.7],material:'wood'});
+  });
+  assert.equal(r.ok,true);
+  await inspect.locator('[data-mode="edit"]').click();
+  const dragLook=async(yFrom,yTo)=>{
+   await inspect.mouse.move(430,yFrom);
+   await inspect.mouse.down({button:'right'});
+   await inspect.mouse.move(430,yTo,{steps:9});
+   await inspect.mouse.up({button:'right'});
+   await inspect.waitForTimeout(90);
+   return inspect.evaluate(()=>window.__splotNext.camera.elevation);
+  };
+  const aimed=(id)=>inspect.evaluate(id=>{
+   const g=window.__splotNext,box=g.world.scene.elements.find(x=>x.id===id),
+    top=[(box.min[0]+box.max[0])/2,(box.min[1]+box.max[1])/2,box.max[2]];
+   const q=projectPoint(g.camera,top),el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   return {x:r.left+q.x/el.width*r.width,y:r.top+q.y/el.height*r.height};
+  },id);
+  const rootZ=await inspect.evaluate(()=>window.__splotNext.world.scene.elements.find(x=>x.id==='orbit-inspection-part').min[2]);
+  for(const [label,from,to,lo,hi] of [['overhead',380,190,1.42,1.44],['oblique',305,580,.37,.39]]){
+   const elev=await dragLook(from,to);
+   assert.ok(elev>=lo&&elev<=hi,label+' camera elevation must remain valid');
+   const pt=await aimed('orbit-inspection-part');
+   assert.ok(pt.x>5&&pt.x<1020&&pt.y>5&&pt.y<810,'target must be in visible canvas');
+   await inspect.mouse.move(pt.x,pt.y);
+   const target=await inspect.locator('#target').textContent();
+   console.log('ELEVATION PICK',JSON.stringify({label,elev,pixel:pt,target}));
+   assert.ok(target.includes('orbit-inspection-part'),
+    label+' visible part must be pickable from projection after camera pitch orbit');
+   await inspect.mouse.click(pt.x,pt.y);
+   await inspect.locator('#edit-up').click();
+   const raised=await inspect.evaluate(()=>window.__splotNext.world.scene.elements.find(x=>x.id==='orbit-inspection-part').min[2]);
+   assert.ok(Math.abs(raised-rootZ-.25)<.02,label+' should modify same material identity');
+   await inspect.locator('#undo').click();
+   const undid=await inspect.evaluate(()=>window.__splotNext.world.scene.elements.find(x=>x.id==='orbit-inspection-part').min[2]);
+   assert.ok(Math.abs(undid-rootZ)<.02,label+' undo must restore material geometry');
+  }
+  console.log('PASS REAL CHROME camera extreme elevation preserves authored picking and undo');
+ }catch(e){failures++;console.error('FAIL camera extreme picking:',String(e));
+  await inspect.screenshot({path:'/tmp/splot-camera-extremes-FAIL.png'}).catch(()=>{});
+ }
+ await inspect.close();
  // Synthetic touch is NOT a physical phone acceptance. It catches the
  // easier but costly failures: hidden tools, pointer ownership, view clipping.
  const mobile=await browser.newContext({viewport:{width:393,height:852},

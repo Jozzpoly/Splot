@@ -465,6 +465,23 @@ try{
   const after=await stackPage.evaluate(()=>window.__splotNext.world.bodies.find(b=>b.id==='crate-2'));
   assert.ok(after.z>.50,'real Box3D contacts must sustain stacked crate after 120 steps');
   console.log('PASS REAL CHROME crate-on-crate direct placement and physical support');
+  // Correction loop: an accidentally built physical crate must be removable
+  // through the SAME visible part and the normal Erase tool.
+  await stackPage.locator('[data-mode="erase"]').click();
+  const erasePixel=await stackPage.evaluate(()=>{
+   const w=window.__splotNext.world,c=window.__splotNext.camera,el=document.querySelector('#world');
+   const b=w.bodies.find(x=>x.id==='crate-2');
+   const p=projectPoint(c,[b.x,b.y,b.z+b.h]),r=el.getBoundingClientRect();
+   return {x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height};
+  });
+  await stackPage.mouse.click(erasePixel.x,erasePixel.y);
+  const afterErase=await stackPage.evaluate(()=>({
+   topExists:window.__splotNext.world.bodies.some(b=>b.id==='crate-2'),
+   baseExists:window.__splotNext.world.bodies.some(b=>b.id==='crate-1')
+  }));
+  assert.equal(afterErase.topExists,false,'Erase must remove the selected physical crate, not a scene face behind');
+  assert.equal(afterErase.baseExists,true,'Erase must preserve the underlying physical crate');
+  console.log('PASS REAL CHROME direct erase of physical crate after stacking');
  }catch(e){failures++;console.error('FAIL real crate top:',String(e));
   await stackPage.screenshot({path:'/tmp/splot-crate-top-FAIL.png'}).catch(()=>{});
  }

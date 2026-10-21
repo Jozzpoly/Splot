@@ -1,3 +1,19 @@
+## 21 OCT — executable red/green campaign (mobile + crate material loop)
+
+**ACTIVE TRUTH:** research PR #5; code HEAD before this doc is `e4e10dbda0c03bfdb88a00fa48d42d249871ff71`; `main` / PR #3 / PR #4 unchanged. [Final fully green CI 39679465083](https://github.com/Jozzpoly/Splot/actions/runs/39679465083), **74 Node tests: 72 PASS, 0 FAIL, 2 TODO**, checked-in standalone byte-identical to deterministic generator, actual Chrome + Box3D WASM probes (fall, support, ascent, full editor, mobile synthetic, restore, camera). No real Owner-device test.
+
+**Three independent real-browser RED → GREEN causal probes (keep the RED evidence):**
+
+1. **Simultaneous mobile touch:** historical K2 failure reappeared in Next. Captured joystick moved human `x:13.12→14.239`, but second finger Chwyt produced `grip:null`, **0 events**. [RED 39677614737](https://github.com/Jozzpoly/Splot/actions/runs/39677614737). Mobile wrappers now use immediate touch/pen `pointerdown`, preserve mouse/keyboard `click`, suppress touch compatibility double toggles. [GREEN 39678040792](https://github.com/Jozzpoly/Splot/actions/runs/39678040792): moving human + one actual Box3D grip event, isolated next tap releases once.
+2. **Physical crate-on-crate stacking by pointing:** visible crate top was absent from authored-only `pickPixel`; real UI click spawned `crate-2` at `z=0` on ground behind. [RED 39678497488](https://github.com/Jozzpoly/Splot/actions/runs/39678497488). New analytic `crateTopHits` uses matching crate lid dimensions and camera ray, merged by distance only for **Box3D physical crate placement**; ordinary authored panel/box placement remains independent. [GREEN 39678983252](https://github.com/Jozzpoly/Splot/actions/runs/39678983252): `crate-2.z≈0.86` and real Box3D support after 120 simulated physics steps.
+3. **Correcting the created object:** tool Usuń previously selected authored parts only; dynamically simulated crate could not be erased even when visible. [RED 39679285501](https://github.com/Jozzpoly/Splot/actions/runs/39679285501). Reuse matching crate top for erase, remove body by *typed ID* from `world.bodies`, clear grip if necessary, immediately sync solver body refs; do NOT conflate with anchored authoring undo. [GREEN 39679465083](https://github.com/Jozzpoly/Splot/actions/runs/39679465083): placed upper crate deleted, lower crate remains and physics runs.
+
+**Honest limitations:** crate top only (not full visible side-face picking / actor occlusion); automatic crate-to-crate rigid joints NOT added; `worldSupport` still only sees authored supports and does not label body-on-body support even though solver physically supports it; crate erasure is not in authored undo; no mobile hardware/Owner freeplay or 300+ crate performance retest. Default physics still LEGACY unless URL includes `?physics=box3d`; capture actual active engine. Do not extrapolate 72 PASS to a pleasing game.
+
+**Next autonomous run (no new PR/merge):** widen a *single natural construction* rather than feature toggle count. First choose freeplay/world experience and verify real engine; then differentiate whether side-face selection, occlusion at overlapping parts, camera time/pose, or dynamic-body ownership is the largest obstruction. Instrument one RED case at a time with actual UI and physics. Preserve current physical stack/grip/edit before broad CSG/rigid-body orientation work. If a better representation is required, A/B it without importing a second Jaskinia or Studio shell. Owner's first ordinary desktop and physical phone session retains veto over product claims.
+
+---
+
 ## 21 OCT EVENING — playable-first reopening
 
 **Checked live 21 Oct evening:** PR #5 is still DRAFT at e6f403e before this note. The most recent executable green run belongs to 9e636c4 (70 Node PASS, 0 FAIL, 2 TODO, real Chrome Box3D), not to documentation-only e6f403e. K2 remains on main. No new physical Owner phone or spontaneous freeplay acceptance.

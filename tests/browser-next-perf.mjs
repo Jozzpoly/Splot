@@ -163,6 +163,53 @@ try{
   w.scene.revision++;g.challenger.syncStatics();
  },perInsert.ids);
  const removed=await measure('300_crates_after_remove_stack');
+ // One deliberately overlapping stress field in DEFAULT and exterior-only
+ // research rendering. Each page owns identical 301 Box3D crates, 80
+ // authored boxes and original K2/Next scene parts; never share a runtime.
+ const buildOverlap=async(target,withCrates)=>{
+  return target.evaluate(withCrates=>{
+   const g=window.__splotNext,w=g.world;
+   if(withCrates){
+    for(let i=0;i<300;i++)w.bodies.push({id:'bench-crate-'+i,kind:'crate',
+     x:1.15+(i%20)*1.96,y:1.15+Math.floor(i/20)*1.91,z:.2,
+     r:.43,h:.86,mass:36,support:null,vz:0,yaw:0});
+    g.challenger.syncBodies();
+   }
+   for(let i=0;i<80;i++){
+    const x=9.4+(i%10)*.72,y=11.3+Math.floor(i/10)*.75,z=(i%6)*.26;
+    const q=g.build({id:'visual-inspection-'+i,kind:'box',
+     min:[x,y,z],max:[x+.96,y+.99,z+.88+(i%3)*.25],
+     material:['stone','wood','steel'][i%3]});
+    if(!q.ok)throw Error('overlap '+q.reason);
+   }
+   g.challenger.syncStatics();
+   return {sceneParts:w.scene.elements.length,crates:w.bodies.filter(x=>x.kind==='crate').length};
+  },withCrates);
+ };
+ const plainFixture=await buildOverlap(page,false);
+ const plain=await measure('301_crates_80_overlapping_anchored_PLAIN');
+ const extPage=await browser.newPage({viewport:{width:1280,height:820}});
+ await extPage.goto('http://127.0.0.1:18880/src/next/Splot_Next_GRAJ.html?physics=box3d&faces=exterior-boxes');
+ await extPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ const extFixture=await buildOverlap(extPage,true);
+ const extMeasure=async()=>{
+  await extPage.waitForTimeout(900);
+  await extPage.evaluate(()=>window.__splotNext.clearProfile());
+  await extPage.waitForTimeout(2700);
+  return extPage.evaluate(()=>{
+   const g=window.__splotNext;
+   return {profile:g.profile(),visual:g.visualStats,
+    parts:g.world.scene.elements.length,crates:g.world.bodies.filter(x=>x.kind==='crate').length,engine:g.physics};
+  });
+ };
+ const exterior=await extMeasure();
+ console.log('OVERLAP VISUAL EXTERIOR PERF A/B',JSON.stringify({
+  plainFixture,extFixture,plain:{profile:plain.profile,visual:await page.evaluate(()=>window.__splotNext.visualStats)},
+  exterior
+ }));
+ if(JSON.stringify(plainFixture)!==JSON.stringify(extFixture)||exterior.engine!=='box3d')
+  throw Error('invalid Box3D physical fixture parity in visual A/B');
+ await extPage.close();
  console.log('SUMMARY',JSON.stringify({baseline:baseline.profile,crates:crates.profile,anchored:anchored.profile,dynamic:dynamic.profile,removed:removed.profile,errors}));
  if(errors.length)throw Error('browser JS errors: '+errors.join(';'));
  if(!removed.profile.frames)throw Error('no frame profiling');

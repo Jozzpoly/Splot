@@ -15,6 +15,7 @@ node --test \
  tests/research/actor-contact-pressure.test.mjs \
  tests/research/boar-intent.test.mjs \
  tests/research/crate-visual.test.mjs \
+ tests/research/crate-admission-policy.test.mjs \
  tests/research/perf-metrics.test.mjs \
  tests/research/scene-restore.test.mjs \
  tests/research/authoring-editor.test.mjs \

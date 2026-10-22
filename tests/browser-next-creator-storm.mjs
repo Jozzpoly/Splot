@@ -34,9 +34,11 @@ try{
  for(const admission of ['legacy','solver']){
  const storm=await context.newPage();
  console.log('\nRUN 127 UI creator storm admission='+admission);
- await storm.goto(rootUrl+(admission==='solver'?'?admission=solver':''),{waitUntil:'domcontentloaded'});
+ await storm.goto(rootUrl+'?admission='+admission,{waitUntil:'domcontentloaded'});
  try{
   await storm.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  assert.equal(await storm.evaluate(()=>new URLSearchParams(location.search).get('admission')),admission,
+   'research A/B policy MUST be explicitly selected, independent of changing game defaults');
   const before=await storm.evaluate(()=>({
    time:window.__splotNext.world.time,
    bodies:window.__splotNext.world.bodies.length,
@@ -241,6 +243,8 @@ try{
  await storm.close();
  }
  assert.equal(stormOutcomes.length,2,'each Box3D policy must run a separate full creator storm');
+ assert.ok(stormOutcomes[0].crateFail>=5,
+  'legacy-control must demonstrably reject some placements or this is NOT a valid A/B');
  assert.ok(stormOutcomes[1].crateFail<=stormOutcomes[0].crateFail,
   'opt-in solver admission cannot reject MORE than old circle gate for same scripted intents');
  console.log('CREATOR ADMISSION A/B SUMMARY',JSON.stringify(stormOutcomes.map(s=>({

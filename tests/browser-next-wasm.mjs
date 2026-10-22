@@ -394,6 +394,31 @@ try{
   await page.screenshot({path:'/tmp/splot-manual-ui-FAIL.png'}).catch(()=>{});
  }
  await page.close();
+ // Safeguard the Owner's unsaved work against a stray 'R' near WASD.
+ // One reset click/keypress must only arm, explicit second confirmation resets.
+ const resetPage=await context.newPage();
+ console.log('\nRUN destructive reset must be intentional, with unsaved authoring intact');
+ await resetPage.goto(rootUrl,{waitUntil:'domcontentloaded'});
+ try{
+  await resetPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const part=await resetPage.evaluate(()=>window.__splotNext.build({
+   id:'unsaved-important-experiment',kind:'box',
+   min:[6,7,0],max:[8,9,3],material:'wood'
+  }));
+  assert.equal(part.ok,true);
+  const hasPart=()=>resetPage.evaluate(()=>window.__splotNext.world.scene.elements.some(e=>e.id==='unsaved-important-experiment'));
+  await resetPage.keyboard.press('r');
+  assert.equal(await hasPart(),true,'single accidental R must preserve unsaved construction');
+  assert.match(await resetPage.locator('#notice').textContent(),/reset|potwierd/i,
+   'player must see understandable confirmation');
+  await resetPage.locator('#reset').click();
+  await resetPage.waitForTimeout(100);
+  assert.equal(await hasPart(),false,'second explicit action should deliberately reset');
+  assert.equal(await resetPage.evaluate(()=>window.__splotNext.physics),'box3d',
+   'intentional reset must preserve actual solver engine');
+  console.log('PASS real Chrome guarded reset preserves accidental-R work, deliberate reset Box3D');
+ }catch(e){failures++;console.error('FAIL guarded reset:',String(e));}
+ await resetPage.close();
  // Browser-level scene restore. ~132 authored parts and 59 crates are
  // synthetic but match the SHAPE/SCALE of the Owner's private exported world.
  // Do not commit the private raw save into a public test fixture.

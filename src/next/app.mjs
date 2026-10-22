@@ -102,7 +102,8 @@ function refreshEditButtons(){
  const current=world.scene.elements.find(e=>e.id===editSelectedId);
  const editable=mode==='edit'&&current&&!(current.kind==='box'&&current.motionType==='dynamic');
  $('#edit-up').disabled=$('#edit-down').disabled=!editable;
- $('#undo').disabled=!editHistory.canUndo;$('#redo').disabled=!editHistory.canRedo;
+ $('#undo').disabled=$('[data-mobile-action="undo"]').disabled=!editHistory.canUndo;
+ $('#redo').disabled=$('[data-mobile-action="redo"]').disabled=!editHistory.canRedo;
 }
 function commitPartEdit(from,to,reason='move'){
  const r=editHistory.apply(world.scene,from,to);
@@ -155,7 +156,7 @@ $('#layer').onclick=()=>{selection++;refreshSelection();};
 // The second finger on a touch action must fire even while joystick owns
 // the first pointer. Compatibility click may not be generated in multitouch;
 // if generated after touch, it must not toggle the action twice.
-for(const [name,target] of [['grip','#grip'],['layer','#layer']]){
+for(const [name,target] of [['grip','#grip'],['layer','#layer'],['undo','#undo'],['redo','#redo']]){
  const button=$('[data-mobile-action="'+name+'"]');
  const activate=()=>$(target).click();
  button.addEventListener('pointerdown',event=>{

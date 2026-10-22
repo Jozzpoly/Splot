@@ -2897,6 +2897,21 @@ function renderOverlay(cam){const ctx=$('#overlay').getContext('2d'),w=$('#overl
   const e=world.scene.elements.find(p=>p.id===editSelectedId);
   if(e)outline(e,'#ffd59e');
  }
+ // The click target is a MATERIAL OBJECT, not the small point on its surface.
+ // Highlight the full currently targeted body before erase/material actions,
+ // including solver-owned crates; selecting another Q-layer updates this cue.
+ if(selected&&['erase','material','edit','crate'].includes(mode)){
+  const crate=world.bodies.find(b=>b.kind==='crate'&&b.id===selected.id);
+  if(crate){
+   const r=crate.r;
+   outline({kind:'box',min:[crate.x-r,crate.y-r,crate.z],
+    max:[crate.x+r,crate.y+r,crate.z+crate.h]},
+    '#ffd59e',selection>0);
+  }else if(mode==='erase'||mode==='material'){
+   const part=world.scene.elements.find(e=>e.id===selected.id);
+   if(part)outline(part,'#ffd59e',selection>0);
+  }
+ }
  if(editDrag&&Math.hypot(...editDrag.delta)>.035)
   outline(translatedElement(editDrag.from,editDrag.delta),'#d7f4bd',true);
  if(startPanel){const p=projectPoint(cam,startPanel),k=$('#overlay').width/cam.width;ctx.beginPath();ctx.arc(p.x*k,p.y*k,7*k,0,Math.PI*2);ctx.strokeStyle='#d6e3bf';ctx.stroke();}

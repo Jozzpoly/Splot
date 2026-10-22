@@ -44,6 +44,17 @@ jobs:
         run: |
           command -v google-chrome || command -v chromium
           node tests/browser-next-wasm.mjs
+      - name: Research dense creator-pressure Box3D A/B
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[storm]')
+        run: node tests/browser-next-creator-storm.mjs
+      - name: Archive dense creator visual evidence
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[storm]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-creator-pressure
+          path: /tmp/splot-creator-storm-dense-solver.png
+          if-no-files-found: error
+          retention-days: 3
       - name: Research CPU and rAF performance A/B
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[profile]')
         run: node tests/browser-next-perf.mjs

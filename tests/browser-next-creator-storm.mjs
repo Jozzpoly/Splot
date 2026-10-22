@@ -1,0 +1,201 @@
+// Real Chromium + remote ESM/WebAssembly integration test of the EXACT
+// checked-in playable standalone, with no navigation in Owner's Opera.
+// This is browser proof (not Owner feel, not real phone, not offline packaging).
+import {chromium} from 'playwright-core';
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {resolve,extname,sep} from 'node:path';
+import assert from 'node:assert/strict';
+
+const root=resolve(process.cwd()),port=18881;
+const server=createServer(async(req,res)=>{
+ try {
+  const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  const file=resolve(root,'.'+pathname);
+  if(!(file===root||file.startsWith(root+sep)))throw Error('outside document root');
+  const data=await readFile(file);
+  res.setHeader('content-type',({'.html':'text/html; charset=utf-8','.mjs':'text/javascript','.js':'text/javascript','.wasm':'application/wasm'}[extname(file)])||'application/octet-stream');
+  res.end(data);
+ }catch(e){res.statusCode=404;res.end(String(e?.message||e));}
+});
+await new Promise(r=>server.listen(port,'127.0.0.1',r));
+const chrome=process.env.CHROME_BIN||'/usr/bin/google-chrome';
+const browser=await chromium.launch({executablePath:chrome,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+const context=await browser.newContext({viewport:{width:1280,height:820}});
+const rootUrl=`http://127.0.0.1:${port}/src/next/Splot_Next_GRAJ.html`;
+let failures=0;
+try{
+ // Deliberately messy independent browser-play experiment. 127 rapid UI
+ // attempts, inspired by the ORDER and intensity of one Owner session, NOT
+ // a replay: the private log has no failed-click coordinates or reasons.
+ // Keep the same Box3D world, interleave independent authored objects,
+ // rotate viewpoint mid-build and verify that failures do not corrupt it.
+ const stormOutcomes=[];
+ for(const admission of ['legacy','solver']){
+ const storm=await context.newPage();
+ console.log('\nRUN 127 UI creator storm admission='+admission);
+ await storm.goto(rootUrl+(admission==='solver'?'?admission=solver':''),{waitUntil:'domcontentloaded'});
+ try{
+  await storm.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const before=await storm.evaluate(()=>({
+   time:window.__splotNext.world.time,
+   bodies:window.__splotNext.world.bodies.length,
+   parts:window.__splotNext.world.scene.elements.length
+  }));
+  const sectors={};
+  const rejections={},rejectionTargets={};
+  let cratePass=0,crateFail=0,authoredPass=0,offscreen=0;
+  const worldPixel=point=>storm.evaluate(point=>{
+   const g=window.__splotNext,canvas=document.querySelector('#world'),r=canvas.getBoundingClientRect();
+   const projected=projectPoint(g.camera,point);
+   const x=r.left+projected.x/canvas.width*r.width,y=r.top+projected.y/canvas.height*r.height;
+   const node=document.elementFromPoint(x,y);
+   return {x,y,pixelInside:x>=r.left+10&&x<r.right-10&&y>=r.top+10&&y<r.bottom-10,
+    onCanvas:node===canvas||node?.id==='overlay'};
+  },point);
+  for(let i=0;i<127;i++){
+   // Four working areas: known body; ramp; dense new structure; free ground.
+   const sector=Math.floor(i/32),ix=i%32;
+   let x,y;
+   if(sector===0){x=13.75+(ix%8)*.18;y=14.7+Math.floor(ix/8)*.19;}
+   else if(sector===1){x=12+(ix%8)*.66;y=11.2+Math.floor(ix/8)*.62;}
+   else if(sector===2){x=7.3+(ix%8)*.48;y=9.7+Math.floor(ix/8)*.55;}
+   else{x=7.1+(ix%8)*1.27;y=17.0+Math.floor(ix/8)*1.05;}
+   const sectorLabel=['near-live-crate','across-ramp','crowded-boxes','open-ground'][sector];
+   const createBox=i%9===0;
+   await storm.locator('[data-mode="'+(createBox?'box':'crate')+'"]').click();
+   const pixel=await worldPixel([x,y,0]);
+   if(!pixel.pixelInside||!pixel.onCanvas){offscreen++;continue;}
+   await storm.mouse.move(pixel.x,pixel.y);
+   const target=(await storm.locator('#target').textContent())?.split(' • ')[0]??'none';
+   const prev=await storm.evaluate(()=>({
+    crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+    parts:window.__splotNext.world.scene.elements.length
+   }));
+   await storm.mouse.click(pixel.x,pixel.y);
+   const after=await storm.evaluate(()=>({
+    crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+    parts:window.__splotNext.world.scene.elements.length,
+    notice:document.querySelector('#notice').textContent.trim()
+   }));
+   if(createBox){if(after.parts>prev.parts)authoredPass++;continue;}
+   if(after.crates>prev.crates)cratePass++;
+   else {
+    crateFail++;
+    const why=after.notice||'no UI message';
+    rejections[why]=(rejections[why]||0)+1;
+    rejectionTargets[target]=(rejectionTargets[target]||0)+1;
+   }
+   // Exercise active contacts across bursts rather than a static frozen dump.
+   if(i%32===31)await storm.evaluate(()=>window.__splotNext.step(90));
+   if(i===63)await storm.locator('#turn-right').click();
+  }
+  await storm.evaluate(()=>window.__splotNext.step(240));
+  const built=await storm.evaluate(()=>({
+   engine:window.__splotNext.physics,
+   time:window.__splotNext.world.time,
+   crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+   parts:window.__splotNext.world.scene.elements.length,
+   finite:window.__splotNext.world.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite)),
+   bodyIds:window.__splotNext.world.bodies.map(b=>b.id),
+   partIds:window.__splotNext.world.scene.elements.map(e=>e.id),
+   render:window.__splotNext.visualStats,
+   escaped:window.__splotNext.world.bodies.filter(b=>b.kind==='crate'&&
+    (b.x<-.05||b.x>window.__splotNext.world.scene.width+.05||
+     b.y<-.05||b.y>window.__splotNext.world.scene.height+.05||b.z<-2||b.z>30)).length,
+   minCrateZ:Math.min(...window.__splotNext.world.bodies.filter(b=>b.kind==='crate').map(b=>b.z)),
+   maxCrateZ:Math.max(...window.__splotNext.world.bodies.filter(b=>b.kind==='crate').map(b=>b.z))
+  }));
+  Object.assign(sectors,{admission,cratePass,crateFail,authoredPass,offscreen,rejections,rejectionTargets,before,
+   after:{engine:built.engine,time:built.time,crates:built.crates,parts:built.parts,finite:built.finite,escaped:built.escaped,minCrateZ:built.minCrateZ,maxCrateZ:built.maxCrateZ},
+   renderer:built.render});
+  stormOutcomes.push(sectors);
+  console.log('CREATOR UI STORM REPORT',JSON.stringify(sectors));
+  assert.equal(built.engine,'box3d');
+  assert.ok(cratePass+crateFail>=75,'stress experiment must actually execute many crate clicks');
+  assert.ok(cratePass>=12,'experiment must really place dynamic crates through UI');
+  assert.ok(authoredPass>=5,'experiment must interleave independently authored elements');
+  assert.equal(built.finite,true,'solver must keep every real body finite during creator storm');
+  assert.equal(new Set(built.bodyIds).size,built.bodyIds.length);
+  assert.equal(new Set(built.partIds).size,built.partIds.length);
+  assert.ok(built.time>before.time,'same world must continue physically stepping');
+  console.log('PASS REAL CHROME 127-input creator storm classification and live Box3D world');
+  // Second frontier: build the approximate authored-content DENSITY of the
+  // historical log, then retain and stress the very same solver world.
+  // Synthetic shapes, never the Owner's private geometry or click coordinates.
+  if(admission==='solver'){
+   const baselineForDensity=await storm.evaluate(()=>{
+    const g=window.__splotNext,w=g.world;
+    let boxes=0,panels=0;
+    for(let i=0;i<80;i++){
+     const x=6.1+(i%12)*.72,y=7.0+Math.floor(i/12)*1.12,z=(i%7)*.17;
+     const q=g.build({id:'synthetic-dense-box-'+i,kind:'box',
+      min:[x,y,z],max:[x+.82,y+1.04,z+.9],material:['stone','wood','steel'][i%3]});
+     if(!q.ok)throw Error('dense box '+i+': '+q.reason);
+     boxes++;
+    }
+    for(let i=0;i<25;i++){
+     const x=8+(i%5)*1.25,y=15+Math.floor(i/5)*.73;
+     const q=g.build({id:'synthetic-dense-panel-'+i,kind:'panel',
+      a:[x,y,(i%3)*.4],b:[x+1.4,y+.28,.4+(i%3)*.4],
+      width:.67,thickness:.15,material:'wood'});
+     if(!q.ok)throw Error('dense panel '+i+': '+q.reason);
+     panels++;
+    }
+    g.challenger.syncStatics();
+    return {boxes,panels,parts:w.scene.elements.length,crates:w.bodies.filter(b=>b.kind==='crate').length};
+   });
+   let extraAccepted=0,extraRefused=0,blockedPointers=0;
+   for(let i=0;i<64;i++){
+    const x=7.3+(i%8)*.55,y=9.0+Math.floor(i/8)*.64;
+    await storm.locator('[data-mode="crate"]').click();
+    const pix=await worldPixel([x,y,0]);
+    if(!pix.onCanvas||!pix.pixelInside){blockedPointers++;continue;}
+    const prev=await storm.evaluate(()=>window.__splotNext.world.bodies.length);
+    await storm.mouse.click(pix.x,pix.y);
+    const count=await storm.evaluate(()=>window.__splotNext.world.bodies.length);
+    if(count>prev)extraAccepted++;else extraRefused++;
+   }
+   await storm.evaluate(()=>window.__splotNext.step(600));
+   const afterDense=await storm.evaluate(()=>{
+    const w=window.__splotNext.world;
+    const crates=w.bodies.filter(b=>b.kind==='crate');
+    const finite=w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite));
+    return {
+     time:w.time,engine:window.__splotNext.physics,
+     authored:w.scene.elements.length,crates:crates.length,finite,
+     escaped:crates.filter(b=>b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||
+      b.y>w.scene.height+.1||b.z < -2||b.z>30).length,
+     maxHeight:Math.max(...crates.map(b=>b.z+b.h)),
+     maxX:Math.max(...crates.map(b=>b.x)),
+     maxY:Math.max(...crates.map(b=>b.y))
+    };
+   });
+   console.log('DENSE AUTHORING SOLVER PRESSURE',JSON.stringify({
+    baselineForDensity,extraAccepted,extraRefused,blockedPointers,afterDense
+   }));
+   await storm.screenshot({path:'/tmp/splot-creator-storm-dense-solver.png'});
+   assert.equal(baselineForDensity.boxes,80);
+   assert.equal(baselineForDensity.panels,25);
+   assert.ok(baselineForDensity.parts>=120);
+   assert.ok(extraAccepted>=40,'dense world must accept many more real UI crate intents');
+   assert.equal(afterDense.engine,'box3d');
+   assert.equal(afterDense.finite,true,'long-lived dense world cannot destabilize to nonfinite');
+   assert.equal(afterDense.escaped,0,'physical explosion outside bounds would falsify permissive admission');
+   console.log('PASS dense authored world + permissive 64 extra crate intents + 600 physical steps');
+  }
+ }catch(e){failures++;console.error('FAIL 127-input creator storm:',String(e));
+  await storm.screenshot({path:'/tmp/splot-creator-storm-FAIL.png'}).catch(()=>{});
+ }
+ await storm.close();
+ }
+ assert.equal(stormOutcomes.length,2,'each Box3D policy must run a separate full creator storm');
+ assert.ok(stormOutcomes[1].crateFail<=stormOutcomes[0].crateFail,
+  'opt-in solver admission cannot reject MORE than old circle gate for same scripted intents');
+ console.log('CREATOR ADMISSION A/B SUMMARY',JSON.stringify(stormOutcomes.map(s=>({
+  admission:s.admission,accepted:s.cratePass,refused:s.crateFail,
+  authored:s.authoredPass,escaped:s.after.escaped,
+  minCrateZ:s.after.minCrateZ,maxCrateZ:s.after.maxCrateZ
+ }))));
+}finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
+assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

@@ -1126,5 +1126,87 @@ try{
   await loopPage.screenshot({path:'/tmp/splot-integrated-FAIL.png'}).catch(()=>{});
  }
  await loopPage.close();
+ // In one real playable Box3D session the SAME undo/redo buttons must
+ // follow chronological intent across authored shapes and dynamic crates.
+ // No reset, no silent snapshot rewind, no hidden separate crate-history UI.
+ const historyPage=await context.newPage();
+ console.log('\nRUN mixed chronological history through actual UI and moving Box3D crates');
+ await historyPage.goto(rootUrl,{waitUntil:'domcontentloaded'});
+ try{
+  await historyPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await historyPage.locator('#pause').click();
+  await historyPage.waitForTimeout(250);
+  const click=async point=>{
+   const {x,y}=await historyPage.evaluate(point=>{
+    const g=window.__splotNext,c=document.querySelector('#world'),r=c.getBoundingClientRect(),
+      pixel=projectPoint(g.camera,point);
+    return {x:r.left+pixel.x/c.width*r.width,y:r.top+pixel.y/c.height*r.height};
+   },point);
+   await historyPage.mouse.click(x,y);
+  };
+  const state=()=>historyPage.evaluate(()=>{
+   const g=window.__splotNext;
+   return {physics:g.physics,
+    crates:g.world.bodies.filter(b=>b.kind==='crate').map(b=>({id:b.id,x:b.x,y:b.y,z:b.z,h:b.h})),
+    parts:g.world.scene.elements.map(p=>p.id),
+    canUndo:!document.querySelector('#undo').disabled,
+    canRedo:!document.querySelector('#redo').disabled,
+    grip:g.world.grip
+   };
+  });
+  await historyPage.locator('[data-mode="box"]').click();
+  await click([9.3,9.0,0]);
+  assert.equal((await state()).parts.includes('block-10'),true,'user creates authored part');
+  await historyPage.locator('[data-mode="crate"]').click();
+  await click([7.2,7.0,0]);
+  assert.equal((await state()).crates.some(b=>b.id==='crate-2'),true,'user creates crate after authored part');
+  await historyPage.locator('#undo').click();
+  assert.equal((await state()).crates.some(b=>b.id==='crate-2'),false,
+   'first Undo removes most recent crate without removing authored part');
+  assert.equal((await state()).parts.includes('block-10'),true);
+  await historyPage.locator('#undo').click();
+  assert.equal((await state()).parts.includes('block-10'),false,
+   'second Undo removes chronologically earlier authored part');
+  assert.equal((await state()).canRedo,true);
+  await historyPage.locator('#redo').click();
+  assert.equal((await state()).parts.includes('block-10'),true,
+   'first Redo restores authored part in same world');
+  await historyPage.locator('#redo').click();
+  assert.equal((await state()).crates.some(b=>b.id==='crate-2'),true,
+   'second Redo restores crate-2 without resetting solver');
+  const low=(await state()).crates.find(b=>b.id==='crate-2');
+  await click([low.x,low.y,low.z+low.h]);
+  await historyPage.evaluate(()=>window.__splotNext.step(120));
+  const top=(await state()).crates.find(b=>b.id==='crate-3');
+  assert.ok(top?.z>.5,'solver must support a second crate after history redo');
+  await historyPage.locator('[data-mode="erase"]').click();
+  await click([top.x,top.y,top.z+top.h]);
+  const erased=await state();
+  assert.equal(erased.crates.some(b=>b.id==='crate-3'),false,'eraser deletes physical upper crate');
+  assert.equal(erased.crates.some(b=>b.id==='crate-2'),true,'lower crate remains');
+  await historyPage.locator('#undo').click();
+  const restored=await state();
+  assert.equal(restored.crates.some(b=>b.id==='crate-3'),true,
+   'Undo of Delete recreates upper body in the real solver');
+  assert.ok(Math.abs(restored.crates.find(b=>b.id==='crate-3').z-top.z)<.1,
+   'restored body must use deletion-time pose, not original spawn or reset');
+  await historyPage.evaluate(()=>window.__splotNext.step(100));
+  const live=await state();
+  assert.ok(live.crates.find(b=>b.id==='crate-3').z>.45,
+   'restored crate should physically settle on still-live lower crate');
+  await historyPage.locator('#redo').click();
+  const final=await state();
+  assert.equal(final.crates.some(b=>b.id==='crate-3'),false,
+   'Redo of Delete must remove currently moving crate by ID');
+  assert.equal(final.crates.some(b=>b.id==='crate-2'),true);
+  assert.equal(final.parts.includes('block-10'),true);
+  assert.equal(final.crates.length,2,'original and lower crate are the only survivors');
+  console.log('PASS REAL CHROME one chronological Undo/Redo across authored part and live crates',
+   JSON.stringify({top,restored:restored.crates.find(b=>b.id==='crate-3'),final}));
+ }catch(e){
+  failures++;console.error('FAIL mixed creator history:',String(e));
+  await historyPage.screenshot({path:'/tmp/splot-mixed-history-FAIL.png'}).catch(()=>{});
+ }
+ await historyPage.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

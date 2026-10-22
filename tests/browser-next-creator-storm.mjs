@@ -236,6 +236,60 @@ try{
    assert.equal(afterRedo.redoDisabled,true);
    assert.ok(afterRedo.time>sceneBefore.time,'world timeline must continue, not rewind');
    console.log('PASS dense 64 Undo + 64 Redo against 177 physical crates and 127 authored parts');
+   // Owner preflight: exported REAL browser JSON with all dynamic bodies must
+   // load into the very same playable app, retain identities and initialize
+   // fresh paused Box3D. Do not pretend it is a byte-for-byte physics replay.
+   const [savedDownload]=await Promise.all([
+    storm.waitForEvent('download',{timeout:12000}),
+    storm.locator('#save').click()
+   ]);
+   const savedBytes=await readFile(await savedDownload.path());
+   const saved=JSON.parse(savedBytes.toString('utf8'));
+   console.log('DENSE WORLD SAVE',JSON.stringify({
+    bytes:savedBytes.length,parts:saved.scene.elements.length,
+    crates:saved.bodies.filter(x=>x.kind==='crate').length,time:saved.time
+   }));
+   assert.equal(saved.scene.elements.length,127);
+   assert.equal(saved.bodies.filter(x=>x.kind==='crate').length,177);
+   await storm.locator('#load-file').setInputFiles({
+    name:'Splot_Nowy_Rozdzial.json',mimeType:'application/json',buffer:savedBytes
+   });
+   await storm.waitForFunction(()=>window.__splotNext?.world?.scene?.elements.length===127&&
+    document.querySelector('#pause')?.textContent==='Uruchom',null,{timeout:30000});
+   const reopened=await storm.evaluate(()=>{
+    const g=window.__splotNext,w=g.world;
+    return {parts:w.scene.elements.map(e=>e.id),
+     crates:w.bodies.filter(b=>b.kind==='crate').map(b=>b.id),
+     actors:w.bodies.filter(b=>b.kind!=='crate').map(b=>b.id),
+     paused:w.paused,physics:g.physics,grip:w.grip,
+     historyUndoEnabled:!document.querySelector('#undo').disabled,
+     historyRedoEnabled:!document.querySelector('#redo').disabled};
+   });
+   assert.deepEqual(reopened.parts,sceneBefore.parts);
+   assert.deepEqual(reopened.crates,sceneBefore.crateIds);
+   assert.deepEqual(reopened.actors,sceneBefore.actors);
+   assert.equal(reopened.physics,'box3d');
+   assert.equal(reopened.paused,true);
+   assert.equal(reopened.grip,null);
+   assert.equal(reopened.historyUndoEnabled,false,
+    'fresh import must not retain commands from a DIFFERENT solver world');
+   assert.equal(reopened.historyRedoEnabled,false);
+   await storm.locator('#pause').click();
+   await storm.evaluate(()=>window.__splotNext.step(120));
+   const liveAfterImport=await storm.evaluate(()=>{
+    const g=window.__splotNext,w=g.world;
+    return {time:w.time,physics:g.physics,
+     finite:w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite)),
+     count:w.bodies.length};
+   });
+   assert.equal(liveAfterImport.physics,'box3d');
+   assert.equal(liveAfterImport.finite,true);
+   assert.equal(liveAfterImport.count,179,'177 crates and original two living actors');
+   console.log('PASS DENSE OWNER PRETEST save/download/import/restart',JSON.stringify({
+    bytes:savedBytes.length,parts:reopened.parts.length,
+    crates:reopened.crates.length,actors:reopened.actors.length,
+    after:liveAfterImport
+   }));
   }
  }catch(e){failures++;console.error('FAIL 127-input creator storm:',String(e));
   await storm.screenshot({path:'/tmp/splot-creator-storm-FAIL.png'}).catch(()=>{});

@@ -910,6 +910,28 @@ try{
    const p=projectPoint(c,[b.x,b.y,b.z+b.h]),r=el.getBoundingClientRect();
    return {x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height};
   });
+  // Before deleting a physical crate, the visual indicator must outline
+  // its WHOLE selectable body, not merely show a tiny aim-point circle.
+  // Only sample amber pixels away from that center circle.
+  await stackPage.mouse.move(erasePixel.x,erasePixel.y);
+  await stackPage.waitForTimeout(120);
+  const selectionCues=await stackPage.evaluate(({x,y})=>{
+   const c=document.querySelector('#overlay'),rect=c.getBoundingClientRect(),
+    data=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+   const cx=(x-rect.x)/rect.width*c.width,cy=(y-rect.y)/rect.height*c.height;
+   let amberOutside=0;
+   for(let j=0;j<c.height;j++)for(let i=0;i<c.width;i++){
+    if(Math.hypot(i-cx,j-cy)<18)continue;
+    const k=(j*c.width+i)*4;
+    if(data[k]>240&&data[k+1]>170&&data[k+1]<240&&
+       data[k+2]>100&&data[k+2]<200&&data[k+3]>100)amberOutside++;
+   }
+   return {amberOutside,target:document.querySelector('#target').textContent};
+  },erasePixel);
+  assert.match(selectionCues.target,/crate-2/);
+  assert.ok(selectionCues.amberOutside>=16,
+   'eraser must visibly outline chosen crate beyond small target dot');
+  console.log('PASS visual physical crate selection outline',JSON.stringify(selectionCues));
   await stackPage.mouse.click(erasePixel.x,erasePixel.y);
   const afterErase=await stackPage.evaluate(()=>({
    topExists:window.__splotNext.world.bodies.some(b=>b.id==='crate-2'),

@@ -172,6 +172,10 @@ try{
   const candidate=await context.newPage();
   await candidate.goto(rootUrl+suffix,{waitUntil:'domcontentloaded'});
   await candidate.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await candidate.locator('#pause').click();
+  await candidate.waitForTimeout(900); // let camera follow converge before exact hit test
+  await candidate.locator('[data-mode="crate"]').click();
+  await candidate.waitForTimeout(80);
   const pixel=await candidate.evaluate(()=>{
    const g=window.__splotNext;
    const q=g.build({id:'admission-wall',kind:'box',
@@ -184,7 +188,6 @@ try{
     onCanvas:document.elementFromPoint(r.x+p.x/c.width*r.width,r.y+p.y/c.height*r.height)===c};
   });
   assert.equal(pixel.onCanvas,true,label+' click must target actual playable canvas');
-  await candidate.locator('[data-mode="crate"]').click();
   await candidate.mouse.click(pixel.x,pixel.y);
   const actual=await candidate.evaluate(()=>({
    engine:window.__splotNext.physics,
@@ -196,7 +199,11 @@ try{
   }));
   console.log('NATURAL CRATE ADMISSION',label,JSON.stringify(actual));
   assert.equal(actual.engine,'box3d');
-  assert.equal(actual.crates,shouldAdd?2:1,'natural entrypoint and explicit legacy control must differ at tangent');
+  if(shouldAdd){
+   assert.equal(actual.crates,2,'plain GRAJ must accept solver-resolvable partial penetration');
+  }else{
+   assert.equal(actual.crates,1,'explicit legacy must refuse the same occupied position');
+  }
   if(!shouldAdd)assert.match(actual.notice,/occupied/);
   await candidate.close();
  }

@@ -1201,6 +1201,47 @@ try{
   assert.equal(final.crates.some(b=>b.id==='crate-2'),true);
   assert.equal(final.parts.includes('block-10'),true);
   assert.equal(final.crates.length,2,'original and lower crate are the only survivors');
+  // Same history on a true narrow viewport. The player should correct a
+  // mistake with a second finger without opening the authoring rail.
+  await historyPage.setViewportSize({width:320,height:568});
+  await historyPage.waitForTimeout(170);
+  const mobileGeometry=await historyPage.evaluate(()=>{
+   const rect=selector=>{
+    const el=document.querySelector(selector),r=el?.getBoundingClientRect();
+    return r&&{x:r.x,y:r.y,w:r.width,h:r.height,cx:r.x+r.width/2,cy:r.y+r.height/2};
+   };
+   return {stick:rect('#joystick'),undo:rect('[data-mobile-action="undo"]'),
+    redo:rect('[data-mobile-action="redo"]'),grip:rect('[data-mobile-action="grip"]'),
+    layer:rect('[data-mobile-action="layer"]')};
+  });
+  console.log('MOBILE CORRECTION GEOMETRY',JSON.stringify(mobileGeometry));
+  for(const name of ['undo','redo','grip','layer']){
+   const r=mobileGeometry[name];
+   assert.ok(r&&r.w>=44&&r.h>=44,name+' needs a visible 44px touch target');
+   assert.ok(r.x>mobileGeometry.stick.x+mobileGeometry.stick.w,
+    name+' touch target cannot overlap joystick');
+   assert.ok(r.x>=0&&r.x+r.w<=320&&r.y>=0&&r.y+r.h<=568,
+    name+' must stay in phone viewport');
+  }
+  const touch=await context.newCDPSession(historyPage);
+  const stickTouch={x:mobileGeometry.stick.cx+20,y:mobileGeometry.stick.cy,id:91};
+  const tap=async(name,id)=>{
+   const area=mobileGeometry[name],second={x:area.cx,y:area.cy,id};
+   await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[stickTouch,second]});
+   await historyPage.waitForTimeout(40);
+   await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[stickTouch]});
+   await historyPage.waitForTimeout(40);
+  };
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[stickTouch]});
+  await tap('undo',92);
+  assert.equal((await state()).crates.some(b=>b.id==='crate-3'),true,
+   'native second-finger Undo must recover erased physical crate once');
+  await tap('redo',93);
+  assert.equal((await state()).crates.some(b=>b.id==='crate-3'),false,
+   'native second-finger Redo must delete restored crate once');
+  await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await touch.detach();
+  console.log('PASS REAL CHROME mobile second-finger undo/redo while joystick held');
   console.log('PASS REAL CHROME one chronological Undo/Redo across authored part and live crates',
    JSON.stringify({top,restored:restored.crates.find(b=>b.id==='crate-3'),final}));
  }catch(e){

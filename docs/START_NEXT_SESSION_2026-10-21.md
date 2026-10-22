@@ -1,3 +1,8 @@
+## 22 OCT — PRETEST / AKTUALNY PUNKT WEJŚCIA
+**[PRETEST_SPLOT_NEXT_2026-10-22.md](PRETEST_SPLOT_NEXT_2026-10-22.md)** jest krótkim aktualnym kontraktem przed fizycznym Owner testem. Zielone: code `45ad1fc` [#39847405274](https://github.com/Jozzpoly/Splot/actions/runs/39847405274), 90 PASS, 0 FAIL, 2 TODO; długi 177-crate save/download/reload i 64×Undo/Redo [#39846117325](https://github.com/Jozzpoly/Splot/actions/runs/39846117325). Naprawiono destrukcyjny przypadkowy Reset (dwukrotne potwierdzenie 6s), obrys całej fizycznej skrzyni przed usuwaniem i stale nieistniejący hover target po jej skasowaniu. Zmiany tylko w DRAFT PR #5. **Granice:** natywny telefon Ownera, feel, gęste okluzje, lifecycle undo dla uwolnionych części i velocity replay nadal niezweryfikowane/ograniczone. Nie promować do `main` na podstawie CI.
+
+---
+
 ## 22 OCT AFTERNOON — owner-like creator agency: solver-owned placement promoted to DRAFT default
 
 **Code head `2935215510188a0786a72e2e0a24f34fd2d39d2d`, [GREEN #39805519736](https://github.com/Jozzpoly/Splot/actions/runs/39805519736): 87 Node cases, **85 PASS, 0 FAIL, 2 TODO**, real Chrome + Box3D, reproducible downloaded HTML. PR #5 remains unmerged DRAFT; `main`/K2 and other repo unchanged. New default for **Splot Next's active Box3D**: physical crate placement leaves material contact resolution to Box3D while retaining finite world coordinate bounds. `?admission=legacy` explicitly restores old circular clearance for A/B. The standalone legacy solver and emergency fallback still use historical rules. Do NOT imply all physical collisions or arbitrary constructions are stable.

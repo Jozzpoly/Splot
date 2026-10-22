@@ -939,6 +939,9 @@ try{
   }));
   assert.equal(afterErase.topExists,false,'Erase must remove the selected physical crate, not a scene face behind');
   assert.equal(afterErase.baseExists,true,'Erase must preserve the underlying physical crate');
+  const targetAfterErase=await stackPage.locator('#target').textContent();
+  assert.doesNotMatch(targetAfterErase,/crate-2/,
+   'after erasure the stationary cursor must not keep advertising an object that no longer exists');
   console.log('PASS REAL CHROME direct erase of physical crate after stacking');
   // The visible FRONT/SIDE of the same still-live physical crate must not
   // click through to ground or an authored structure during Erase.

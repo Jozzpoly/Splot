@@ -2555,6 +2555,7 @@ for(const [id,op] of [['#undo','undo'],['#redo','redo']]){
   if(r.ok){
    if(r.kind==='crate')bridge?.syncBodies?.();
    else bridge?.syncStatics?.();
+   selection=0;refreshSelection();
    playtest.event('authoring-history',{action:op,kind:r.kind,id:r.id});
    actionText(op==='undo'?'Cofnięto '+(r.kind==='crate'?'operację na skrzyni':'edycję części')+'.':
     'Ponowiono '+(r.kind==='crate'?'operację na skrzyni':'edycję części')+'.');
@@ -2715,7 +2716,7 @@ function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Łado
  if(mode==='crate'){
   const r=addCrate(world,a.point[0],a.point[1],a.point[2],
    {admission:physicsState==='box3d'&&researchArgs.get('admission')!=='legacy'?'solver':'legacy'});
-  if(r.ok){editHistory.recordBodyAdded(world,r.id);bridge?.syncBodies?.();}
+  if(r.ok){editHistory.recordBodyAdded(world,r.id);bridge?.syncBodies?.();selection=0;refreshSelection();}
   refreshEditButtons();
   playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});
   actionText(r.ok?'Nowa skrzynia w świecie. Można cofnąć.':'Odmowa: '+r.reason);return;
@@ -2725,7 +2726,7 @@ function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Łado
   const crateIndex=world.bodies.findIndex(b=>b.kind==='crate'&&b.id===a.id);
   if(crateIndex!==-1){
    const crate=world.bodies[crateIndex],r=editHistory.removeBody(world,crate.id);
-   if(r.ok)bridge?.syncBodies?.();
+   if(r.ok){bridge?.syncBodies?.();selection=0;refreshSelection();}
    refreshEditButtons();
    playtest.event('delete-crate',{id:crate.id,ok:r.ok});
    actionText(r.ok?'Skrzynia usunięta. Można cofnąć bez cofania fizyki.':
@@ -2737,6 +2738,7 @@ function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Łado
   const external=e?.kind==='box'&&e.motionType==='dynamic';
   const r=external?removeElement(world.scene,a.id):editHistory.apply(world.scene,e||null,null);
   if(r.ok&&external)editHistory.invalidateId(a.id);
+  if(r.ok){selection=0;refreshSelection();}
   refreshEditButtons();playtest.event('delete-part',{ok:r.ok,id:a.id});
   actionText(r.ok?'Element usunięty; ciała zareagują na utratę podparcia.':'Odmowa: '+r.reason);
  }

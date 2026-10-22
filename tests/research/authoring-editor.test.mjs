@@ -184,3 +184,19 @@ test('restoring a deleted middle crate preserves original world ordering',()=>{
  assert.equal(h.undo(live).ok,true);
  assert.deepEqual(live.bodies.map(b=>b.id),before);
 });
+
+test('Owner-scale 183-item construction history stays undoable beyond the old 64 limit',()=>{
+ const w=world(),h=createEditHistory(256);
+ for(let i=0;i<183;i++){
+  const b=box('owner-action-'+i);
+  assert.equal(h.apply(w,null,b).ok,true);
+ }
+ assert.equal(w.elements.length,185);
+ for(let i=0;i<183;i++)assert.equal(h.undo(w).ok,true,'undo authored action '+i);
+ assert.equal(w.elements.length,2);
+ assert.equal(h.canUndo,false);
+ assert.equal(h.canRedo,true);
+ for(let i=0;i<183;i++)assert.equal(h.redo(w).ok,true,'redo authored action '+i);
+ assert.equal(w.elements.length,185);
+ assert.equal(h.canRedo,false);
+});

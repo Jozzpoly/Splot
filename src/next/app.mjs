@@ -15,7 +15,7 @@ const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=
 let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,pitch=1.03,zoom=1,renderScale=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
-const editHistory=createEditHistory();let editSelectedId=null,editDrag=null;
+const editHistory=createEditHistory(256);let editSelectedId=null,editDrag=null; // bounded per-intent snapshots: Owner-scale creator sessions
 const sceneVisual=createSceneVisualCache({exteriorBoxes:new URLSearchParams(location.search).get('faces')==='exterior-boxes'});
 const researchArgs=new URLSearchParams(location.search);
 renderScale=researchArgs.get('pixels')==='50'?.5:researchArgs.get('pixels')==='75'?.75:1;

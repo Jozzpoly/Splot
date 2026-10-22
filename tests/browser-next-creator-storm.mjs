@@ -205,7 +205,7 @@ try{
      redoDisabled:document.querySelector('#redo').disabled};
    });
    assert.equal(afterUndo.crates.length,sceneBefore.crateIds.length-64);
-   assert.equal(afterUndo.undoDisabled,true,'history is bounded at 64 without phantom older actions');
+   assert.equal(afterUndo.undoDisabled,false,'256-intent history retains earlier construction beyond 64 undos');
    assert.equal(afterUndo.redoDisabled,false);
    assert.deepEqual(afterUndo.parts,sceneBefore.parts);
    assert.deepEqual(afterUndo.actors,sceneBefore.actors);

@@ -261,7 +261,7 @@ function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Łado
   else actionText('Błąd zmiany stanu: '+r.reason);
   return;
  }
- if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
+ if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2],{admission:physicsState==='box3d'&&researchArgs.get('admission')==='solver'?'solver':'legacy'});playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
  if(mode==='edit'){actionText('Zaznacz i przeciągnij zakotwiczoną część. Pion: przyciski ±0,25 m.');return;}
  if(mode==='erase'){
   const crateIndex=world.bodies.findIndex(b=>b.kind==='crate'&&b.id===a.id);

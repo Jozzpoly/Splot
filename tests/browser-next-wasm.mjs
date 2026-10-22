@@ -1085,9 +1085,11 @@ try{
  // a replay: the private log has no failed-click coordinates or reasons.
  // Keep the same Box3D world, interleave independent authored objects,
  // rotate viewpoint mid-build and verify that failures do not corrupt it.
+ const stormOutcomes=[];
+ for(const admission of ['legacy','solver']){
  const storm=await context.newPage();
- console.log('\nRUN 127 UI crate attempts mixed with authored construction, no resets');
- await storm.goto(rootUrl,{waitUntil:'domcontentloaded'});
+ console.log('\nRUN 127 UI creator storm admission='+admission);
+ await storm.goto(rootUrl+(admission==='solver'?'?admission=solver':''),{waitUntil:'domcontentloaded'});
  try{
   await storm.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
   const before=await storm.evaluate(()=>({
@@ -1152,11 +1154,17 @@ try{
    finite:window.__splotNext.world.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite)),
    bodyIds:window.__splotNext.world.bodies.map(b=>b.id),
    partIds:window.__splotNext.world.scene.elements.map(e=>e.id),
-   render:window.__splotNext.visualStats
+   render:window.__splotNext.visualStats,
+   escaped:window.__splotNext.world.bodies.filter(b=>b.kind==='crate'&&
+    (b.x<-.05||b.x>window.__splotNext.world.scene.width+.05||
+     b.y<-.05||b.y>window.__splotNext.world.scene.height+.05||b.z<-2||b.z>30)).length,
+   minCrateZ:Math.min(...window.__splotNext.world.bodies.filter(b=>b.kind==='crate').map(b=>b.z)),
+   maxCrateZ:Math.max(...window.__splotNext.world.bodies.filter(b=>b.kind==='crate').map(b=>b.z))
   }));
-  Object.assign(sectors,{cratePass,crateFail,authoredPass,offscreen,rejections,rejectionTargets,before,
-   after:{engine:built.engine,time:built.time,crates:built.crates,parts:built.parts,finite:built.finite},
+  Object.assign(sectors,{admission,cratePass,crateFail,authoredPass,offscreen,rejections,rejectionTargets,before,
+   after:{engine:built.engine,time:built.time,crates:built.crates,parts:built.parts,finite:built.finite,escaped:built.escaped,minCrateZ:built.minCrateZ,maxCrateZ:built.maxCrateZ},
    renderer:built.render});
+  stormOutcomes.push(sectors);
   console.log('CREATOR UI STORM REPORT',JSON.stringify(sectors));
   assert.equal(built.engine,'box3d');
   assert.ok(cratePass+crateFail>=75,'stress experiment must actually execute many crate clicks');
@@ -1171,5 +1179,14 @@ try{
   await storm.screenshot({path:'/tmp/splot-creator-storm-FAIL.png'}).catch(()=>{});
  }
  await storm.close();
+ }
+ assert.equal(stormOutcomes.length,2,'each Box3D policy must run a separate full creator storm');
+ assert.ok(stormOutcomes[1].crateFail<=stormOutcomes[0].crateFail,
+  'opt-in solver admission cannot reject MORE than old circle gate for same scripted intents');
+ console.log('CREATOR ADMISSION A/B SUMMARY',JSON.stringify(stormOutcomes.map(s=>({
+  admission:s.admission,accepted:s.cratePass,refused:s.crateFail,
+  authored:s.authoredPass,escaped:s.after.escaped,
+  minCrateZ:s.after.minCrateZ,maxCrateZ:s.after.maxCrateZ
+ }))));
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

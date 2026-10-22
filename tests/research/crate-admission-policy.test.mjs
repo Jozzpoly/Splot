@@ -52,3 +52,15 @@ test('OBSERVATION: the same admission check ignores fully coincident live crates
 });
 // Before changing any behavior: measure solver response, distinguish
 // actual stability from arbitrary prohibitions, preserve playful misuse.
+
+test('EXPERIMENT: solver-owned admission permits intentional overlap but retains finite bounds',()=>{
+ const w=fixture();
+ assert.equal(addCrate(w,7.57,8.5,0,{admission:'solver'}).ok,true);
+ assert.equal(addCrate(w,8.5,8.5,0,{admission:'solver'}).ok,true);
+ const c=w.bodies.find(b=>b.id==='crate-1');
+ assert.equal(addCrate(w,c.x,c.y,c.z,{admission:'solver'}).ok,true);
+ assert.equal(addCrate(w,-3,8,0,{admission:'solver'}).reason,'bounds');
+ assert.equal(addCrate(w,8,8,Infinity,{admission:'solver'}).reason,'bounds');
+ assert.equal(addCrate(w,8,8,30,{admission:'solver'}).reason,'bounds');
+ assert.throws(()=>addCrate(w,8,8,0,{admission:'unknown'}),/unknown-crate-admission/);
+});

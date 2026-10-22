@@ -1461,7 +1461,7 @@ function createEditHistory(limit=64){
  // Solver body poses evolve continuously. History acts on stable ID,
  // not old x/y/z. A removed crate reappears at its deletion-time pose;
  // this is not simulation replay and never moves other bodies backwards.
- const bodyChange=(live,from,to)=>{
+ const bodyChange=(live,from,to,index=null)=>{
   if(!live?.scene||!Array.isArray(live.bodies))return {ok:false,reason:'missing-live-world'};
   const id=to?.id||from?.id;
   if(!id||!/^[-_a-zA-Z0-9]{1,64}$/.test(id)||from&&to)
@@ -1478,7 +1478,8 @@ function createEditHistory(limit=64){
    if(!to)return {ok:false,reason:'no-change'};
    if(current||live.scene.elements.some(e=>e.id===id))
     return {ok:false,reason:'duplicate-id'};
-   live.bodies.push(copy(to));
+   const at=Number.isInteger(index)?Math.max(0,Math.min(index,live.bodies.length)):live.bodies.length;
+   live.bodies.splice(at,0,copy(to));
   }
   return {ok:true,id,kind:'crate'};
  };
@@ -1493,7 +1494,7 @@ function createEditHistory(limit=64){
    const b=live?.bodies?.find(b=>b.id===id);
    if(!b||b.kind!=='crate'||live.scene.elements.some(e=>e.id===id))
     return {ok:false,reason:'invalid-crate-creation'};
-   past.push({kind:'crate',from:null,to:copy(b)});
+   past.push({kind:'crate',from:null,to:copy(b),index:live.bodies.indexOf(b)});
    if(past.length>limit)past.shift();
    future.length=0;
    return {ok:true,id,kind:'crate'};
@@ -1501,9 +1502,9 @@ function createEditHistory(limit=64){
   removeBody(live,id){
    const b=live?.bodies?.find(b=>b.id===id);
    if(!b||b.kind!=='crate')return {ok:false,reason:'not-crate'};
-   const snapshot=copy(b),r=bodyChange(live,snapshot,null);
+   const index=live.bodies.indexOf(b),snapshot=copy(b),r=bodyChange(live,snapshot,null);
    if(r.ok){
-    past.push({kind:'crate',from:snapshot,to:null});
+    past.push({kind:'crate',from:snapshot,to:null,index});
     if(past.length>limit)past.shift();
     future.length=0;
    }
@@ -1511,12 +1512,12 @@ function createEditHistory(limit=64){
   },
   undo(world){
    if(!past.length)return {ok:false,reason:'empty'};
-   const c=past[past.length-1],r=c.kind==='crate'?bodyChange(world,c.to,c.from):applyChange(world.scene||world,c.to,c.from);
+   const c=past[past.length-1],r=c.kind==='crate'?bodyChange(world,c.to,c.from,c.index):applyChange(world.scene||world,c.to,c.from);
    if(r.ok){past.pop();future.push(c);}return {...r,kind:c.kind};
   },
   redo(world){
    if(!future.length)return {ok:false,reason:'empty'};
-   const c=future[future.length-1],r=c.kind==='crate'?bodyChange(world,c.from,c.to):applyChange(world.scene||world,c.from,c.to);
+   const c=future[future.length-1],r=c.kind==='crate'?bodyChange(world,c.from,c.to,c.index):applyChange(world.scene||world,c.from,c.to);
    if(r.ok){future.pop();past.push(c);}return {...r,kind:c.kind};
   },
   // An external solver/lifecycle mutation must not leave stale commands

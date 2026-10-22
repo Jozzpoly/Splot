@@ -179,7 +179,7 @@ try{
    if(!q.ok)throw Error('wall fixture:'+q.reason);
    g.challenger.syncStatics();
    const c=document.querySelector('#world'),r=c.getBoundingClientRect();
-   const p=projectPoint(g.camera,[7.57,8.5,0]);
+   const p=projectPoint(g.camera,[7.75,8.5,0]);
    return {x:r.x+p.x/c.width*r.width,y:r.y+p.y/c.height*r.height,
     onCanvas:document.elementFromPoint(r.x+p.x/c.width*r.width,r.y+p.y/c.height*r.height)===c};
   });
@@ -189,6 +189,9 @@ try{
   const actual=await candidate.evaluate(()=>({
    engine:window.__splotNext.physics,
    crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+   newCrate:window.__splotNext.world.bodies.find(b=>b.id==='crate-2')??null,
+   href:location.href,
+   target:document.querySelector('#target').textContent.trim(),
    notice:document.querySelector('#notice').textContent.trim()
   }));
   console.log('NATURAL CRATE ADMISSION',label,JSON.stringify(actual));

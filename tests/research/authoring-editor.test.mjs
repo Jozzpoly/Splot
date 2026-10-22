@@ -166,3 +166,21 @@ test('undo/redo crate identity must not affect unrelated moving bodies or aliase
  assert.equal(h.removeBody(live,'boar').ok,false,'noncrate bodies never enter creator history');
  assert.equal(live.bodies.find(b=>b.id==='boar').x,3);
 });
+
+
+test('restoring a deleted middle crate preserves original world ordering',()=>{
+ const scene=world(),live={scene,bodies:[
+  {id:'human',kind:'human',x:1,y:1,z:0},
+  {id:'crate-11',kind:'crate',x:3,y:3,z:0,r:.43,h:.86},
+  {id:'crate-12',kind:'crate',x:4,y:4,z:0,r:.43,h:.86},
+  {id:'boar',kind:'boar',x:8,y:8,z:0}
+ ]},h=createEditHistory();
+ const before=live.bodies.map(b=>b.id);
+ assert.equal(h.removeBody(live,'crate-11').ok,true);
+ assert.equal(h.undo(live).ok,true);
+ assert.deepEqual(live.bodies.map(b=>b.id),before,
+  'an undo restore should not reorder other bodies/render siblings');
+ assert.equal(h.redo(live).ok,true);
+ assert.equal(h.undo(live).ok,true);
+ assert.deepEqual(live.bodies.map(b=>b.id),before);
+});

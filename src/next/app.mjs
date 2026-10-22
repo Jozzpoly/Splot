@@ -170,7 +170,23 @@ for(const [name,target] of [['grip','#grip'],['layer','#layer'],['undo','#undo']
   activate();
  });
 }
-$('#reset').onclick=()=>{if(physicsState.startsWith('loading-')){actionText('Reset po załadowaniu właściwej fizyki.');return;}playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();editHistory.clear();editSelectedId=null;editDrag=null;
+let resetArmedUntil=0;
+$('#reset').onclick=()=>{
+ if(physicsState.startsWith('loading-')){actionText('Reset po załadowaniu właściwej fizyki.');return;}
+ // The current scene may contain hours of unsaved construction; one stray
+ // R beside WASD must never wipe it. Confirmation is limited to RESET,
+ // not to experimental geometry, overlapping materials or other play.
+ const now=performance.now();
+ if(now>resetArmedUntil){
+  resetArmedUntil=now+6000;
+  const armed=resetArmedUntil;
+  $('#reset').textContent='Potwierdź reset';
+  actionText('Reset usunie bieżący świat i historię cofania. Ponów w ciągu 6 s, aby potwierdzić. Zapisz JSON, jeśli chcesz zachować konstrukcję.');
+  setTimeout(()=>{if(resetArmedUntil===armed){resetArmedUntil=0;$('#reset').textContent='Reset';}},6000);
+  return;
+ }
+ resetArmedUntil=0;$('#reset').textContent='Reset';
+ playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();editHistory.clear();editSelectedId=null;editDrag=null;
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}

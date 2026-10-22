@@ -1080,5 +1080,96 @@ try{
   await loopPage.screenshot({path:'/tmp/splot-integrated-FAIL.png'}).catch(()=>{});
  }
  await loopPage.close();
+ // Deliberately messy independent browser-play experiment. 127 rapid UI
+ // attempts, inspired by the ORDER and intensity of one Owner session, NOT
+ // a replay: the private log has no failed-click coordinates or reasons.
+ // Keep the same Box3D world, interleave independent authored objects,
+ // rotate viewpoint mid-build and verify that failures do not corrupt it.
+ const storm=await context.newPage();
+ console.log('\nRUN 127 UI crate attempts mixed with authored construction, no resets');
+ await storm.goto(rootUrl,{waitUntil:'domcontentloaded'});
+ try{
+  await storm.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const before=await storm.evaluate(()=>({
+   time:window.__splotNext.world.time,
+   bodies:window.__splotNext.world.bodies.length,
+   parts:window.__splotNext.world.scene.elements.length
+  }));
+  const sectors={};
+  const rejections={},rejectionTargets={};
+  let cratePass=0,crateFail=0,authoredPass=0,offscreen=0;
+  const worldPixel=point=>storm.evaluate(point=>{
+   const g=window.__splotNext,canvas=document.querySelector('#world'),r=canvas.getBoundingClientRect();
+   const projected=projectPoint(g.camera,point);
+   const x=r.left+projected.x/canvas.width*r.width,y=r.top+projected.y/canvas.height*r.height;
+   const node=document.elementFromPoint(x,y);
+   return {x,y,pixelInside:x>=r.left+10&&x<r.right-10&&y>=r.top+10&&y<r.bottom-10,
+    onCanvas:node===canvas||node?.id==='overlay'};
+  },point);
+  for(let i=0;i<127;i++){
+   // Four working areas: known body; ramp; dense new structure; free ground.
+   const sector=Math.floor(i/32),ix=i%32;
+   let x,y;
+   if(sector===0){x=13.75+(ix%8)*.18;y=14.7+Math.floor(ix/8)*.19;}
+   else if(sector===1){x=12+(ix%8)*.66;y=11.2+Math.floor(ix/8)*.62;}
+   else if(sector===2){x=7.3+(ix%8)*.48;y=9.7+Math.floor(ix/8)*.55;}
+   else{x=7.1+(ix%8)*1.27;y=17.0+Math.floor(ix/8)*1.05;}
+   const sectorLabel=['near-live-crate','across-ramp','crowded-boxes','open-ground'][sector];
+   const createBox=i%9===0;
+   await storm.locator('[data-mode="'+(createBox?'box':'crate')+'"]').click();
+   const pixel=await worldPixel([x,y,0]);
+   if(!pixel.pixelInside||!pixel.onCanvas){offscreen++;continue;}
+   await storm.mouse.move(pixel.x,pixel.y);
+   const target=(await storm.locator('#target').textContent())?.split(' • ')[0]??'none';
+   const prev=await storm.evaluate(()=>({
+    crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+    parts:window.__splotNext.world.scene.elements.length
+   }));
+   await storm.mouse.click(pixel.x,pixel.y);
+   const after=await storm.evaluate(()=>({
+    crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+    parts:window.__splotNext.world.scene.elements.length,
+    notice:document.querySelector('#notice').textContent.trim()
+   }));
+   if(createBox){if(after.parts>prev.parts)authoredPass++;continue;}
+   if(after.crates>prev.crates)cratePass++;
+   else {
+    crateFail++;
+    const why=after.notice||'no UI message';
+    rejections[why]=(rejections[why]||0)+1;
+    rejectionTargets[target]=(rejectionTargets[target]||0)+1;
+   }
+   // Exercise active contacts across bursts rather than a static frozen dump.
+   if(i%32===31)await storm.evaluate(()=>window.__splotNext.step(90));
+   if(i===63)await storm.locator('#turn-right').click();
+  }
+  await storm.evaluate(()=>window.__splotNext.step(240));
+  const built=await storm.evaluate(()=>({
+   engine:window.__splotNext.physics,
+   time:window.__splotNext.world.time,
+   crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+   parts:window.__splotNext.world.scene.elements.length,
+   finite:window.__splotNext.world.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite)),
+   bodyIds:window.__splotNext.world.bodies.map(b=>b.id),
+   partIds:window.__splotNext.world.scene.elements.map(e=>e.id),
+   render:window.__splotNext.visualStats
+  }));
+  Object.assign(sectors,{cratePass,crateFail,authoredPass,offscreen,rejections,rejectionTargets,before,
+   after:{engine:built.engine,time:built.time,crates:built.crates,parts:built.parts,finite:built.finite},
+   renderer:built.render});
+  console.log('CREATOR UI STORM REPORT',JSON.stringify(sectors));
+  assert.equal(built.engine,'box3d');
+  assert.ok(cratePass+crateFail>=75,'stress experiment must actually execute many crate clicks');
+  assert.ok(cratePass>=12,'experiment must really place dynamic crates through UI');
+  assert.ok(authoredPass>=5,'experiment must interleave independently authored elements');
+  assert.equal(built.finite,true,'solver must keep every real body finite during creator storm');
+  assert.equal(new Set(built.bodyIds).size,built.bodyIds.length);
+  assert.equal(new Set(built.partIds).size,built.partIds.length);
+  assert.ok(built.time>before.time,'same world must continue physically stepping');
+  console.log('PASS REAL CHROME 127-input creator storm classification and live Box3D world');
+ }catch(e){failures++;console.error('FAIL 127-input creator storm:',String(e));
+  await storm.screenshot({path:'/tmp/splot-creator-storm-FAIL.png'}).catch(()=>{});
+ }
+ await storm.close();
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

@@ -918,6 +918,53 @@ try{
   await contactPage.screenshot({path:'/tmp/splot-cross-type-FAIL.png'}).catch(()=>{});
  }
  await contactPage.close();
+ // Observational research: old circleRect admission is not the same geometry
+ // as actual b3CreateBoxShape's square half-extents. No gameplay change here.
+ // Inject deliberate cases directly into an isolated REAL solver, including
+ // cases the old admission would refuse, to assess stability before policy.
+ const admissionCases=[
+  {label:'face-tangent-old-rejects',x:7.57,y:8.5,wall:true},
+  {label:'corner-penetration-old-accepts',x:7.66,y:7.66,wall:true},
+  {label:'coincident-crates-old-accepts',x:14.2,y:15.2,wall:false}
+ ];
+ for(const cfg of admissionCases){
+  const admission=await context.newPage();
+  await admission.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+  try{
+   await admission.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+   const observation=await admission.evaluate(({label,x,y,wall})=>{
+    const g=window.__splotNext,w=g.world;
+    if(wall){
+     const built=g.build({id:'wall-for-crate-contact',kind:'box',
+      min:[8,8,0],max:[9,9,1],material:'stone'});
+     if(!built.ok)throw Error('failed static wall '+built.reason);
+     g.challenger.syncStatics();
+    }
+    const id='admission-'+label;
+    const initial={x,y,z:0};
+    w.bodies.push({id,kind:'crate',x,y,z:0,r:.43,h:.86,mass:36,
+     support:null,vz:0,yaw:0});
+    g.challenger.syncBodies();
+    g.step(180);
+    const b=w.bodies.find(q=>q.id===id);
+    const base=w.bodies.find(q=>q.id==='crate-1');
+    return {
+     engine:g.physics,
+     after:{x:b.x,y:b.y,z:b.z},
+     displacement:Math.hypot(b.x-x,b.y-y,b.z),
+     base:wall?null:{x:base.x,y:base.y,z:base.z},
+     finite:[b.x,b.y,b.z,base.x,base.y,base.z].every(Number.isFinite)
+    };
+   },cfg);
+   console.log('ACTUAL BOX3D CRATE ADMISSION PRESSURE',cfg.label,JSON.stringify(observation));
+   assert.equal(observation.engine,'box3d');
+   assert.equal(observation.finite,true,'overlap admission cannot corrupt world into NaN/Infinity');
+   assert.ok(observation.displacement<8,'overlap may resolve but may not eject crate across the world');
+  }catch(e){
+   failures++;console.error('FAIL Box3D admission pressure:',cfg.label,String(e));
+  }
+  await admission.close();
+ }
  // Perceptual provenance: a moving crate in front of an authored part must
  // be the FIRST target for Popraw. Q deliberately reaches the obscured part.
  // The fixture is permissively overlapping, as in the Owner's real builds.

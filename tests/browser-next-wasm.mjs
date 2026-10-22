@@ -162,6 +162,42 @@ try{
   releaseFetch?.();
   await gated.close();
  }
+
+ // New R&D default must really be a permissive solver-owned spawn, not a
+ // hidden URL opt-in. Explicit legacy remains an honest A/B control.
+ for(const [label,suffix,shouldAdd] of [
+  ['owner-default','',true],
+  ['legacy-control','?admission=legacy',false]
+ ]){
+  const candidate=await context.newPage();
+  await candidate.goto(rootUrl+suffix,{waitUntil:'domcontentloaded'});
+  await candidate.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const pixel=await candidate.evaluate(()=>{
+   const g=window.__splotNext;
+   const q=g.build({id:'admission-wall',kind:'box',
+    min:[8,8,0],max:[9,9,1],material:'stone'});
+   if(!q.ok)throw Error('wall fixture:'+q.reason);
+   g.challenger.syncStatics();
+   const c=document.querySelector('#world'),r=c.getBoundingClientRect();
+   const p=projectPoint(g.camera,[7.57,8.5,0]);
+   return {x:r.x+p.x/c.width*r.width,y:r.y+p.y/c.height*r.height,
+    onCanvas:document.elementFromPoint(r.x+p.x/c.width*r.width,r.y+p.y/c.height*r.height)===c};
+  });
+  assert.equal(pixel.onCanvas,true,label+' click must target actual playable canvas');
+  await candidate.locator('[data-mode="crate"]').click();
+  await candidate.mouse.click(pixel.x,pixel.y);
+  const actual=await candidate.evaluate(()=>({
+   engine:window.__splotNext.physics,
+   crates:window.__splotNext.world.bodies.filter(b=>b.kind==='crate').length,
+   notice:document.querySelector('#notice').textContent.trim()
+  }));
+  console.log('NATURAL CRATE ADMISSION',label,JSON.stringify(actual));
+  assert.equal(actual.engine,'box3d');
+  assert.equal(actual.crates,shouldAdd?2:1,'natural entrypoint and explicit legacy control must differ at tangent');
+  if(!shouldAdd)assert.match(actual.notice,/occupied/);
+  await candidate.close();
+ }
+ console.log('PASS REAL CHROME natural Box3D admission default and explicit legacy control');
  const legacyPage=await context.newPage();
  console.log('\nRUN deliberate comparison: ?physics=legacy');
  await legacyPage.goto(rootUrl+'?physics=legacy',{waitUntil:'domcontentloaded'});

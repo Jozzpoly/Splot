@@ -11,6 +11,7 @@ on:
       - 'tests/verify-next.sh'
       - 'tests/check-next-bundle.mjs'
       - 'tests/browser-next-wasm.mjs'
+      - 'tests/browser-next-creator-storm.mjs'
       - 'tests/browser-next-perf.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:

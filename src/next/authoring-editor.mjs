@@ -49,21 +49,66 @@ export function createEditHistory(limit=64){
   if(!to)return removeElement(world,id);
   return replaceElement(world,id,to);
  };
+ // Solver body poses evolve continuously. History acts on stable ID,
+ // not old x/y/z. A removed crate reappears at its deletion-time pose;
+ // this is not simulation replay and never moves other bodies backwards.
+ const bodyChange=(live,from,to)=>{
+  if(!live?.scene||!Array.isArray(live.bodies))return {ok:false,reason:'missing-live-world'};
+  const id=to?.id||from?.id;
+  if(!id||!/^[-_a-zA-Z0-9]{1,64}$/.test(id)||from&&to)
+   return {ok:false,reason:'unsupported-body-change'};
+  for(const b of [from,to].filter(Boolean))
+   if(b.kind!=='crate'||![b.x,b.y,b.z,b.r,b.h].every(Number.isFinite)||
+      b.r<=0||b.h<=0||b.id!==id)return {ok:false,reason:'invalid-crate'};
+  const current=live.bodies.find(b=>b.id===id);
+  if(from){
+   if(!current||current.kind!=='crate')return {ok:false,reason:'stale-crate'};
+   live.bodies.splice(live.bodies.indexOf(current),1);
+   if(live.grip===id)live.grip=null;
+  }else{
+   if(!to)return {ok:false,reason:'no-change'};
+   if(current||live.scene.elements.some(e=>e.id===id))
+    return {ok:false,reason:'duplicate-id'};
+   live.bodies.push(copy(to));
+  }
+  return {ok:true,id,kind:'crate'};
+ };
  return {
   apply(world,from,to){
    const initial=copy(from),final=copy(to),r=applyChange(world,initial,final);
-   if(r.ok){past.push({from:initial,to:final});if(past.length>limit)past.shift();future.length=0;}
+   if(r.ok){past.push({kind:'part',from:initial,to:final});if(past.length>limit)past.shift();future.length=0;}
+   return r;
+  },
+  // Record the body AFTER addCrate has admitted it to the same live world.
+  recordBodyAdded(live,id){
+   const b=live?.bodies?.find(b=>b.id===id);
+   if(!b||b.kind!=='crate'||live.scene.elements.some(e=>e.id===id))
+    return {ok:false,reason:'invalid-crate-creation'};
+   past.push({kind:'crate',from:null,to:copy(b)});
+   if(past.length>limit)past.shift();
+   future.length=0;
+   return {ok:true,id,kind:'crate'};
+  },
+  removeBody(live,id){
+   const b=live?.bodies?.find(b=>b.id===id);
+   if(!b||b.kind!=='crate')return {ok:false,reason:'not-crate'};
+   const snapshot=copy(b),r=bodyChange(live,snapshot,null);
+   if(r.ok){
+    past.push({kind:'crate',from:snapshot,to:null});
+    if(past.length>limit)past.shift();
+    future.length=0;
+   }
    return r;
   },
   undo(world){
    if(!past.length)return {ok:false,reason:'empty'};
-   const c=past[past.length-1],r=applyChange(world,c.to,c.from);
-   if(r.ok){past.pop();future.push(c);}return r;
+   const c=past[past.length-1],r=c.kind==='crate'?bodyChange(world,c.to,c.from):applyChange(world.scene||world,c.to,c.from);
+   if(r.ok){past.pop();future.push(c);}return {...r,kind:c.kind};
   },
   redo(world){
    if(!future.length)return {ok:false,reason:'empty'};
-   const c=future[future.length-1],r=applyChange(world,c.from,c.to);
-   if(r.ok){future.pop();past.push(c);}return r;
+   const c=future[future.length-1],r=c.kind==='crate'?bodyChange(world,c.from,c.to):applyChange(world.scene||world,c.from,c.to);
+   if(r.ok){future.pop();past.push(c);}return {...r,kind:c.kind};
   },
   // An external solver/lifecycle mutation must not leave stale commands
   // at the top of the undo stack, blocking other independent construction.

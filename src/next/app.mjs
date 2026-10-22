@@ -122,8 +122,14 @@ for(const [id,dz] of [['#edit-up',.25],['#edit-down',-.25]]){
 for(const [id,op] of [['#undo','undo'],['#redo','redo']]){
  $(id).onclick=()=>{
   editDrag=null;
-  const r=editHistory[op](world.scene);
-  if(r.ok){bridge?.syncStatics?.();playtest.event('authoring-history',{action:op});actionText(op==='undo'?'Cofnięto edycję.':'Ponowiono edycję.');}
+  const r=editHistory[op](world);
+  if(r.ok){
+   if(r.kind==='crate')bridge?.syncBodies?.();
+   else bridge?.syncStatics?.();
+   playtest.event('authoring-history',{action:op,kind:r.kind,id:r.id});
+   actionText(op==='undo'?'Cofnięto '+(r.kind==='crate'?'operację na skrzyni':'edycję części')+'.':
+    'Ponowiono '+(r.kind==='crate'?'operację na skrzyni':'edycję części')+'.');
+  }
   else actionText('Nie można '+(op==='undo'?'cofnąć':'ponowić')+': '+r.reason);
   refreshEditButtons();
  };
@@ -261,17 +267,24 @@ function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Łado
   else actionText('Błąd zmiany stanu: '+r.reason);
   return;
  }
- if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2],{admission:physicsState==='box3d'&&researchArgs.get('admission')!=='legacy'?'solver':'legacy'});playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
+ if(mode==='crate'){
+  const r=addCrate(world,a.point[0],a.point[1],a.point[2],
+   {admission:physicsState==='box3d'&&researchArgs.get('admission')!=='legacy'?'solver':'legacy'});
+  if(r.ok){editHistory.recordBodyAdded(world,r.id);bridge?.syncBodies?.();}
+  refreshEditButtons();
+  playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});
+  actionText(r.ok?'Nowa skrzynia w świecie. Można cofnąć.':'Odmowa: '+r.reason);return;
+ }
  if(mode==='edit'){actionText('Zaznacz i przeciągnij zakotwiczoną część. Pion: przyciski ±0,25 m.');return;}
  if(mode==='erase'){
   const crateIndex=world.bodies.findIndex(b=>b.kind==='crate'&&b.id===a.id);
   if(crateIndex!==-1){
-   const [crate]=world.bodies.splice(crateIndex,1);
-   if(world.grip===crate.id)world.grip=null;
-   // Solver owns live crate bodies; prune the removed reference immediately.
-   bridge?.syncBodies?.();
-   playtest.event('delete-crate',{id:crate.id});
-   actionText('Skrzynia usunięta. Pozostałe ciała zachowują własną fizykę.');
+   const crate=world.bodies[crateIndex],r=editHistory.removeBody(world,crate.id);
+   if(r.ok)bridge?.syncBodies?.();
+   refreshEditButtons();
+   playtest.event('delete-crate',{id:crate.id,ok:r.ok});
+   actionText(r.ok?'Skrzynia usunięta. Można cofnąć bez cofania fizyki.':
+    'Nie udało się usunąć skrzyni: '+r.reason);
    return;
   }
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}

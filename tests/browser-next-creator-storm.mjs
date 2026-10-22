@@ -183,6 +183,57 @@ try{
    assert.equal(afterDense.finite,true,'long-lived dense world cannot destabilize to nonfinite');
    assert.equal(afterDense.escaped,0,'physical explosion outside bounds would falsify permissive admission');
    console.log('PASS dense authored world + permissive 64 extra crate intents + 600 physical steps');
+   // Bounded 64-entry chronological history under sustained Box3D movement.
+   // This must remove ONLY the last 64 intentional crate additions and
+   // restore them by ID; no rebuilding/reset of the other 113 bodies.
+   assert.equal(extraAccepted,64,'full 64-entry history boundary must be populated');
+   const sceneBefore=await storm.evaluate(()=>{
+    const w=window.__splotNext.world;
+    return {time:w.time,parts:w.scene.elements.map(e=>e.id),
+     crateIds:w.bodies.filter(b=>b.kind==='crate').map(b=>b.id),
+     actors:w.bodies.filter(b=>b.kind!=='crate').map(b=>b.id)};
+   });
+   for(let i=0;i<64;i++)await storm.locator('#undo').click();
+   const afterUndo=await storm.evaluate(()=>{
+    const w=window.__splotNext.world;
+    return {crates:w.bodies.filter(b=>b.kind==='crate').map(b=>b.id),
+     parts:w.scene.elements.map(e=>e.id),
+     actors:w.bodies.filter(b=>b.kind!=='crate').map(b=>b.id),
+     undoDisabled:document.querySelector('#undo').disabled,
+     redoDisabled:document.querySelector('#redo').disabled};
+   });
+   assert.equal(afterUndo.crates.length,sceneBefore.crateIds.length-64);
+   assert.equal(afterUndo.undoDisabled,true,'history is bounded at 64 without phantom older actions');
+   assert.equal(afterUndo.redoDisabled,false);
+   assert.deepEqual(afterUndo.parts,sceneBefore.parts);
+   assert.deepEqual(afterUndo.actors,sceneBefore.actors);
+   for(let i=0;i<64;i++)await storm.locator('#redo').click();
+   await storm.evaluate(()=>window.__splotNext.step(180));
+   const afterRedo=await storm.evaluate(()=>{
+    const w=window.__splotNext.world,cs=w.bodies.filter(b=>b.kind==='crate');
+    return {time:w.time,
+     crateIds:cs.map(b=>b.id),partIds:w.scene.elements.map(e=>e.id),
+     actors:w.bodies.filter(b=>b.kind!=='crate').map(b=>b.id),
+     finite:w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite)),
+     escaped:cs.filter(b=>b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||
+      b.y>w.scene.height+.1||b.z < -2||b.z>30).length,
+     undoDisabled:document.querySelector('#undo').disabled,
+     redoDisabled:document.querySelector('#redo').disabled};
+   });
+   console.log('DENSE CREATOR MIXED HISTORY',JSON.stringify({
+    before:sceneBefore.crateIds.length,afterUndo:afterUndo.crates.length,
+    afterRedo:afterRedo.crateIds.length,finite:afterRedo.finite,
+    escaped:afterRedo.escaped,timeBefore:sceneBefore.time,timeAfter:afterRedo.time
+   }));
+   assert.deepEqual(afterRedo.crateIds,sceneBefore.crateIds,
+    'all 64 live crates must restore their original identities/order');
+   assert.deepEqual(afterRedo.partIds,sceneBefore.parts);
+   assert.deepEqual(afterRedo.actors,sceneBefore.actors);
+   assert.equal(afterRedo.finite,true);
+   assert.equal(afterRedo.escaped,0);
+   assert.equal(afterRedo.redoDisabled,true);
+   assert.ok(afterRedo.time>sceneBefore.time,'world timeline must continue, not rewind');
+   console.log('PASS dense 64 Undo + 64 Redo against 177 physical crates and 127 authored parts');
   }
  }catch(e){failures++;console.error('FAIL 127-input creator storm:',String(e));
   await storm.screenshot({path:'/tmp/splot-creator-storm-FAIL.png'}).catch(()=>{});

@@ -107,3 +107,62 @@ test('overlapping authored parts remain individually selectable',()=>{
  assert.deepEqual(uniquePartHits(castRay(w,[3,4,12],[0,0,-1])).map(h=>h.id),['a','b']);
  assert.deepEqual(uniquePartHits([]),[]);
 });
+
+
+test('one chronological timeline interleaves authored box changes and live crate creation',()=>{
+ const scene=world(),live={scene,bodies:[{id:'human',kind:'human',x:10,y:10,z:0}]},
+  h=createEditHistory();
+ const newPart=box('new-part'),crate={id:'crate-10',kind:'crate',x:6,y:7,z:0,r:.43,h:.86,mass:36};
+ assert.equal(h.apply(scene,null,newPart).ok,true);
+ live.bodies.push(structuredClone(crate));
+ assert.equal(h.recordBodyAdded(live,crate.id).ok,true);
+ const moved=translatedElement(newPart,[1,0,0]);
+ assert.equal(h.apply(scene,newPart,moved).ok,true);
+ assert.equal(h.undo(live).ok,true,'undo most recent authored edit');
+ assert.deepEqual(scene.elements.find(e=>e.id==='new-part'),newPart);
+ // Box3D owns the moving body pose: undo must track ID, not stale transform.
+ live.bodies.find(b=>b.id===crate.id).z=3.4;
+ assert.equal(h.undo(live).ok,true,'next undo removes ONLY authored crate identity');
+ assert.equal(live.bodies.some(b=>b.id===crate.id),false);
+ assert.equal(live.bodies.some(b=>b.id==='human'),true);
+ assert.equal(h.undo(live).ok,true,'third undo removes oldest new part');
+ assert.equal(scene.elements.some(e=>e.id==='new-part'),false);
+ assert.equal(h.redo(live).ok,true);
+ assert.equal(h.redo(live).ok,true);
+ assert.equal(live.bodies.find(b=>b.id===crate.id)?.z,crate.z,
+  'redo recreates original crate, not rewinds the whole simulation');
+ assert.equal(h.redo(live).ok,true);
+ assert.deepEqual(scene.elements.find(e=>e.id==='new-part'),moved);
+});
+test('delete moving crate then undo restores deletion-time pose, redo removes again',()=>{
+ const live={scene:world(),bodies:[{id:'crate-14',kind:'crate',x:8.5,y:7,z:2.7,r:.43,h:.86}]},
+  h=createEditHistory();
+ assert.equal(h.removeBody(live,'crate-14').ok,true);
+ assert.equal(live.bodies.length,0);
+ assert.equal(h.canUndo,true);
+ assert.equal(h.undo(live).ok,true);
+ const body=live.bodies.find(b=>b.id==='crate-14');
+ assert.equal(body.z,2.7);
+ body.x+=.67; // physics advancing must not falsify redo identity
+ assert.equal(h.redo(live).ok,true);
+ assert.equal(live.bodies.length,0);
+ assert.equal(h.undo(live).ok,true);
+ assert.equal(live.bodies[0].x,8.5,'undo redone delete restores captured snapshot');
+});
+test('undo/redo crate identity must not affect unrelated moving bodies or aliases',()=>{
+ const live={scene:world(),bodies:[{id:'boar',kind:'boar',x:3,y:4,z:0}]},
+  h=createEditHistory(),newCrate={id:'crate-30',kind:'crate',x:10,y:9,z:0,r:.43,h:.86};
+ live.bodies.push(structuredClone(newCrate));
+ assert.equal(h.recordBodyAdded(live,'crate-30').ok,true);
+ assert.equal(h.undo(live).ok,true);
+ live.bodies.push({id:'crate-30',kind:'crate',x:5,y:5,z:1});
+ const rejected=h.redo(live);
+ assert.equal(rejected.ok,false);
+ assert.equal(live.bodies.find(b=>b.id==='crate-30').x,5);
+ assert.equal(h.canRedo,true);
+ live.bodies.pop();
+ assert.equal(h.redo(live).ok,true);
+ assert.equal(live.bodies.find(b=>b.id==='crate-30').x,10);
+ assert.equal(h.removeBody(live,'boar').ok,false,'noncrate bodies never enter creator history');
+ assert.equal(live.bodies.find(b=>b.id==='boar').x,3);
+});

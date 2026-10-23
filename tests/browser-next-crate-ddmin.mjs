@@ -146,18 +146,18 @@ try{
 
  // Keep the exact historical ejection, not an unrelated escape from another
  // crate. Source world, 105 edit slots and local-wake policy stay unchanged.
- const seedIndices=Array.from({length:80},(_,i)=>i);
- const base=await runCandidate('baseline-80-crates',seedIndices);
+ const seedIndices=[42,52,60,61,62,63,69,70,71];
+ const base=await runCandidate('baseline-resume-nine-crates',seedIndices);
  const signature=r=>r.firstFast?.id==='crate-270'&&
   r.firstFast?.tick===44&&r.firstFast.speed>20&&
   r.firstOutside?.id==='crate-270'&&r.firstOutside.tick===60&&
   r.firstUnder?.id==='crate-270'&&r.firstUnder.tick===93;
- assert.ok(signature(base),'four-part witness must reproduce with all 80 candidate crates');
+ assert.ok(signature(base),'four-part witness must reproduce from the previous nine-crate checkpoint');
  const targetOnly=await runCandidate('negative-control-target-only',[70]);
  console.log('CRATE DDMIN TARGET-ONLY CONTROL',JSON.stringify({
   reproducesExactSignature:!!signature(targetOnly),fast:targetOnly.firstFast,
   exit:targetOnly.firstOutside}));
- const accepted=[{phase:'initial',indices:seedIndices,from:80,to:80,
+ const accepted=[{phase:'resume-from-proven-checkpoint',indices:seedIndices,from:9,to:9,
   reference:'crate-270/tick44→60→93; anchored boxes 14/36/37/38'}];
  let active=seedIndices.slice();
  let granularity=2,attempts=0;
@@ -197,11 +197,18 @@ try{
    granularity=Math.min(removable.length,granularity*2);
   }
  }
+ const minimalityChecks=[];
+ for(const index of active.filter(i=>i!==70)){
+  const without=active.filter(i=>i!==index);
+  const trial=await runCandidate('independent-single-deletion-'+index,without);
+  minimalityChecks.push({removed:index,preservesExactSignature:!!signature(trial)});
+ }
+ const oneDeletionMinimal=minimalityChecks.every(x=>!x.preservesExactSignature);
  const final=await runCandidate('final-replay',active);
  assert.ok(signature(final),'minimized witness must survive fresh solver replay');
  const json={schema:'splot-crate-ddmin-v1',reference:'crate-270 velocity tick44; XY tick60; floor tick93',
   initial:seedIndices,remaining:active,attempts,budget,budgetExhausted:attempts>=budget,
-  oneMinimalUnderTestedChunks:granularity>=active.length-1,
+  oneMinimalUnderTestedChunks:oneDeletionMinimal,singleDeleteChecks:minimalityChecks,
   checkpoints:accepted,
   finalWitness:{fast:final.firstFast,exit:final.firstOutside,under:final.firstUnder},
   provenance:{engine:'real Chrome + box3d.js@0.1.1',substeps:8,
@@ -211,9 +218,10 @@ try{
    independentFreshEngines:true,localWake:true}};
  await writeFile('/tmp/splot-crate-ddmin.json',JSON.stringify(json,null,2));
  console.log('CRATE DDMIN FINAL',JSON.stringify({
-  original:80,remaining:active.length,ids:active,attempts,budgetExhausted:json.budgetExhausted,
+  original:9,remaining:active.length,ids:active,attempts,
+  oneDeletionMinimal,minimalityChecks,budgetExhausted:json.budgetExhausted,
   granularity,accepted:accepted.length,witness:json.finalWitness
  }));
- console.log('PASS CRATE DDMIN: every accepted deletion retained the specific crate-270 failure signature');
+ console.log('PASS CRATE DDMIN RESUME: accepted deletions replayed; independent single-body necessity checked');
 
 }finally{await browser.close();await new Promise(r=>server.close(r));}

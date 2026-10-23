@@ -138,6 +138,7 @@ try{
     variant:result.variant,inserted:result.inserted,awakened:result.awakened,
     firstFast:result.firstFast,firstOutside:result.firstOutside,firstUnder:result.firstUnder
    }));
+   return result;
   }finally{await page.close();}
  };
 

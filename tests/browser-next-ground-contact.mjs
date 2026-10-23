@@ -1,6 +1,7 @@
 // Isolated REAL Chrome + Box3D causality research, without modifying playable engine.
 // Same deterministic fixture per page; compare thin base ground with a genuine
-// second fixed underlay. No magical teleport, clamp, reject, or "PASS" by hiding escapes.
+// second fixed underlay. Include a pinned in-contact grid so the watched
+// box is NOT scattered away from the critical fixture before static insertion. No magical teleport, clamp, reject, or "PASS" by hiding escapes.
 import {chromium} from 'playwright-core';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
@@ -22,7 +23,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/us
 const rootUrl='http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html?physics=box3d';
 const outcomes=[];
 try{
- for(const density of ['single','cluster']){
+ for(const density of ['single','cluster','pinned-grid']){
   for(const underlay of [false,true]){
    const page=await browser.newPage({viewport:{width:1280,height:820}});
    try{
@@ -48,8 +49,16 @@ try{
      }
      const startCount=density==='single'?1:80;
      for(let i=0;i<startCount;i++){
-      const x=density==='single'?9.18:7.35+(i%10)*.35,
-       y=density==='single'?9.70:8.1+Math.floor(i/10)*.35;
+      let x,y;
+      if(density==='single'||density==='pinned-grid'&&i===0){
+       x=9.18;y=9.70;
+      }else if(density==='cluster'){
+       x=7.35+(i%10)*.35;y=8.1+Math.floor(i/10)*.35;
+      }else{
+       x=5.5+(i%10)*.97;y=5.5+Math.floor(i/10)*.97;
+       // Keep the targeted crate from scattering BEFORE static insertion.
+       if(Math.hypot(x-9.18,y-9.70)<1.1){x=30+(i%5)*1.05;y=20+Math.floor(i/5)*1.05;}
+      }
       w.bodies.push({id:i===0?'contact-watch':'contact-'+i,
        kind:'crate',x,y,z:0,r:.43,h:.86,mass:36,support:null,vz:0,yaw:0});
      }
@@ -92,6 +101,9 @@ try{
     assert.equal(state.finite,true,'Box3D must keep body coordinates finite');
     assert.equal(state.initial.crates,density==='single'?2:81);
     assert.equal(state.final.crates,state.initial.crates);
+    if(density==='pinned-grid')
+     assert.ok(Math.hypot(state.initial.watch.x-9.18,state.initial.watch.y-9.70)<.2,
+      'targeted stress fixture must keep watched crate in the actual overlapping region');
     outcomes.push(state);
     console.log('GROUND CONTACT ISOLATION',JSON.stringify(state));
    }finally{await page.close();}
@@ -102,5 +114,5 @@ try{
   initialMinZ:x.initial.minZ,finalMinZ:x.final.minZ,
   escaped:x.final.lost.length,firstLost:x.firstLost
  }))));
- assert.equal(outcomes.length,4);
+ assert.equal(outcomes.length,6);
 }finally{await browser.close();await new Promise(r=>server.close(r));}

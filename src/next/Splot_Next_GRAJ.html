@@ -2657,7 +2657,7 @@ $('#load-file').onchange=async()=>{
   const human=getBody(world,'human');
   camTarget=[human.x,human.y,human.z+.7];
   keys.clear();stick.x=0;stick.y=0;stick.active=null;look.id=null;
-  selected=null;cursor=null;selection=0;startPanel=null;
+  selected=null;cursor=null;cursorUv=null;selection=0;startPanel=null;
   paused=true;world.paused=true;$('#pause').textContent='Uruchom';
   setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   playtest.event('scene-loaded',{parts:world.scene.elements.length,bodies:world.bodies.length,
@@ -2668,10 +2668,19 @@ $('#load-file').onchange=async()=>{
   actionText('Nie wczytano świata: '+String(err.message||err).slice(0,190));
  }finally{$('#load-file').value='';}
 };
-function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.x)/r.width*canvas.width,y:(e.clientY-r.y)/r.height*canvas.height};}
+// CSS-normalized pointer position is independent of image render quality.
+let cursorUv=null;
+function cursorPos(e){
+ const r=canvas.getBoundingClientRect();
+ cursorUv=[(e.clientX-r.x)/r.width,(e.clientY-r.y)/r.height];
+ return {x:cursorUv[0]*canvas.width,y:cursorUv[1]*canvas.height};
+}
 let cursor=null,targetSetSignature=null;
 let lastHoverRecheckAt=0,lastHoverWorldSignature=null;
 function refreshSelection(){if(!cam||!cursor)return;
+ // The backing canvas size can change without another pointer event.
+ // Reproject the LAST CSS position into its current render-resolution pixels.
+ if(cursorUv){cursor.x=cursorUv[0]*canvas.width;cursor.y=cursorUv[1]*canvas.height;}
  const rawHits=pickPixel(world.scene,cam,cursor.x,cursor.y);
  // Authored editing still selects authored identities; ONLY physical
  // crate placement additionally sees other physical crate tops.

@@ -156,17 +156,19 @@ try{
   assert.equal(saved.bodies.filter(b=>b.kind==='crate').length,81);
  }finally{await seedPage.close();}
  const paired=[];
- for(const dt of [1/60,1/90,1/120,1/60,1/120]){
+ for(const [dt,substeps] of [[1/60,4],[1/60,8],[1/60,12],[1/60,16],[1/90,4],[1/120,4],[1/60,4],[1/60,8],[1/120,4]]){
   const page=await browser.newPage({viewport:{width:1280,height:820}});
   try{
-   await page.goto(rootUrl,{waitUntil:'domcontentloaded'});
+   await page.goto(rootUrl+'&substeps='+substeps,{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+   assert.equal(await page.evaluate(()=>window.__splotNext.challenger.solverSubsteps),substeps,
+    'research URL must reach the real Box3D stepper');
    page.once('dialog',dialog=>dialog.accept());
    await page.locator('#load-file').setInputFiles({name:'Splot_Nowy_Rozdzial.json',
     mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))});
    await page.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',
     null,{timeout:30000});
-   const result=await page.evaluate(dt=>{
+   const result=await page.evaluate(({dt,substeps})=>{
     const g=window.__splotNext,w=g.world;
     const before={time:w.time,paused:w.paused,parts:w.scene.elements.length,
      bodies:w.bodies.map(b=>({id:b.id,x:b.x,y:b.y,z:b.z}))};
@@ -185,6 +187,7 @@ try{
     }
     g.challenger.syncStatics();
     const steps=Math.round(11/dt);
+    const cpuStart=performance.now();
     // UI remains paused throughout; world.paused is unpaused ONLY inside
     // this synchronous test and never concurrently advanced by rAF.
     w.paused=false;
@@ -202,13 +205,14 @@ try{
       if(b)firstUnder={step:i+1,time:w.time,id:b.id,x:b.x,y:b.y,z:b.z};
      }
     }
+    const engineCpuMs=performance.now()-cpuStart;
     const escaped=w.bodies.filter(b=>b.kind==='crate'&&(
      b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||b.y>w.scene.height+.1||
      b.z<-2||b.z>30)).map(b=>({id:b.id,x:b.x,y:b.y,z:b.z})).slice(0,10);
-    return {dt,before,parts:w.scene.elements.length,engine:g.physics,
+    return {dt,substeps,engineCpuMs,before,parts:w.scene.elements.length,engine:g.physics,
      finalTime:w.time,firstXY,firstUnder,escaped,steps,
      finite:w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite))};
-   },dt);
+   },{dt,substeps});
    assert.equal(result.before.time,0);
    assert.equal(result.before.paused,true);
    assert.equal(result.before.parts,7);
@@ -219,18 +223,20 @@ try{
     'initial object identities and coordinates must be byte-identical');
    paired.push(result);
    console.log('GROUND MATCHED-SNAPSHOT TIMESTEP TRIAL',JSON.stringify({
-    dt,steps:result.steps,firstXY:result.firstXY,
+    dt,substeps,steps:result.steps,engineCpuMs:result.engineCpuMs,
+    cpuMsPerSimSecond:result.engineCpuMs/11,firstXY:result.firstXY,
     firstUnder:result.firstUnder,escaped:result.escaped,
     finalTime:result.finalTime,bodyCount:result.before.bodies.length
    }));
   }finally{await page.close();}
  }
  console.log('GROUND MATCHED-SNAPSHOT TIMESTEP SYNTHESIS',JSON.stringify(paired.map(x=>({
-  dt:x.dt,firstXY:x.firstXY,firstUnder:x.firstUnder,
+  dt:x.dt,substeps:x.substeps,engineCpuMs:x.engineCpuMs,
+  firstXY:x.firstXY,firstUnder:x.firstUnder,
   escaped:x.escaped.length,time:x.finalTime
  }))));
- assert.equal(paired.length,5);
- for(const [a,b] of [[0,3],[2,4]]){
+ assert.equal(paired.length,9);
+ for(const [a,b] of [[0,6],[1,7],[5,8]]){
   assert.deepEqual(paired[a].before,paired[b].before,
    'repeated 60/120Hz control must start at the exact same authored state');
   assert.deepEqual({
@@ -241,7 +247,7 @@ try{
    escaped:paired[b].escaped,finalTime:paired[b].finalTime
   },'repeated identical fixed-step trial must reproduce its own outcome');
  }
- console.log('PASS GROUND MATCHED-SNAPSHOT REPEATABILITY: 60Hz and 120Hz replicated exactly');
+ console.log('PASS GROUND MATCHED-SNAPSHOT REPEATABILITY: 60Hz x4, 60Hz x8 and 120Hz x4 repeated exactly');
  console.log('GROUND CONTACT A/B SYNTHESIS',JSON.stringify(outcomes.map(x=>({
   density:x.density,underlay:x.underlay,
   initialMinZ:x.initial.minZ,finalMinZ:x.final.minZ,

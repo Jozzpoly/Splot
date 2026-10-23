@@ -24,7 +24,8 @@ const showEngine=(kind,label)=>{engineState.dataset.state=kind;engineState.textC
 const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage',
+  substeps:['8','12','16'].includes(researchArgs.get('substeps'))?Number(researchArgs.get('substeps')):4};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0,lastY:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();

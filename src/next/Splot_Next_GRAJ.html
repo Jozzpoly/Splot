@@ -1765,9 +1765,10 @@ const Box3DBridge=(()=>{
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage'}={}){
+function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage',substeps=4}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
  if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
+ if(![4,8,12,16].includes(substeps))throw Error('unsupported research solver substeps');
  let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  const boarMind=createBoarIntent({mode:boarMode});
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
@@ -1987,7 +1988,7 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
     }
    }
   }
-  b3.b3World_Step(engine,dt,4);
+  b3.b3World_Step(engine,dt,substeps);
   // Canonical live geometry follows the actual solver body. Picking,
   // rasterized faces and surface queries then see the same updated shape.
   for(const [id,entry]of dynamicParts){
@@ -2020,6 +2021,7 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
   if(!state.disposed){b3.b3DestroyWorld(engine);state.disposed=true;}
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
+  get solverSubsteps(){return substeps},
   setActorContactMode(mode){
    if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
    contactMode=mode;contactNear=false;lastContactImpulse=0;
@@ -2452,7 +2454,8 @@ const showEngine=(kind,label)=>{engineState.dataset.state=kind;engineState.textC
 const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage',
+  substeps:['8','12','16'].includes(researchArgs.get('substeps'))?Number(researchArgs.get('substeps')):4};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0,lastY:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();

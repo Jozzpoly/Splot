@@ -13,9 +13,10 @@ import {partMotionMode,boxCenter,translateBoxToCenter,boxVolume} from './part-li
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage'}={}){
+export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage',substeps=4}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
  if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
+ if(![4,8,12,16].includes(substeps))throw Error('unsupported research solver substeps');
  let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  const boarMind=createBoarIntent({mode:boarMode});
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
@@ -235,7 +236,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
     }
    }
   }
-  b3.b3World_Step(engine,dt,4);
+  b3.b3World_Step(engine,dt,substeps);
   // Canonical live geometry follows the actual solver body. Picking,
   // rasterized faces and surface queries then see the same updated shape.
   for(const [id,entry]of dynamicParts){
@@ -268,6 +269,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
   if(!state.disposed){b3.b3DestroyWorld(engine);state.disposed=true;}
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
+  get solverSubsteps(){return substeps},
   setActorContactMode(mode){
    if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
    contactMode=mode;contactNear=false;lastContactImpulse=0;

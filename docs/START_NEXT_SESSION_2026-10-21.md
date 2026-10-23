@@ -1,3 +1,11 @@
+## 23 OCT — potwierdzona ochrona przed niezamierzonym wczytaniem
+
+**Kod `566e8c8` · [CI #40004563383](https://github.com/Jozzpoly/Splot/actions/runs/40004563383) GREEN · 90 PASS, 0 FAIL, 2 TODO + rzeczywisty Chrome/Box3D.** Wybór poprawnego pliku JSON nie niszczy już automatycznie otwartej konstrukcji: po walidacji przeglądarka pyta o zgodę na zastąpienie świata i utratę Undo/Redo. Chrome zweryfikował odrzucenie (istniejąca niezapisana bryła pozostaje) oraz zaakceptowanie importu, wraz z mobilnymi ścieżkami pliku. `src/next/Splot_Next_GRAJ.html` jest zgodny ze źródłami. Zmiany wyłącznie w szkicu PR #5; `main` nietknięty.
+
+**Dalsza bramka przed Owner testem:** faktyczna kontrola materii i czytelność konsekwencji w gęstym świecie. Unikać kolejnej serii niezwiązanych usprawnień. Nie ogłaszać akceptacji mobilnego feelu ani bezpieczeństwa wszystkich scen; tryb odzyskania nie jest autosave'em. Sprawdzać ochronę historii przy przyszłych zmianach importu, resetu i lifecycle brył.
+
+---
+
 ## 22 OCT — PRETEST / AKTUALNY PUNKT WEJŚCIA
 **[PRETEST_SPLOT_NEXT_2026-10-22.md](PRETEST_SPLOT_NEXT_2026-10-22.md)** jest krótkim aktualnym kontraktem przed fizycznym Owner testem. Zielone: code `45ad1fc` [#39847405274](https://github.com/Jozzpoly/Splot/actions/runs/39847405274), 90 PASS, 0 FAIL, 2 TODO; długi 177-crate save/download/reload i 64×Undo/Redo [#39846117325](https://github.com/Jozzpoly/Splot/actions/runs/39846117325). Naprawiono destrukcyjny przypadkowy Reset (dwukrotne potwierdzenie 6s), obrys całej fizycznej skrzyni przed usuwaniem i stale nieistniejący hover target po jej skasowaniu. Zmiany tylko w DRAFT PR #5. **Granice:** natywny telefon Ownera, feel, gęste okluzje, lifecycle undo dla uwolnionych części i velocity replay nadal niezweryfikowane/ograniczone. Nie promować do `main` na podstawie CI.
 

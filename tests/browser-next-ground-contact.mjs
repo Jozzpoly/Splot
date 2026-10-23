@@ -156,7 +156,7 @@ try{
   assert.equal(saved.bodies.filter(b=>b.kind==='crate').length,81);
  }finally{await seedPage.close();}
  const paired=[];
- for(const dt of [1/60,1/90,1/120]){
+ for(const dt of [1/60,1/90,1/120,1/60,1/120]){
   const page=await browser.newPage({viewport:{width:1280,height:820}});
   try{
    await page.goto(rootUrl,{waitUntil:'domcontentloaded'});
@@ -229,7 +229,19 @@ try{
   dt:x.dt,firstXY:x.firstXY,firstUnder:x.firstUnder,
   escaped:x.escaped.length,time:x.finalTime
  }))));
- assert.equal(paired.length,3);
+ assert.equal(paired.length,5);
+ for(const [a,b] of [[0,3],[2,4]]){
+  assert.deepEqual(paired[a].before,paired[b].before,
+   'repeated 60/120Hz control must start at the exact same authored state');
+  assert.deepEqual({
+   firstXY:paired[a].firstXY,firstUnder:paired[a].firstUnder,
+   escaped:paired[a].escaped,finalTime:paired[a].finalTime
+  },{
+   firstXY:paired[b].firstXY,firstUnder:paired[b].firstUnder,
+   escaped:paired[b].escaped,finalTime:paired[b].finalTime
+  },'repeated identical fixed-step trial must reproduce its own outcome');
+ }
+ console.log('PASS GROUND MATCHED-SNAPSHOT REPEATABILITY: 60Hz and 120Hz replicated exactly');
  console.log('GROUND CONTACT A/B SYNTHESIS',JSON.stringify(outcomes.map(x=>({
   density:x.density,underlay:x.underlay,
   initialMinZ:x.initial.minZ,finalMinZ:x.final.minZ,

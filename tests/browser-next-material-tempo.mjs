@@ -102,7 +102,25 @@ try{
       }
      };
      let firstOutside=null,firstUnder=null,maxMotion=0;
+     const trace=[];
+     let previousWatch=null,maxCorrectionGap=0;
      const record=tick=>{
+      // Body linear velocity and per-step positional displacement are
+      // independent solver observables; large divergence indicates direct
+      // positional correction, not ordinary ballistic velocity.
+      if(tick<=125){
+       const q=g.challenger.researchCrateState('crate-270');
+       const xyz=[q.xyz[0],q.xyz[1],q.xyz[2]];
+       const poseDelta=previousWatch?Math.hypot(...xyz.map((v,i)=>v-previousWatch[i])):0;
+       const speed=Math.hypot(...q.velocity);
+       const gap=Math.abs(poseDelta-speed/60);
+       maxCorrectionGap=Math.max(maxCorrectionGap,gap);
+       trace.push({tick,xyz:xyz.map(v=>Number(v.toFixed(4))),
+        awake:q.awake,velocity:q.velocity.map(v=>Number(v.toFixed(4))),
+        positionDelta:poseDelta,velocityStep:speed/60,gap});
+       previousWatch=xyz;
+      }
+
       for(let i=0;i<crates.length;i++){
        const b=crates[i],ref=initial[i];
        maxMotion=Math.max(maxMotion,Math.hypot(b.x-ref.x,b.y-ref.y,b.z-ref.z));
@@ -144,6 +162,9 @@ try{
      return {substeps,insertion,initial,final,sleepCount,
       parts:w.scene.elements.length,wakeCount,firstOutside,firstUnder,
       unresolved,cpuMs,samples,maxMotion,finalTime:w.time,
+      watchTrace:trace.filter(x=>firstOutside&&
+       x.tick>=firstOutside.tick-7&&x.tick<=firstOutside.tick+5),
+      maxCorrectionGap,
       finite:final.every(b=>[b.x,b.y,b.z].every(Number.isFinite))};
     },{substeps,insertion});
     assert.equal(result.parts,112);
@@ -156,7 +177,8 @@ try{
      substeps,insertion,awakened:result.wakeCount,asleepInitially:result.sleepCount,
      firstOutside:result.firstOutside,firstUnder:result.firstUnder,
      stillOverlapping:result.unresolved,cpuMs:result.cpuMs,
-     maxMotion:result.maxMotion,finalTime:result.finalTime,samples:result.samples
+     maxMotion:result.maxMotion,finalTime:result.finalTime,samples:result.samples,
+     maxCorrectionGap:result.maxCorrectionGap,watchTrace:result.watchTrace
     }));
    }finally{await page.close();}
   }

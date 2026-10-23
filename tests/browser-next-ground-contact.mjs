@@ -23,7 +23,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/us
 const rootUrl='http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html?physics=box3d';
 const outcomes=[];
 try{
- for(const density of ['single','cluster','pinned-grid','active-single','active-pinned-grid']){
+ for(const density of ['single','cluster','pinned-grid','active-single','active-pinned-grid','active-pinned-grid-halfstep']){
   for(const underlay of [false,true]){
    const page=await browser.newPage({viewport:{width:1280,height:820}});
    try{
@@ -92,16 +92,28 @@ try{
        e.min[1]<watched.y+watched.r&&e.max[1]>watched.y-watched.r&&
        e.min[2]<watched.z+watched.h&&e.max[2]>watched.z);
       const overlapIds=authoredOverlaps.map(e=>e.id).slice(0,12);
-     let firstLost=null;
-     for(let i=0;i<660;i++){
-      g.step(1);
-      const b=w.bodies.find(b=>b.id==='contact-watch');
-      if(!firstLost&&b.z<-2)firstLost={step:i+1,time:w.time,z:b.z};
+     const smallDt=density==='active-pinned-grid-halfstep';
+     const steps=smallDt?1320:660,dt=smallDt?1/120:1/60;
+     let firstLost=null,firstXYExit=null,firstUnderGround=null;
+     for(let i=0;i<steps;i++){
+      if(smallDt)g.challenger.advance(dt,[0,0]);else g.step(1);
+      const crates=w.bodies.filter(b=>b.kind==='crate');
+      const watch=crates.find(b=>b.id==='contact-watch');
+      if(!firstLost&&watch.z<-2)firstLost={step:i+1,time:w.time,z:watch.z};
+      if(!firstXYExit){
+       const side=crates.find(b=>b.x<-.1||b.y<-.1||
+        b.x>w.scene.width+.1||b.y>w.scene.height+.1);
+       if(side)firstXYExit={step:i+1,time:w.time,id:side.id,x:side.x,y:side.y,z:side.z};
+      }
+      if(!firstUnderGround){
+       const under=crates.find(b=>b.z<-2);
+       if(under)firstUnderGround={step:i+1,time:w.time,id:under.id,x:under.x,y:under.y,z:under.z};
+      }
      }
-     const final=summarize('after-660-steps');
+     const final=summarize('after-controlled-steps');
      const allFinite=w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite));
      return {density,underlay,initial:settled,inserted,final,firstLost,
-       overlaps:overlapIds,
+       overlaps:overlapIds,dt,steps,firstXYExit,firstUnderGround,
       finite:allFinite,engine:g.physics};
     },{density,underlay});
     assert.equal(state.engine,'box3d');
@@ -119,8 +131,12 @@ try{
  console.log('GROUND CONTACT A/B SYNTHESIS',JSON.stringify(outcomes.map(x=>({
   density:x.density,underlay:x.underlay,
   initialMinZ:x.initial.minZ,finalMinZ:x.final.minZ,
+   dt:x.dt,firstXYExit:x.firstXYExit,firstUnderGround:x.firstUnderGround,
    watchStart:x.initial.watch,watchEnd:x.final.watch,overlaps:x.overlaps,
   escaped:x.final.lost.length,firstLost:x.firstLost
  }))));
- assert.equal(outcomes.length,10);
+ assert.equal(outcomes.length,12);
+ const escaped=outcomes.filter(x=>x.final.lost.length);
+ assert.equal(escaped.length,0,
+  'PHYSICAL RED: Box3D overlaps eject dynamic bodies beyond the world');
 }finally{await browser.close();await new Promise(r=>server.close(r));}

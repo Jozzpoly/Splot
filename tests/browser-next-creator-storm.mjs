@@ -31,14 +31,17 @@ try{
  // Keep the same Box3D world, interleave independent authored objects,
  // rotate viewpoint mid-build and verify that failures do not corrupt it.
  const stormOutcomes=[];
- for(const admission of ['legacy','solver']){
+ const solver8Only=process.env.SPLOT_SOLVER8_ONLY==='1';
+ for(const admission of solver8Only?['solver']:['legacy','solver']){
  const storm=await context.newPage();
  console.log('\nRUN 127 UI creator storm admission='+admission);
- await storm.goto(rootUrl+'?admission='+admission,{waitUntil:'domcontentloaded'});
+ await storm.goto(rootUrl+'?admission='+admission+(solver8Only?'&substeps=8':''),{waitUntil:'domcontentloaded'});
  try{
   await storm.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
   assert.equal(await storm.evaluate(()=>new URLSearchParams(location.search).get('admission')),admission,
    'research A/B policy MUST be explicitly selected, independent of changing game defaults');
+  assert.equal(await storm.evaluate(()=>window.__splotNext.challenger.solverSubsteps),solver8Only?8:4,
+   'research stress must test actual Box3D substep count, not just URL');
   const before=await storm.evaluate(()=>({
    time:window.__splotNext.world.time,
    bodies:window.__splotNext.world.bodies.length,
@@ -443,11 +446,17 @@ try{
  }
  await storm.close();
  }
- assert.equal(stormOutcomes.length,2,'each Box3D policy must run a separate full creator storm');
- assert.ok(stormOutcomes[0].crateFail>=5,
-  'legacy-control must demonstrably reject some placements or this is NOT a valid A/B');
- assert.ok(stormOutcomes[1].crateFail<=stormOutcomes[0].crateFail,
-  'opt-in solver admission cannot reject MORE than old circle gate for same scripted intents');
+ if(solver8Only){
+  assert.equal(stormOutcomes.length,1,'solver8 experiment must run one full creator storm');
+  assert.equal(stormOutcomes[0].admission,'solver');
+  assert.equal(stormOutcomes[0].after.escaped,0,'solver8 creator run must keep the dense world intact');
+ }else{
+  assert.equal(stormOutcomes.length,2,'each Box3D policy must run a separate full creator storm');
+  assert.ok(stormOutcomes[0].crateFail>=5,
+   'legacy-control must demonstrably reject some placements or this is NOT a valid A/B');
+  assert.ok(stormOutcomes[1].crateFail<=stormOutcomes[0].crateFail,
+   'opt-in solver admission cannot reject MORE than old circle gate for same scripted intents');
+ }
  console.log('CREATOR ADMISSION A/B SUMMARY',JSON.stringify(stormOutcomes.map(s=>({
   admission:s.admission,accepted:s.cratePass,refused:s.crateFail,
   authored:s.authoredPass,escaped:s.after.escaped,

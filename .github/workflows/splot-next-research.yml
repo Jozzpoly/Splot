@@ -18,6 +18,7 @@ on:
       - 'tests/browser-next-sleep-contact.mjs'
       - 'tests/browser-next-sleep-density.mjs'
       - 'tests/browser-next-material-tempo.mjs'
+      - 'tests/browser-next-contact-minimize.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -92,6 +93,9 @@ jobs:
       - name: Experiment with gradual versus bulk authored collision creation
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[material-tempo]')
         run: node tests/browser-next-material-tempo.mjs
+      - name: Minimize Box3D contact-ejection set under identical edit schedule
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[contact-min]')
+        run: node tests/browser-next-contact-minimize.mjs
       - name: Archive temporary synthetic camera visual evidence
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual]')
         uses: actions/upload-artifact@v4

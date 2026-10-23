@@ -12,7 +12,7 @@ const server=createServer(async(req,res)=>{
   const file=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
   if(!file.startsWith(root+sep))throw Error('outside root');
   const bytes=await readFile(file);
-  res.setHeader('content-type',({'.html':'text/html; charset=utf-8','.mjs':'text/javascript','.js':'text/javascript','.wasm':'application/wasm'}[extname(file)]||'application/octet-stream');
+  res.setHeader('content-type',({'.html':'text/html; charset=utf-8','.mjs':'text/javascript','.js':'text/javascript','.wasm':'application/wasm'}[extname(file)]||'application/octet-stream'));
   res.end(bytes);
  }catch(e){res.statusCode=404;res.end(String(e.message||e));}
 });
@@ -42,7 +42,7 @@ try{
      };
      if(underlay){
       const floor=g.build({id:'research-physical-underlay',kind:'box',
-       min:[0,0,-4],max:[w.scene.width,w.scene.height,-.65],material:'stone'});
+       min:[0,0,-1.95],max:[w.scene.width,w.scene.height,-.65],material:'stone'});
       if(!floor.ok)throw Error('underlay insertion '+floor.reason);
       g.challenger.syncStatics();
      }

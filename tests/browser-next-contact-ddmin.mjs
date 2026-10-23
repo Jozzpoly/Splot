@@ -157,7 +157,7 @@ try{
  assert.ok(signature(no43),'deleting box 43 must preserve previously confirmed event');
  const accepted=[{phase:'initial',indices:seedIndices,from:seedIndices.length,
   to:seedIndices.length,witness:'crate-270/tick44→60→93'}];
- let active=no43.indices.slice();
+ let active=seedIndices.filter(i=>i!==43); // runCandidate returns observables, not the request mask
  accepted.push({phase:'prior-falsification',indices:active,from:30,to:29,removed:[43]});
  let granularity=2,attempts=0;
  const budget=48;

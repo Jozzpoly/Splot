@@ -1,3 +1,5 @@
+> **Aktualny krótki stan / wejście dla agenta:** [CURRENT_EXECUTION_STATE.md](research/CURRENT_EXECUTION_STATE.md). Poniższy dokument to historyczny dziennik badań; nie czytaj go w całości przy każdym `kontynuuj`.
+
 ## 24 OCT — Contact subset reduction: delayed instability, NOT one guilty authored box
 
 **Version lineage and evidence:** PR #5 still DRAFT; `main` untouched. [GREEN #40033932430](https://github.com/Jozzpoly/Splot/actions/runs/40033932430) with 7 controlled deletion masks and [GREEN #40034200092](https://github.com/Jozzpoly/Splot/actions/runs/40034200092) with 14 masks. Both use actual Chrome/Box3D at 60Hz×8, same fresh initial positions and settled 81-crate world, local waking on intersecting material, same **660 physics ticks** and fixed 105 candidate edit slots (omitted parts leave an empty scheduled step). This preserves both initial state and time, rather than shortening the physics history when we remove solids.

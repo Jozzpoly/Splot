@@ -19,6 +19,7 @@ on:
       - 'tests/browser-next-sleep-density.mjs'
       - 'tests/browser-next-material-tempo.mjs'
       - 'tests/browser-next-contact-minimize.mjs'
+      - 'tests/browser-next-contact-ddmin.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -96,6 +97,17 @@ jobs:
       - name: Minimize Box3D contact-ejection set under identical edit schedule
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[contact-min]')
         run: node tests/browser-next-contact-minimize.mjs
+      - name: Automatically reduce and replay the exact Box3D contact failure
+        if: contains(github.event.head_commit.message, '[contact-ddmin]')
+        run: node tests/browser-next-contact-ddmin.mjs
+      - name: Retain bounded contact-minimization evidence
+        if: always() && contains(github.event.head_commit.message, '[contact-ddmin]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-contact-ddmin
+          path: /tmp/splot-contact-ddmin.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Archive temporary synthetic camera visual evidence
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual]')
         uses: actions/upload-artifact@v4

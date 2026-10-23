@@ -16,6 +16,7 @@ on:
       - 'tests/browser-next-ground-contact.mjs'
       - 'tests/browser-next-substep-profile.mjs'
       - 'tests/browser-next-sleep-contact.mjs'
+      - 'tests/browser-next-sleep-density.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -84,6 +85,9 @@ jobs:
       - name: Probe Box3D real sleep/wake around new anchored material
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[sleep-contact]')
         run: node tests/browser-next-sleep-contact.mjs
+      - name: Compare local vs all waking under dense authored material
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[sleep-density]')
+        run: node tests/browser-next-sleep-density.mjs
       - name: Archive temporary synthetic camera visual evidence
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual]')
         uses: actions/upload-artifact@v4

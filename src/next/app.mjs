@@ -95,7 +95,7 @@ $('#test-export').onclick=()=>{
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
-function setMode(m){if(m==='material'&&physicsState!=='box3d'){actionText('Uwalnianie brył wymaga Box3D R&D.');return;}playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;editDrag=null;editSelectedId=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część',material:'Kotwica / uwolnij bryłę',edit:'Popraw zakotwiczoną część'}[m]||m);document.body.classList.remove('menu-open');document.body.classList.toggle('editing',m==='edit');
+function setMode(m){if(m==='material'&&physicsState!=='box3d'){actionText('Uwalnianie brył wymaga Box3D R&D.');return;}playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;targetSetSignature=null;selected=null;editDrag=null;editSelectedId=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część',material:'Kotwica / uwolnij bryłę',edit:'Popraw zakotwiczoną część'}[m]||m);document.body.classList.remove('menu-open');document.body.classList.toggle('editing',m==='edit');
  for(const b of buttons)b.classList.toggle('active',b.dataset.mode===m);refreshEditButtons();
 }
 function refreshEditButtons(){
@@ -241,7 +241,7 @@ $('#load-file').onchange=async()=>{
  }finally{$('#load-file').value='';}
 };
 function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.x)/r.width*canvas.width,y:(e.clientY-r.y)/r.height*canvas.height};}
-let cursor=null;
+let cursor=null,targetSetSignature=null;
 function refreshSelection(){if(!cam||!cursor)return;
  const rawHits=pickPixel(world.scene,cam,cursor.x,cursor.y);
  // Authored editing still selects authored identities; ONLY physical
@@ -257,6 +257,13 @@ function refreshSelection(){if(!cam||!cursor)return;
   [...rawHits,...crateHits].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)):rawHits;
  const partTool=['edit','erase','material'].includes(mode);
  const hits=partTool?uniquePartHits(ordered):ordered;
+ // Q selects a layer inside the current depth-ordered material hit group.
+ // Never carry an invisible second-layer target into a different pile.
+ if(partTool){
+  const signature=hits.map(hit=>hit.id).join('|');
+  if(targetSetSignature!==null&&signature!==targetSetSignature)selection=0;
+  targetSetSignature=signature;
+ }
  selected=hits.length?hits[selection%hits.length]:null;
  const a=selected;$('#target').textContent=a?`${a.id} • Z ${a.point[2].toFixed(2)} m • ${partTool?'element':'warstwa'} ${selection%hits.length+1}/${hits.length}`:
   (partTool?'Brak części pod kursorem':'Brak powierzchni pod kursorem');

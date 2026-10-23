@@ -33,7 +33,7 @@ try{
   });
  }finally{await seedPage.close();}
  const trials=[];
- for(const variant of ['full','first60','first45','first30','last30','even60','odd60']){
+ for(const variant of ['full','first60','first45','first44','first43','first30','last30','even60','odd60','no43','only43','omit0to14','omit15to29','omit30to44']){
   const page=await browser.newPage({viewport:{width:1120,height:730}});
   try{
    await page.goto(uri,{waitUntil:'domcontentloaded'});
@@ -65,7 +65,14 @@ try{
      variant==='first45'&&i<45||variant==='first30'&&i<30||
      variant==='last30'&&i>=30&&i<60||
      variant==='even60'&&i<60&&i%2===0||
-     variant==='odd60'&&i<60&&i%2===1;
+     variant==='odd60'&&i<60&&i%2===1||
+     variant==='first44'&&i<44||
+     variant==='first43'&&i<43||
+     variant==='no43'&&i<45&&i!==43||
+     variant==='only43'&&i===43||
+     variant==='omit0to14'&&i>=15&&i<45||
+     variant==='omit15to29'&&(i<15||i>=30&&i<45)||
+     variant==='omit30to44'&&i<30;
     const parts=[];
     for(let i=0;i<80;i++){
      const x=6.1+(i%12)*.72,y=7+Math.floor(i/12)*1.12,z=(i%7)*.17;
@@ -144,8 +151,14 @@ try{
    }));
   }finally{await page.close();}
  }
- assert.equal(trials.length,7);
+ assert.equal(trials.length,14);
  const full=trials[0],first=trials[1];
+ const first45=trials.find(x=>x.variant==='first45');
+ const first44=trials.find(x=>x.variant==='first44');
+ assert.deepEqual(first45.firstOutside,full.firstOutside,
+  '45 first authored boxes must reproduce the same first ejection');
+ assert.deepEqual(first44.firstOutside,full.firstOutside,
+  'authoring boxes 44+ must not be needed for an event at step 44');
  assert.ok(full.firstOutside&&full.firstOutside.tick<=60,
   'reference catastrophic materialization must reproduce by tick 60');
  assert.deepEqual(first.firstOutside,full.firstOutside,

@@ -14,6 +14,7 @@ on:
       - 'tests/browser-next-creator-storm.mjs'
       - 'tests/browser-next-perf.mjs'
       - 'tests/browser-next-ground-contact.mjs'
+      - 'tests/browser-next-substep-profile.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -73,6 +74,9 @@ jobs:
       - name: Isolate deep-overlap ground contact and physical underlay A/B
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[ground]')
         run: node tests/browser-next-ground-contact.mjs
+      - name: Balanced 4-vs-8 substep CPU and rAF cost on sparse and dense material
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[substep-perf]')
+        run: node tests/browser-next-substep-profile.mjs
       - name: Archive temporary synthetic camera visual evidence
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual]')
         uses: actions/upload-artifact@v4

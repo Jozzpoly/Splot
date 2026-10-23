@@ -56,6 +56,14 @@ jobs:
           path: /tmp/splot-creator-storm-dense-solver.png
           if-no-files-found: error
           retention-days: 3
+      - name: Archive 100/75/50 dense matched-scene screenshots
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[storm]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-dense-resolution-ab
+          path: /tmp/splot-dense-quality-*.png
+          if-no-files-found: error
+          retention-days: 3
       - name: Research CPU and rAF performance A/B
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[profile]')
         run: node tests/browser-next-perf.mjs

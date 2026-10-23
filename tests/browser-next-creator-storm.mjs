@@ -336,6 +336,79 @@ try{
     crates:reopened.crates.length,actors:reopened.actors.length,
     after:liveAfterImport
    }));
+
+   // Rehydrate the EXACT same saved 127-part / 177-crate starting pose
+   // before EACH trial. A fresh Box3D is initialized each time.
+   // Run both a frozen-scene render comparison and an active-physics
+   // comparison; repeat 100% last to check time/runner drift.
+   const comparisons=[];
+   for(const [index,scale] of [1,.75,.5,1].entries()){
+    if(index>0)await storm.locator('#quality').click();
+    storm.once('dialog',dialog=>dialog.accept());
+    await storm.locator('#load-file').setInputFiles({
+     name:'Splot_Nowy_Rozdzial.json',mimeType:'application/json',buffer:savedBytes
+    });
+    await storm.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',
+     null,{timeout:30000});
+    await storm.waitForTimeout(260);
+    await storm.evaluate(()=>window.__splotNext.clearProfile());
+    await storm.waitForTimeout(2250);
+    const frozen=await storm.evaluate(()=>{
+     const g=window.__splotNext,w=g.world,c=document.querySelector('#world');
+     return {profile:g.profile(),time:w.time,parts:w.scene.elements.map(e=>e.id),
+      bodies:w.bodies.map(b=>b.id),paused:w.paused,
+      canvas:[c.width,c.height],engine:g.physics};
+    });
+    assert.equal(frozen.profile.renderScale,scale,'quality button must set the actual tested scale');
+    assert.equal(frozen.engine,'box3d');
+    assert.equal(frozen.paused,true);
+    assert.equal(frozen.parts.length,127);
+    assert.equal(frozen.bodies.length,179);
+    assert.equal(frozen.profile.physics.steps,0,'frozen A/B must exclude simulation stepping');
+    if(comparisons.length){
+     assert.deepEqual(frozen.parts,comparisons[0].frozen.parts,'identical authored IDs required');
+     assert.deepEqual(frozen.bodies,comparisons[0].frozen.bodies,'identical body IDs required');
+     assert.equal(frozen.time,comparisons[0].frozen.time,'identical simulation starting time required');
+     assert.equal(frozen.profile.triangles.median,comparisons[0].frozen.profile.triangles.median,
+      'quality control must not change world triangle count');
+    }
+    if(index<3)await storm.screenshot({path:'/tmp/splot-dense-quality-'+Math.round(scale*100)+'.png'});
+    await storm.locator('#pause').click();
+    await storm.evaluate(()=>window.__splotNext.clearProfile());
+    const beginning=await storm.evaluate(()=>({time:window.__splotNext.world.time,ms:performance.now()}));
+    await storm.waitForTimeout(2250);
+    const live=await storm.evaluate(()=>{
+     const g=window.__splotNext,w=g.world;
+     return {profile:g.profile(),time:w.time,ms:performance.now(),
+      finite:w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite))};
+    });
+    const wall=(live.ms-beginning.ms)/1000,sim=live.time-beginning.time;
+    assert.ok(wall>0&&sim>0,'live comparison must advance physical simulation');
+    assert.equal(live.profile.renderScale,scale);
+    assert.equal(live.finite,true);
+    assert.ok(live.profile.physics.steps>0,'live comparison must execute Box3D ticks');
+    const sample={scale,pixels:frozen.profile.canvasPixels,frozen,live,
+     wallSeconds:wall,simSeconds:sim,simToWall:sim/wall};
+    comparisons.push(sample);
+    console.log('DENSE SAME-SCENE QUALITY TRIAL',JSON.stringify({
+     scale,pixels:sample.pixels,triangles:frozen.profile.triangles.median,
+     frozen:{raf:frozen.profile.rafMs,geometry:frozen.profile.geometryCpuMs,
+      draw:frozen.profile.drawSubmissionCpuMs,frames:frozen.profile.frames},
+     live:{raf:live.profile.rafMs,geometry:live.profile.geometryCpuMs,
+      draw:live.profile.drawSubmissionCpuMs,physics:live.profile.physics,
+      wallSeconds:wall,simSeconds:sim,simToWall:sample.simToWall}
+    }));
+   }
+   assert.ok(comparisons[0].pixels>comparisons[1].pixels&&
+    comparisons[1].pixels>comparisons[2].pixels,'pixel area must decrease 100→75→50');
+   assert.equal(comparisons[3].pixels,comparisons[0].pixels,'repeat 100% must restore pixel area');
+   console.log('PASS DENSE SAME-SCENE QUALITY A/B + REPEATED CONTROL',JSON.stringify(
+    comparisons.map(c=>({scale:c.scale,pixels:c.pixels,
+     triangles:c.frozen.profile.triangles.median,
+     frozenRaf:c.frozen.profile.rafMs,liveRaf:c.live.profile.rafMs,
+     physicsPerStep:c.live.profile.physics.cpuMsPerStep,
+     simToWall:c.simToWall}))));
+   // Runner rAF is not GPU time; scene parity does not imply Owner feel.
   }
  }catch(e){failures++;console.error('FAIL 127-input creator storm:',String(e));
   await storm.screenshot({path:'/tmp/splot-creator-storm-FAIL.png'}).catch(()=>{});

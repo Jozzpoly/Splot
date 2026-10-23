@@ -1,3 +1,13 @@
+## 23 OCT — Stage B: stationary-pointer material targeting and pixel-scale safety
+
+**Two independent RED → GREEN browser regressions, real Chrome + Box3D.** [RED #40007303119](https://github.com/Jozzpoly/Splot/actions/runs/40007303119) reproduced a stale target: after keyboard yaw changed the ray to empty space, the HUD still claimed a previously hovered material box. **Code `9f1dfbf` / [GREEN #40007727020](https://github.com/Jozzpoly/Splot/actions/runs/40007727020)** adds a limited ~8Hz state-change hover recheck during authoring; fingerprints camera parameters, authored scene/motion revision and physical crate poses. No every-frame heavy picking; still not a performance certification for extreme density.
+
+A second **[RED #40008073349](https://github.com/Jozzpoly/Splot/actions/runs/40008073349)** found that changing image quality 100%→75% changed canvas backing pixels but kept stale pointer pixel coordinates, targeting unrelated material at the same CSS location. **Verified code `83bf8abc` / [GREEN #40008339276](https://github.com/Jozzpoly/Splot/actions/runs/40008339276): 90 Node PASS, 0 FAIL, 2 TODO and actual Chrome+Box3D.** The latest browser run independently passes both stationary-pointer cases, crate/edit/undo and multi-touch. Cursor coordinates are now cached normalized to the canvas's CSS rectangle and reprojected into the current backing pixel dimensions when raycasting. Tracked standalone HTML matches source.
+
+**Live boundaries:** a physically moving Owner crate under stationary pointer was not isolated into its own browser acceptance test; performance in Owner dense scene, actual device feel, window resize with changed CSS rectangle and mobile hardware remain unproven. Do not silently promote all of these to PASS. Scope remains draft PR #5, not `main`. Next higher-value move: cohesive, low-friction Owner freeplay test and causality/readability review, not uncontrolled microfeature expansion.
+
+---
+
 ## 23 OCT — Stage B: layer selection must follow the current material target
 
 **RED → GREEN in actual Chrome + Box3D.** [RED #40005696338](https://github.com/Jozzpoly/Splot/actions/runs/40005696338) demonstrated a creator-control defect: after explicit Q selected a hidden part of pile A, moving the cursor to pile B silently kept layer index 2 and highlighted the hidden B part. This can mislead material editing/erasure even if the solver is correct. Only that new scenario failed; earlier browser and Node regressions remained green.

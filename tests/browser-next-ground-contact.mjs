@@ -23,7 +23,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/us
 const rootUrl='http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html?physics=box3d';
 const outcomes=[];
 try{
- for(const density of ['single','cluster','pinned-grid']){
+ for(const density of ['single','cluster','pinned-grid','active-single','active-pinned-grid']){
   for(const underlay of [false,true]){
    const page=await browser.newPage({viewport:{width:1280,height:820}});
    try{
@@ -47,10 +47,10 @@ try{
       if(!floor.ok)throw Error('underlay insertion '+floor.reason);
       g.challenger.syncStatics();
      }
-     const startCount=density==='single'?1:80;
+     const startCount=density.includes('single')?1:80;
      for(let i=0;i<startCount;i++){
       let x,y;
-      if(density==='single'||density==='pinned-grid'&&i===0){
+      if(density.includes('single')||density.includes('pinned-grid')&&i===0){
        x=9.18;y=9.70;
       }else if(density==='cluster'){
        x=7.35+(i%10)*.35;y=8.1+Math.floor(i/10)*.35;
@@ -63,9 +63,9 @@ try{
        kind:'crate',x,y,z:0,r:.43,h:.86,mass:36,support:null,vz:0,yaw:0});
      }
      g.challenger.syncBodies();
-     g.step(180);
+     g.step(density.startsWith('active-')?1:180);
      const settled=summarize('settled-initial');
-     if(density==='single'){
+     if(density.includes('single')){
       const r=g.build({id:'research-deep-overlap',kind:'box',min:[8.88,9.4,-.05],
        max:[9.48,10,1.25],material:'stone'});
       if(!r.ok)throw Error('box '+r.reason);
@@ -86,6 +86,12 @@ try{
      }
      g.challenger.syncStatics();
      const inserted=summarize('immediately-after-insertion');
+      const watched=w.bodies.find(b=>b.id==='contact-watch');
+      const authoredOverlaps=w.scene.elements.filter(e=>e.kind==='box'&&
+       e.min[0]<watched.x+watched.r&&e.max[0]>watched.x-watched.r&&
+       e.min[1]<watched.y+watched.r&&e.max[1]>watched.y-watched.r&&
+       e.min[2]<watched.z+watched.h&&e.max[2]>watched.z);
+      const overlapIds=authoredOverlaps.map(e=>e.id).slice(0,12);
      let firstLost=null;
      for(let i=0;i<660;i++){
       g.step(1);
@@ -95,13 +101,14 @@ try{
      const final=summarize('after-660-steps');
      const allFinite=w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite));
      return {density,underlay,initial:settled,inserted,final,firstLost,
+       overlaps:overlapIds,
       finite:allFinite,engine:g.physics};
     },{density,underlay});
     assert.equal(state.engine,'box3d');
     assert.equal(state.finite,true,'Box3D must keep body coordinates finite');
-    assert.equal(state.initial.crates,density==='single'?2:81);
+    assert.equal(state.initial.crates,density.includes('single')?2:81);
     assert.equal(state.final.crates,state.initial.crates);
-    if(density==='pinned-grid')
+    if(density.includes('pinned-grid'))
      assert.ok(Math.hypot(state.initial.watch.x-9.18,state.initial.watch.y-9.70)<.2,
       'targeted stress fixture must keep watched crate in the actual overlapping region');
     outcomes.push(state);
@@ -112,7 +119,8 @@ try{
  console.log('GROUND CONTACT A/B SYNTHESIS',JSON.stringify(outcomes.map(x=>({
   density:x.density,underlay:x.underlay,
   initialMinZ:x.initial.minZ,finalMinZ:x.final.minZ,
+   watchStart:x.initial.watch,watchEnd:x.final.watch,overlaps:x.overlaps,
   escaped:x.final.lost.length,firstLost:x.firstLost
  }))));
- assert.equal(outcomes.length,6);
+ assert.equal(outcomes.length,10);
 }finally{await browser.close();await new Promise(r=>server.close(r));}

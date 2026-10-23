@@ -181,7 +181,28 @@ try{
       .slice(0,6).map(b=>({id:b.id,x:b.x,y:b.y,z:b.z,support:b.support}))};
    });
    console.log('DENSE PRE-SETTLE BODY BOUNDS',JSON.stringify({...preSettle,firstSink}));
-   await storm.evaluate(()=>window.__splotNext.step(600));
+   // Check ALL 177 crates at EVERY fixed step, not just the final pose.
+   // A body that briefly exits bounds and returns would be missed by an end-only
+   // assertion; preserving full material continuity is the acceptance gate.
+   const continuousPressure=await storm.evaluate(()=>{
+    const w=window.__splotNext.world;
+    let firstOutlier=null,minZ=Infinity,maxPlanarRadius=0;
+    for(let i=0;i<600;i++){
+     window.__splotNext.step(1);
+     for(const b of w.bodies){
+      if(b.kind!=='crate')continue;
+      minZ=Math.min(minZ,b.z);
+      maxPlanarRadius=Math.max(maxPlanarRadius,Math.hypot(b.x,b.y));
+      if(!firstOutlier&&(b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||
+       b.y>w.scene.height+.1||b.z<-2||b.z>30))
+       firstOutlier={step:i+1,time:w.time,id:b.id,x:b.x,y:b.y,z:b.z,support:b.support};
+     }
+    }
+    return {steps:600,firstOutlier,minZ,maxPlanarRadius};
+   });
+   console.log('DENSE CONTINUOUS BODY INTEGRITY',JSON.stringify(continuousPressure));
+   assert.equal(continuousPressure.firstOutlier,null,
+    'live creator world must not transiently eject bodies during 600 Box3D steps');
    // Observational metrics only: CI render timing is NOT a frame-rate
    // guarantee for Owner hardware. Sample the real scene at full density.
    await storm.waitForTimeout(800);

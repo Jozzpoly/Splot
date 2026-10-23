@@ -2022,6 +2022,26 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
   get solverSubsteps(){return substeps},
+  // Explicit research probes, never called from normal game logic.
+  // True solver state: a mirrored Splot position/support is NOT proof
+  // that the WASM body is awake or has processed a newly authored contact.
+  researchCrateState(id){
+   const ref=refs.get(id);
+   if(ref?.kind!=='crate')return null;
+   if(typeof b3.b3Body_IsAwake!=='function')throw Error('Box3D WASM b3Body_IsAwake unavailable');
+   b3.b3Body_GetPosition(position,ref.rb);
+   b3.b3Body_GetLinearVelocity(velocity,ref.rb);
+   return {id,awake:b3.b3Body_IsAwake(ref.rb),
+    xyz:box3DToSplot(position),velocity:box3DToSplot(velocity)};
+  },
+  researchWakeCrate(id){
+   const ref=refs.get(id);
+   if(ref?.kind!=='crate')throw Error('research wake requires a live crate');
+   if(typeof b3.b3Body_SetAwake!=='function')throw Error('Box3D WASM b3Body_SetAwake unavailable');
+   b3.b3Body_SetAwake(ref.rb,true);
+   return this.researchCrateState(id);
+  },
+
   setActorContactMode(mode){
    if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
    contactMode=mode;contactNear=false;lastContactImpulse=0;

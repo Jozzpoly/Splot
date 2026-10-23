@@ -1,3 +1,13 @@
+## 23 OCT — Stage B: layer selection must follow the current material target
+
+**RED → GREEN in actual Chrome + Box3D.** [RED #40005696338](https://github.com/Jozzpoly/Splot/actions/runs/40005696338) demonstrated a creator-control defect: after explicit Q selected a hidden part of pile A, moving the cursor to pile B silently kept layer index 2 and highlighted the hidden B part. This can mislead material editing/erasure even if the solver is correct. Only that new scenario failed; earlier browser and Node regressions remained green.
+
+**Code `0d55e8c` · [GREEN #40006062555](https://github.com/Jozzpoly/Splot/actions/runs/40006062555): 90 Node PASS, 0 FAIL, 2 TODO + real Chrome Box3D.** For Popraw/Usuń/Kotwica, Q selection is scoped to the current ordered set of material IDs hit by the ray; switching to a different pile resets to the foremost visible piece, while the same pile preserves intentional deeper selection. The GREEN browser case explicitly verifies moving across piles and re-selecting hidden B by Q. No changes to solver, physics/visual geometry, authoring limits or main. Sources and tracked one-file standalone match.
+
+**Unproven:** spontaneous Owner feel, physical phone and selection affordance in genuinely moving/dense Owner worlds. Potential future hypothesis: hover overlay can become stale while the camera or solver bodies move without a pointer event; do not fix with expensive per-frame raycasting before causal evidence/profiling. Do not create further UI layers or geometry restrictions by default. PR #5 remains DRAFT.
+
+---
+
 ## 23 OCT — potwierdzona ochrona przed niezamierzonym wczytaniem
 
 **Kod `566e8c8` · [CI #40004563383](https://github.com/Jozzpoly/Splot/actions/runs/40004563383) GREEN · 90 PASS, 0 FAIL, 2 TODO + rzeczywisty Chrome/Box3D.** Wybór poprawnego pliku JSON nie niszczy już automatycznie otwartej konstrukcji: po walidacji przeglądarka pyta o zgodę na zastąpienie świata i utratę Undo/Redo. Chrome zweryfikował odrzucenie (istniejąca niezapisana bryła pozostaje) oraz zaakceptowanie importu, wraz z mobilnymi ścieżkami pliku. `src/next/Splot_Next_GRAJ.html` jest zgodny ze źródłami. Zmiany wyłącznie w szkicu PR #5; `main` nietknięty.

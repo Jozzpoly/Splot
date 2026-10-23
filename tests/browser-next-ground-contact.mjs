@@ -128,6 +128,108 @@ try{
    }finally{await page.close();}
   }
  }
+ // Stronger control: these three fresh Box3D worlds start from the SAME
+ // serialized material snapshot, not merely similar page initialization.
+ // The import deliberately clears velocity and resets physical contacts.
+ // Once imported, run the full physics synchronously with no intervening rAF.
+ const seedPage=await browser.newPage({viewport:{width:1280,height:820}});
+ let saved;
+ try{
+  await seedPage.goto(rootUrl,{waitUntil:'domcontentloaded'});
+  await seedPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  saved=await seedPage.evaluate(()=>{
+   const g=window.__splotNext,w=g.world;
+   for(let i=0;i<80;i++){
+    let x,y;
+    if(i===0){x=9.18;y=9.70;}
+    else{
+     x=5.5+(i%10)*.97;y=5.5+Math.floor(i/10)*.97;
+     if(Math.hypot(x-9.18,y-9.70)<1.1){x=30+(i%5)*1.05;y=20+Math.floor(i/5)*1.05;}
+    }
+    w.bodies.push({id:'crate-'+(200+i),kind:'crate',x,y,z:0,r:.43,h:.86,
+     mass:36,support:null,vz:0,yaw:0});
+   }
+   return {format:'splot-next-live-research-1',scene:structuredClone(w.scene),
+    bodies:structuredClone(w.bodies),time:0};
+  });
+  assert.equal(saved.scene.elements.length,7);
+  assert.equal(saved.bodies.filter(b=>b.kind==='crate').length,81);
+ }finally{await seedPage.close();}
+ const paired=[];
+ for(const dt of [1/60,1/90,1/120]){
+  const page=await browser.newPage({viewport:{width:1280,height:820}});
+  try{
+   await page.goto(rootUrl,{waitUntil:'domcontentloaded'});
+   await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+   page.once('dialog',dialog=>dialog.accept());
+   await page.locator('#load-file').setInputFiles({name:'Splot_Nowy_Rozdzial.json',
+    mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))});
+   await page.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',
+    null,{timeout:30000});
+   const result=await page.evaluate(dt=>{
+    const g=window.__splotNext,w=g.world;
+    const before={time:w.time,paused:w.paused,parts:w.scene.elements.length,
+     bodies:w.bodies.map(b=>({id:b.id,x:b.x,y:b.y,z:b.z}))};
+    for(let i=0;i<80;i++){
+     const x=6.1+(i%12)*.72,y=7.0+Math.floor(i/12)*1.12,z=(i%7)*.17;
+     const r=g.build({id:'research-box-'+i,kind:'box',
+      min:[x,y,z],max:[x+.82,y+1.04,z+.9],material:'stone'});
+     if(!r.ok)throw Error('paired box:'+i+':'+r.reason);
+    }
+    for(let i=0;i<25;i++){
+     const x=8+(i%5)*1.25,y=15+Math.floor(i/5)*.73;
+     const r=g.build({id:'research-panel-'+i,kind:'panel',
+      a:[x,y,(i%3)*.4],b:[x+1.4,y+.28,.4+(i%3)*.4],
+      width:.67,thickness:.15,material:'wood'});
+     if(!r.ok)throw Error('paired panel:'+i+':'+r.reason);
+    }
+    g.challenger.syncStatics();
+    const steps=Math.round(11/dt);
+    // UI remains paused throughout; world.paused is unpaused ONLY inside
+    // this synchronous test and never concurrently advanced by rAF.
+    w.paused=false;
+    let firstXY=null,firstUnder=null;
+    for(let i=0;i<steps;i++){
+     g.challenger.advance(dt,[0,0]);
+     const crates=w.bodies.filter(b=>b.kind==='crate');
+     if(!firstXY){
+      const b=crates.find(b=>b.x<-.1||b.y<-.1||
+       b.x>w.scene.width+.1||b.y>w.scene.height+.1);
+      if(b)firstXY={step:i+1,time:w.time,id:b.id,x:b.x,y:b.y,z:b.z};
+     }
+     if(!firstUnder){
+      const b=crates.find(b=>b.z<-2);
+      if(b)firstUnder={step:i+1,time:w.time,id:b.id,x:b.x,y:b.y,z:b.z};
+     }
+    }
+    const escaped=w.bodies.filter(b=>b.kind==='crate'&&(
+     b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||b.y>w.scene.height+.1||
+     b.z<-2||b.z>30)).map(b=>({id:b.id,x:b.x,y:b.y,z:b.z})).slice(0,10);
+    return {dt,before,parts:w.scene.elements.length,engine:g.physics,
+     finalTime:w.time,firstXY,firstUnder,escaped,steps,
+     finite:w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite))};
+   },dt);
+   assert.equal(result.before.time,0);
+   assert.equal(result.before.paused,true);
+   assert.equal(result.before.parts,7);
+   assert.equal(result.parts,112);
+   assert.equal(result.engine,'box3d');
+   assert.equal(result.finite,true);
+   assert.deepEqual(result.before.bodies,paired.length?paired[0].before.bodies:result.before.bodies,
+    'initial object identities and coordinates must be byte-identical');
+   paired.push(result);
+   console.log('GROUND MATCHED-SNAPSHOT TIMESTEP TRIAL',JSON.stringify({
+    dt,steps:result.steps,firstXY:result.firstXY,
+    firstUnder:result.firstUnder,escaped:result.escaped,
+    finalTime:result.finalTime,bodyCount:result.before.bodies.length
+   }));
+  }finally{await page.close();}
+ }
+ console.log('GROUND MATCHED-SNAPSHOT TIMESTEP SYNTHESIS',JSON.stringify(paired.map(x=>({
+  dt:x.dt,firstXY:x.firstXY,firstUnder:x.firstUnder,
+  escaped:x.escaped.length,time:x.finalTime
+ }))));
+ assert.equal(paired.length,3);
  console.log('GROUND CONTACT A/B SYNTHESIS',JSON.stringify(outcomes.map(x=>({
   density:x.density,underlay:x.underlay,
   initialMinZ:x.initial.minZ,finalMinZ:x.final.minZ,

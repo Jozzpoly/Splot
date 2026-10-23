@@ -158,6 +158,15 @@ try{
     const count=await storm.evaluate(()=>window.__splotNext.world.bodies.length);
     if(count>prev)extraAccepted++;else extraRefused++;
    }
+   const preSettle=await storm.evaluate(()=>{
+    const w=window.__splotNext.world,cs=w.bodies.filter(b=>b.kind==='crate');
+    return {worldTime:w.time,lowZ:Math.min(...cs.map(b=>b.z)),
+     lowX:Math.min(...cs.map(b=>b.x)),lowY:Math.min(...cs.map(b=>b.y)),
+     outliers:cs.filter(b=>b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||
+      b.y>w.scene.height+.1||b.z<-2||b.z>30)
+      .slice(0,6).map(b=>({id:b.id,x:b.x,y:b.y,z:b.z,support:b.support}))};
+   });
+   console.log('DENSE PRE-SETTLE BODY BOUNDS',JSON.stringify(preSettle));
    await storm.evaluate(()=>window.__splotNext.step(600));
    // Observational metrics only: CI render timing is NOT a frame-rate
    // guarantee for Owner hardware. Sample the real scene at full density.
@@ -175,8 +184,16 @@ try{
     const w=window.__splotNext.world;
     const crates=w.bodies.filter(b=>b.kind==='crate');
     const finite=w.bodies.every(b=>[b.x,b.y,b.z].every(Number.isFinite));
+    const outside=crates.filter(b=>b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||
+     b.y>w.scene.height+.1||b.z < -2||b.z>30);
     return {
      time:w.time,engine:window.__splotNext.physics,
+     lowestZ:Math.min(...crates.map(b=>b.z)),
+     lowestX:Math.min(...crates.map(b=>b.x)),
+     lowestY:Math.min(...crates.map(b=>b.y)),
+     escapedSamples:outside.slice(0,6).map(b=>({
+      id:b.id,x:b.x,y:b.y,z:b.z,r:b.r,h:b.h,support:b.support
+     })),
      authored:w.scene.elements.length,crates:crates.length,finite,
      escaped:crates.filter(b=>b.x<-.1||b.y<-.1||b.x>w.scene.width+.1||
       b.y>w.scene.height+.1||b.z < -2||b.z>30).length,

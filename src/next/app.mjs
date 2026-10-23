@@ -242,6 +242,7 @@ $('#load-file').onchange=async()=>{
 };
 function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.x)/r.width*canvas.width,y:(e.clientY-r.y)/r.height*canvas.height};}
 let cursor=null,targetSetSignature=null;
+let lastHoverRecheckAt=0,lastHoverWorldSignature=null;
 function refreshSelection(){if(!cam||!cursor)return;
  const rawHits=pickPixel(world.scene,cam,cursor.x,cursor.y);
  // Authored editing still selects authored identities; ONLY physical
@@ -533,6 +534,21 @@ function frame(t){
   if(bridge)bridge.advance(1/60,keyDirection());else stepLive(world,1/60,keyDirection());
   acc-=1/60;iter++;physicsSteps++;}}
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
+ // Camera and solver material can move under a stationary pointer.
+ // Do not raycast every render frame; probe only during authoring and at 8 Hz.
+ if(cursor&&mode!=='move'&&!editDrag&&look.id===null&&t>=lastHoverRecheckAt){
+  lastHoverRecheckAt=t+125;
+  let cratePose='';
+  for(const b of world.bodies)if(b.kind==='crate')
+   cratePose+=b.id+':'+Math.round(b.x*100)+','+Math.round(b.y*100)+','+Math.round(b.z*100)+';';
+  const signature=[mode,rot,pitch,zoom,info.width,info.height,
+   ...camTarget.map(v=>v.toFixed(3)),world.scene.revision,world.scene.motionRevision||0,
+   cratePose].join('|');
+  if(signature!==lastHoverWorldSignature){
+   refreshSelection();
+   lastHoverWorldSignature=signature;
+  }
+ }
  const simulationCpuMs=performance.now()-physicsStart;
  const geometryStart=performance.now();
  const tris=floorGeometry.concat(sceneVisual.triangles(world.scene),actorsMesh());

@@ -145,9 +145,12 @@ try{
      panels++;
     }
     g.challenger.syncStatics();
-    return {boxes,panels,parts:w.scene.elements.length,crates:w.bodies.filter(b=>b.kind==='crate').length};
+    const watch=w.bodies.find(b=>b.id==='crate-61'),crates=w.bodies.filter(b=>b.kind==='crate');
+    return {boxes,panels,parts:w.scene.elements.length,crates:crates.length,
+     time:w.time,watched:watch&&{x:watch.x,y:watch.y,z:watch.z,
+      support:watch.support},lowestZ:Math.min(...crates.map(b=>b.z))};
    });
-   let extraAccepted=0,extraRefused=0,blockedPointers=0;
+   let extraAccepted=0,extraRefused=0,blockedPointers=0,firstSink=null;
    for(let i=0;i<64;i++){
     const x=7.3+(i%8)*.55,y=9.0+Math.floor(i/8)*.64;
     await storm.locator('[data-mode="crate"]').click();
@@ -155,8 +158,16 @@ try{
     if(!pix.onCanvas||!pix.pixelInside){blockedPointers++;continue;}
     const prev=await storm.evaluate(()=>window.__splotNext.world.bodies.length);
     await storm.mouse.click(pix.x,pix.y);
-    const count=await storm.evaluate(()=>window.__splotNext.world.bodies.length);
-    if(count>prev)extraAccepted++;else extraRefused++;
+    const observed=await storm.evaluate(()=>{
+     const w=window.__splotNext.world,b=w.bodies.find(b=>b.id==='crate-61');
+     return {count:w.bodies.length,time:w.time,
+      watched:b&&{x:b.x,y:b.y,z:b.z,support:b.support}};
+    });
+    if(observed.watched?.z<-1&&!firstSink){
+     firstSink={intent:i,requested:[x,y],...observed};
+     console.log('DENSE FIRST UNDERGROUND CRATE',JSON.stringify(firstSink));
+    }
+    if(observed.count>prev)extraAccepted++;else extraRefused++;
    }
    const preSettle=await storm.evaluate(()=>{
     const w=window.__splotNext.world,cs=w.bodies.filter(b=>b.kind==='crate');
@@ -166,7 +177,7 @@ try{
       b.y>w.scene.height+.1||b.z<-2||b.z>30)
       .slice(0,6).map(b=>({id:b.id,x:b.x,y:b.y,z:b.z,support:b.support}))};
    });
-   console.log('DENSE PRE-SETTLE BODY BOUNDS',JSON.stringify(preSettle));
+   console.log('DENSE PRE-SETTLE BODY BOUNDS',JSON.stringify({...preSettle,firstSink}));
    await storm.evaluate(()=>window.__splotNext.step(600));
    // Observational metrics only: CI render timing is NOT a frame-rate
    // guarantee for Owner hardware. Sample the real scene at full density.

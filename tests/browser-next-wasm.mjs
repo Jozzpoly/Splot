@@ -1077,6 +1077,47 @@ try{
   }
   await admission.close();
  }
+ // RED: camera motion must not leave the hover label aimed at old geometry.
+ // Keyboard orbit leaves the pointer motionless, exposing stale ray-based HUD.
+ const hoverPage=await context.newPage();
+ console.log('\nRUN stationary-cursor targeting after keyboard camera orbit');
+ await hoverPage.goto(rootUrl+'?physics=box3d',{waitUntil:'domcontentloaded'});
+ try{
+  await hoverPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await hoverPage.locator('#pause').click();
+  const made=await hoverPage.evaluate(()=>window.__splotNext.build({
+   id:'hover-moving-camera',kind:'box',min:[8,18,0],max:[10,20,3],material:'stone'
+  }));
+  assert.equal(made.ok,true);
+  await hoverPage.locator('[data-mode="erase"]').click();
+  await hoverPage.waitForTimeout(350);
+  const pos=await hoverPage.evaluate(()=>{
+   const g=window.__splotNext,p=projectPoint(g.camera,[9,19,3]),
+    el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   return {x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height};
+  });
+  await hoverPage.mouse.move(pos.x,pos.y);
+  const first=await hoverPage.locator('#target').textContent();
+  assert.match(first,/hover-moving-camera/,'test must start on the authored visible box');
+  await hoverPage.keyboard.press('z'); // orbit without any pointermove
+  await hoverPage.waitForTimeout(400);
+  const after=await hoverPage.evaluate(screen=>{
+   const g=window.__splotNext,el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   const x=(screen.x-r.left)/r.width*el.width,y=(screen.y-r.top)/r.height*el.height;
+   const hits=uniquePartHits([...pickPixel(g.world.scene,g.camera,x,y),
+     ...crateSurfaceHits(g.world.bodies,g.camera,x,y)].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)));
+   return {nearest:hits[0]?.id??null,label:document.querySelector('#target').textContent};
+  },pos);
+  assert.notEqual(after.nearest,'hover-moving-camera','camera orbit must change the true hovered material');
+  if(after.nearest)assert.ok(after.label.includes(after.nearest),
+   'hover target must follow the actual ray after camera motion');
+  else assert.match(after.label,/Brak części pod kursorem/,
+   'hover must clear when the camera moves away from all parts');
+  console.log('PASS REAL CHROME stationary cursor camera orbit updates live target',JSON.stringify(after));
+ }catch(e){failures++;console.error('FAIL stationary cursor target after camera orbit:',String(e));
+  await hoverPage.screenshot({path:'/tmp/splot-stale-hover-FAIL.png'}).catch(()=>{});
+ }
+ await hoverPage.close();
  // Perceptual provenance: a moving crate in front of an authored part must
  // be the FIRST target for Popraw. Q deliberately reaches the obscured part.
  // The fixture is permissively overlapping, as in the Owner's real builds.

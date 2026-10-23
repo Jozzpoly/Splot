@@ -207,6 +207,12 @@ $('#load-file').onchange=async()=>{
   if(file.size>8*1024*1024)throw Error('Plik większy niż 8 MB; nie wczytano.');
   if(physicsState.startsWith('loading-'))throw Error('Poczekaj na załadowanie fizyki.');
   const nextWorld=restoreResearchWorld(await file.text());
+  // Import is a destructive swap, not an automatic consequence of file selection.
+  // The active world, solver and undo history survive a declined confirmation.
+  if(!window.confirm('Wczytanie pliku zastąpi cały bieżący świat i wyczyści historię cofania. Niezapisane zmiany zostaną utracone. Kontynuować?')){
+   actionText('Anulowano wczytywanie. Bieżący świat pozostał bez zmian.');
+   return;
+  }
   let nextBridge=null;
   if(physicsState==='box3d'){
    if(!box3dLibrary)throw Error('Box3D nie jest gotowy.');

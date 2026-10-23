@@ -445,6 +445,20 @@ try{
    saved.bodies.find(b=>b.id==='human').y=16;
    return saved;
   });
+  // A valid file must not silently destroy an unsaved experiment.
+  const unsaved=await resumedPage.evaluate(()=>window.__splotNext.build({
+   id:'unsaved-preimport-world',kind:'box',min:[6,7,0],max:[8,9,3],material:'wood'
+  }));
+  assert.equal(unsaved.ok,true);
+  let declined=false;
+  resumedPage.once('dialog',async dialog=>{declined=true;await dialog.dismiss();});
+  await resumedPage.locator('#load-file').setInputFiles({name:'Splot_Nowy_Rozdzial.json',
+   mimeType:'application/json',buffer:Buffer.from(JSON.stringify(snapshot))});
+  await resumedPage.waitForFunction(()=>document.querySelector('#notice')?.textContent?.includes('Anulowano wczytywanie'),null,{timeout:5000});
+  assert.equal(declined,true,'valid import must require confirmation');
+  assert.ok(await resumedPage.evaluate(()=>window.__splotNext.world.scene.elements.some(e=>e.id==='unsaved-preimport-world')),
+   'declining import preserves unsaved work');
+  resumedPage.once('dialog',dialog=>dialog.accept());
   await resumedPage.locator('#load-file').setInputFiles({name:'Splot_Nowy_Rozdzial.json',
    mimeType:'application/json',buffer:Buffer.from(JSON.stringify(snapshot))});
   await resumedPage.waitForFunction(()=>window.__splotNext?.world?.scene?.elements.length===132,null,{timeout:20000});
@@ -678,6 +692,7 @@ try{
   const [picker]=await Promise.all([
    phone.waitForEvent('filechooser'),phone.locator('#load').tap()
   ]);
+  phone.once('dialog',dialog=>dialog.accept());
   await picker.setFiles({name:'Splot_Nowy_Rozdzial.json',mimeType:'application/json',
    buffer:Buffer.from(JSON.stringify(mobileSaved))});
   await phone.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',null,{timeout:8000});
@@ -737,6 +752,7 @@ try{
    Object.assign(saved.bodies.find(b=>b.id==='human'),{x:13.12,y:15.2,z:0,vz:0,support:'ground'});
    return saved;
   });
+  pairPage.once('dialog',dialog=>dialog.accept());
   await pairPage.locator('#load-file').setInputFiles({name:'two-finger.json',mimeType:'application/json',
    buffer:Buffer.from(JSON.stringify(fixture))});
   await pairPage.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',null,{timeout:8000});

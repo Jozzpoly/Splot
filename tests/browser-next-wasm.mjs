@@ -1114,6 +1114,28 @@ try{
   else assert.match(after.label,/Brak części pod kursorem/,
    'hover must clear when the camera moves away from all parts');
   console.log('PASS REAL CHROME stationary cursor camera orbit updates live target',JSON.stringify(after));
+  // Changing ONLY canvas render resolution must preserve the same physical
+  // cursor ray in CSS space, even without another pointer movement.
+  await hoverPage.keyboard.press('x'); // restore camera yaw
+  await hoverPage.waitForTimeout(380);
+  await hoverPage.mouse.move(pos.x,pos.y);
+  assert.match(await hoverPage.locator('#target').textContent(),/hover-moving-camera/,
+   'camera reset must re-target the same physical box before quality experiment');
+  await hoverPage.evaluate(()=>document.querySelector('#quality').click()); // no pointer motion
+  await hoverPage.waitForTimeout(420);
+  const afterQuality=await hoverPage.evaluate(screen=>{
+   const g=window.__splotNext,el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   const x=(screen.x-r.left)/r.width*el.width,y=(screen.y-r.top)/r.height*el.height;
+   const hits=uniquePartHits([...pickPixel(g.world.scene,g.camera,x,y),
+    ...crateSurfaceHits(g.world.bodies,g.camera,x,y)].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)));
+   return {expected:hits[0]?.id??null,actual:document.querySelector('#target').textContent,
+    pixelScale:g.renderScale,canvas:{width:el.width,height:el.height}};
+  },pos);
+  assert.equal(afterQuality.pixelScale,.75,'test requires real canvas size change');
+  assert.equal(afterQuality.expected,'hover-moving-camera','CSS-stable cursor should still aim at same box');
+  assert.match(afterQuality.actual,/hover-moving-camera/,
+   'quality change must not redirect stationary cursor into unrelated material');
+  console.log('PASS REAL CHROME canvas quality change preserves stationary cursor ray',JSON.stringify(afterQuality));
  }catch(e){failures++;console.error('FAIL stationary cursor target after camera orbit:',String(e));
   await hoverPage.screenshot({path:'/tmp/splot-stale-hover-FAIL.png'}).catch(()=>{});
  }

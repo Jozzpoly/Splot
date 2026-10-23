@@ -20,6 +20,7 @@ on:
       - 'tests/browser-next-material-tempo.mjs'
       - 'tests/browser-next-contact-minimize.mjs'
       - 'tests/browser-next-contact-ddmin.mjs'
+      - 'tests/browser-next-crate-ddmin.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -106,6 +107,17 @@ jobs:
         with:
           name: splot-contact-ddmin
           path: /tmp/splot-contact-ddmin.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Reduce causal crate population around the four-solid counterexample
+        if: contains(github.event.head_commit.message, '[crate-ddmin]')
+        run: node tests/browser-next-crate-ddmin.mjs
+      - name: Preserve crate reduction checkpoints
+        if: always() && contains(github.event.head_commit.message, '[crate-ddmin]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-crate-ddmin
+          path: /tmp/splot-crate-ddmin.json
           if-no-files-found: warn
           retention-days: 14
       - name: Archive temporary synthetic camera visual evidence

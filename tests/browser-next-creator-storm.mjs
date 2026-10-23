@@ -159,6 +159,18 @@ try{
     if(count>prev)extraAccepted++;else extraRefused++;
    }
    await storm.evaluate(()=>window.__splotNext.step(600));
+   // Observational metrics only: CI render timing is NOT a frame-rate
+   // guarantee for Owner hardware. Sample the real scene at full density.
+   await storm.waitForTimeout(800);
+   const densePerf=await storm.evaluate(()=>window.__splotNext.profile());
+   console.log('DENSE LIVE RENDER PROFILE',JSON.stringify({
+    renderer:densePerf.renderer,renderScale:densePerf.renderScale,
+    frames:densePerf.frames,raf:densePerf.rafMs,
+    draw:densePerf.drawSubmissionCpuMs,geometry:densePerf.geometryCpuMs,
+    physics:densePerf.physics,triangles:densePerf.triangles
+   }));
+   assert.ok(densePerf.frames>0&&densePerf.triangles.median>0,
+    'creator-density rehearsal must still produce measurable rendered frames');
    const afterDense=await storm.evaluate(()=>{
     const w=window.__splotNext.world;
     const crates=w.bodies.filter(b=>b.kind==='crate');
@@ -251,11 +263,45 @@ try{
    }));
    assert.equal(saved.scene.elements.length,127);
    assert.equal(saved.bodies.filter(x=>x.kind==='crate').length,177);
+   // A valid file is still a DESTRUCTIVE import. Even at Owner density,
+   // dismissing the browser confirmation must preserve the full live world,
+   // solver and usable creator Undo stack.
+   const beforeDecline=await storm.evaluate(()=>{
+    const g=window.__splotNext,w=g.world;
+    return {parts:w.scene.elements.map(e=>e.id),
+     crates:w.bodies.filter(b=>b.kind==='crate').map(b=>b.id),
+     actors:w.bodies.filter(b=>b.kind!=='crate').map(b=>b.id),
+     canUndo:!document.querySelector('#undo').disabled,
+     solver:g.physics,paused:w.paused};
+   });
+   let declinePrompt='';
+   storm.once('dialog',async dialog=>{declinePrompt=dialog.message();await dialog.dismiss();});
+   await storm.locator('#load-file').setInputFiles({
+    name:'Splot_Nowy_Rozdzial.json',mimeType:'application/json',buffer:savedBytes
+   });
+   await storm.waitForFunction(()=>document.querySelector('#notice')?.textContent?.includes('Anulowano wczytywanie'),
+    null,{timeout:15000});
+   assert.match(declinePrompt,/zastąpi.*świat|historię cofania/,
+    'even Owner-dense import requires explicit consent');
+   const afterDecline=await storm.evaluate(()=>{
+    const g=window.__splotNext,w=g.world;
+    return {parts:w.scene.elements.map(e=>e.id),
+     crates:w.bodies.filter(b=>b.kind==='crate').map(b=>b.id),
+     actors:w.bodies.filter(b=>b.kind!=='crate').map(b=>b.id),
+     canUndo:!document.querySelector('#undo').disabled,
+     solver:g.physics,paused:w.paused};
+   });
+   assert.deepEqual(afterDecline,beforeDecline,
+    'declined import must not replace a dense live world or clear history');
+   let acceptPrompt='';
+   storm.once('dialog',async dialog=>{acceptPrompt=dialog.message();await dialog.accept();});
    await storm.locator('#load-file').setInputFiles({
     name:'Splot_Nowy_Rozdzial.json',mimeType:'application/json',buffer:savedBytes
    });
    await storm.waitForFunction(()=>window.__splotNext?.world?.scene?.elements.length===127&&
     document.querySelector('#pause')?.textContent==='Uruchom',null,{timeout:30000});
+   assert.match(acceptPrompt,/zastąpi.*świat|historię cofania/);
+   console.log('PASS DENSE destructive import confirmation: dismiss preserves live scene/history, accept pauses restored world');
    const reopened=await storm.evaluate(()=>{
     const g=window.__splotNext,w=g.world;
     return {parts:w.scene.elements.map(e=>e.id),

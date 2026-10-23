@@ -1105,7 +1105,26 @@ try{
   const revealed=await occlusionPage.locator('#target').textContent();
   assert.ok(revealed.includes('behind-crate'),
    'explicit Q should reveal hidden authored part without erasing creator freedom');
-  console.log('PASS REAL CHROME visible crate occlusion + deliberate deeper authored selection');
+  // A Q-selected hidden part in one pile must not remain the implicit layer
+  // when the cursor enters a different pile, especially in destructive tools.
+  const other=await occlusionPage.evaluate(()=>{
+   const g=window.__splotNext;
+   const front=g.build({id:'other-visible',kind:'box',min:[8,18,1],max:[12,22,3],material:'stone'});
+   const back=g.build({id:'other-hidden',kind:'box',min:[8,18,.5],max:[12,22,1.5],material:'wood'});
+   const p=projectPoint(g.camera,[10,20,3]);
+   const el=document.querySelector('#world'),r=el.getBoundingClientRect();
+   return {front:front.ok,back:back.ok,
+    screen:{x:r.left+p.x/el.width*r.width,y:r.top+p.y/el.height*r.height}};
+  });
+  assert.equal(other.front,true);assert.equal(other.back,true);
+  await occlusionPage.mouse.move(other.screen.x,other.screen.y);
+  const otherSelection=await occlusionPage.locator('#target').textContent();
+  assert.match(otherSelection,/other-visible.*element 1\/2/,
+   'switching to a different overlapping group must reset Q to its visible target');
+  await occlusionPage.locator('#layer').click();
+  assert.match(await occlusionPage.locator('#target').textContent(),/other-hidden.*element 2\/2/,
+   'Q must still deliberately reach the new hidden piece');
+  console.log('PASS REAL CHROME visible crate occlusion, new-stack target reset, deliberate Q selection');
  }catch(e){failures++;console.error('FAIL occlusion provenance:',String(e));
   await occlusionPage.screenshot({path:'/tmp/splot-occlusion-FAIL.png'}).catch(()=>{});
  }

@@ -21,6 +21,7 @@ on:
       - 'tests/browser-next-contact-minimize.mjs'
       - 'tests/browser-next-contact-ddmin.mjs'
       - 'tests/browser-next-crate-ddmin.mjs'
+      - 'tests/browser-next-contact-chain.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -118,6 +119,17 @@ jobs:
         with:
           name: splot-crate-ddmin
           path: /tmp/splot-crate-ddmin.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Trace reduced Box3D contact chain and two control worlds
+        if: contains(github.event.head_commit.message, '[contact-chain]')
+        run: node tests/browser-next-contact-chain.mjs
+      - name: Preserve contact-chain evidence
+        if: always() && contains(github.event.head_commit.message, '[contact-chain]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-contact-chain
+          path: /tmp/splot-contact-chain.json
           if-no-files-found: warn
           retention-days: 14
       - name: Archive temporary synthetic camera visual evidence

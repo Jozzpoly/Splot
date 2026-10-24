@@ -1,12 +1,12 @@
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>Splot Next — żywy świat XYZ</title>
 <style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;color:#e5e7cd;background:#0c1d23}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}button{font:600 12px system-ui;color:#ecedde;background:#193b3e;border:1px solid #54726a;border-radius:10px;min-height:36px;padding:8px 12px;cursor:pointer}button.active{background:#a57248;color:#fff4d8;border-color:#e6b978}button:disabled{opacity:.45;cursor:not-allowed}.session-state{font:10px/1.45 ui-monospace,monospace;color:#acbfb6;white-space:normal;padding:3px 2px}button:focus-visible{outline:2px solid #f5d092}#world{width:100%;height:100%;display:block;touch-action:none;image-rendering:pixelated}#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.viewport{position:relative;width:100vw;height:100dvh;overflow:hidden}.header{position:absolute;top:14px;left:17px;z-index:4;pointer-events:none;filter:drop-shadow(0 2px 6px #000)}.header strong{font-size:17px;letter-spacing:.02em;color:#f3e0bf}.header small{display:block;color:#a7cebd;font-size:11px;margin-top:4px}#hud{margin-top:8px;color:#bbd2c1;font:11px ui-monospace,monospace}.rail{position:absolute;right:14px;top:16px;width:201px;z-index:8;display:flex;flex-direction:column;gap:7px;background:#122d30d8;border:1px solid #526f6766;border-radius:14px;padding:11px;max-height:calc(100dvh - 26px);overflow-y:auto;overscroll-behavior:contain}.rail .row{display:flex;gap:5px;flex-wrap:wrap}.rail button{flex:1;min-width:64px}.rail .section{font-size:10px;color:#caac83;letter-spacing:.18em;margin:4px 2px 1px;text-transform:uppercase}.rail p{font-size:11px;line-height:1.5;color:#b7c9bc;margin:0}.bar{position:absolute;bottom:14px;left:16px;right:229px;z-index:2;display:flex;gap:10px;align-items:center;justify-content:space-between;pointer-events:none}#notice,#target{background:#11292bda;padding:8px 11px;max-width:48%;border:1px solid #516f684d;border-radius:10px;font-size:11px;color:#eed9b1;transition:opacity .3s}#target{color:#afcdbb}#notice:not(.show){opacity:.55}#mobile-menu,#active-mode{display:none}.mobile{display:none}a{color:#c9e7c7}@media(max-width:760px), (max-height:500px) and (pointer:coarse){.header{top:calc(8px + env(safe-area-inset-top));left:12px}.header strong{font-size:15px}.header small{font-size:10px;max-width:190px}.rail{top:calc(60px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:min(300px,78vw);max-height:calc(100dvh - 190px);gap:7px;padding:11px;transform:translateX(calc(100% + 22px));transition:transform .16s ease;pointer-events:none}.menu-open .rail{transform:translateX(0);pointer-events:auto;background:#122b30f5}#mobile-menu{display:block;position:absolute;top:calc(9px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:12;width:46px;height:44px;font-size:21px;background:#153238e9}#active-mode{display:block;position:absolute;top:calc(61px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:5;max-width:140px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:11px;background:#153238d9}.rail button{font-size:10px;padding:5px 6px;min-height:32px;min-width:54px}.rail .section,.rail p,.rail #save{display:none}.rail .row{gap:3px}.bar{bottom:calc(137px + env(safe-area-inset-bottom));left:10px;right:10px;justify-content:center}.bar #notice{max-width:80%;font-size:10px}.bar #target{display:none}.mobile{display:flex;position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:calc(12px + env(safe-area-inset-left));right:calc(12px + env(safe-area-inset-right));height:118px;justify-content:space-between;pointer-events:none;z-index:6}.joystick{position:relative;flex:0 0 116px;width:116px;height:116px;border-radius:100%;border:1px solid #91baa67a;background:#153a3baf;box-shadow:inset 0 0 22px #0b1a16;pointer-events:auto;touch-action:none;display:grid;place-items:center}.joystick:before{content:'';width:82px;height:82px;border-radius:100%;border:1px dashed #9db6a68a}.knob{position:absolute;width:50px;height:50px;border-radius:50%;background:linear-gradient(#5b9082,#26504e);border:2px solid #bdd5b6;box-shadow:0 3px 14px #0a201b;pointer-events:none}.touch-action{align-self:flex-end;display:flex;flex-direction:column;gap:8px;pointer-events:auto}.touch-action button{min-width:93px;height:47px;font-size:13px;background:#665039eb;border-color:#ddbd8b}.touch-action button:last-child{background:#173b41ec;border-color:#84b5af}}
-</style></head><body><main class="viewport"><canvas id="world" aria-label="Trójwymiarowy świat Splot Next"></canvas><canvas id="overlay" aria-hidden="true"></canvas>
-<header class="header"><strong>SPLOT / NOWY ROZDZIAŁ</strong><small>Świat XYZ · wspólna geometria · realna głębia</small><div id="hud">Uruchamianie…</div></header>
-<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="row"><button id="actor-contact" type="button" disabled title="Tryb badawczy Box3D: swobodne mijanie lub miękki impuls">Kontakt: swobodny</button></div><div class="row"><button id="boar-behavior" type="button" disabled title="Tryb badawczy Box3D: jedzenie albo reagowanie na zbliżenie gracza">Dzik: przy jedzeniu</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button></div><div class="section">Sesja badawcza</div><div class="row"><button id="test-toggle" aria-label="Rozpocznij lub zakończ lokalną sesję testową">Zacznij test</button><button id="test-export" disabled aria-label="Pobierz lokalny raport testu">Raport</button></div><div id="test-status" class="session-state" aria-live="off" aria-label="Stan lokalnej sesji Splot">Bez aktywnej rejestracji</div>
-<p>WASD — ruch względem kamery. E — chwyt. Z/X — obrót kamery. Kółko — zoom. Tryb „Płyta”: wskaż dwa punkty, niezależnie zmieniaj części. Q — kolejne trafione powierzchnie. To badawczy rozdział, nie ukończona gra ani silnik.</p></aside>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;color:#e5e7cd;background:#0c1d23}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}button{font:600 12px system-ui;color:#ecedde;background:#193b3e;border:1px solid #54726a;border-radius:10px;min-height:36px;padding:8px 12px;cursor:pointer}button.active{background:#a57248;color:#fff4d8;border-color:#e6b978}button:disabled{opacity:.45;cursor:not-allowed}.session-state{font:10px/1.45 ui-monospace,monospace;color:#acbfb6;white-space:normal;padding:3px 2px}button:focus-visible{outline:2px solid #f5d092}#world{width:100%;height:100%;display:block;touch-action:none;image-rendering:pixelated}#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.viewport{position:relative;width:100vw;height:100dvh;overflow:hidden}.header{position:absolute;top:14px;left:17px;z-index:4;pointer-events:none;filter:drop-shadow(0 2px 6px #000)}.header strong{font-size:17px;letter-spacing:.02em;color:#f3e0bf}.header small{display:block;color:#a7cebd;font-size:11px;margin-top:4px}.engine-state{margin-top:5px;font-size:11px;color:#b7e1bd;font-weight:650;letter-spacing:.01em}.engine-state[data-state="loading"]{color:#e9c998}.engine-state[data-state="legacy"]{color:#d4c9b8}.engine-state[data-state="fallback"]{color:#ffbe9e}#hud{margin-top:8px;color:#bbd2c1;font:11px ui-monospace,monospace}.rail{position:absolute;right:14px;top:16px;width:201px;z-index:8;display:flex;flex-direction:column;gap:7px;background:#122d30d8;border:1px solid #526f6766;border-radius:14px;padding:11px;max-height:calc(100dvh - 26px);overflow-y:auto;overscroll-behavior:contain}.rail .row{display:flex;gap:5px;flex-wrap:wrap}.rail .row.edit-nudge{display:none}body.editing .rail .row.edit-nudge{display:flex}.rail button{flex:1;min-width:64px}.rail .section{font-size:10px;color:#caac83;letter-spacing:.18em;margin:4px 2px 1px;text-transform:uppercase}.rail p{font-size:11px;line-height:1.5;color:#b7c9bc;margin:0}.bar{position:absolute;bottom:14px;left:16px;right:229px;z-index:2;display:flex;gap:10px;align-items:center;justify-content:space-between;pointer-events:none}#notice,#target{background:#11292bda;padding:8px 11px;max-width:48%;border:1px solid #516f684d;border-radius:10px;font-size:11px;color:#eed9b1;transition:opacity .3s}#target{color:#afcdbb}#notice:not(.show){opacity:.55}#mobile-menu,#active-mode{display:none}.mobile{display:none}a{color:#c9e7c7}@media(max-width:760px), (max-height:500px) and (pointer:coarse){.header{top:calc(8px + env(safe-area-inset-top));left:12px;width:160px}.header strong{font-size:14px;line-height:1.15}.header small{display:none}#hud{font-size:10px;line-height:1.35;max-width:160px}.engine-state{font-size:10px;line-height:1.3;max-width:160px;overflow-wrap:break-word}.rail{top:calc(60px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:min(300px,78vw);max-height:calc(100dvh - 190px);gap:7px;padding:11px;transform:translateX(calc(100% + 22px));transition:transform .16s ease;pointer-events:none}.menu-open .rail{transform:translateX(0);pointer-events:auto;background:#122b30f5}#mobile-menu{display:block;position:absolute;top:calc(9px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:12;width:46px;height:44px;font-size:21px;background:#153238e9}#active-mode{display:block;position:absolute;top:calc(61px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:5;max-width:140px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:11px;background:#153238d9}.rail button{font-size:10px;padding:5px 6px;min-height:32px;min-width:54px}.rail .section,.rail p{display:none}.rail .row{gap:3px}.bar{bottom:calc(137px + env(safe-area-inset-bottom));left:10px;right:10px;justify-content:center}.bar #notice{max-width:80%;font-size:10px}.bar #target{display:block;max-width:92%;font-size:10px;padding:4px 7px}.bar{flex-direction:column;gap:4px}.bar #notice{max-width:92%;font-size:10px}.mobile{display:flex;position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:calc(12px + env(safe-area-inset-left));right:calc(12px + env(safe-area-inset-right));height:118px;justify-content:space-between;pointer-events:none;z-index:6}.joystick{position:relative;flex:0 0 116px;width:116px;height:116px;border-radius:100%;border:1px solid #91baa67a;background:#153a3baf;box-shadow:inset 0 0 22px #0b1a16;pointer-events:auto;touch-action:none;display:grid;place-items:center}.joystick:before{content:'';width:82px;height:82px;border-radius:100%;border:1px dashed #9db6a68a}.knob{position:absolute;width:50px;height:50px;border-radius:50%;background:linear-gradient(#5b9082,#26504e);border:2px solid #bdd5b6;box-shadow:0 3px 14px #0a201b;pointer-events:none}.touch-action{align-self:flex-end;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,51px);gap:6px;width:min(174px,calc(100vw - 160px));pointer-events:auto}.touch-action button{min-width:0;height:51px;padding:3px;font-size:11px;white-space:nowrap;touch-action:manipulation;background:#665039eb;border-color:#ddbd8b}.touch-action button[data-mobile-action="layer"],.touch-action button[data-mobile-action="redo"]{background:#173b41ec;border-color:#84b5af}.touch-action button:disabled{opacity:.45;cursor:default}}
+</style></head><body><main class="viewport"><canvas id="world" aria-label="Trójwymiarowy świat Splot Next. W trybie Ruch przeciągnij palcem po świecie, aby obrócić widok poziomo i pionowo."></canvas><canvas id="overlay" aria-hidden="true"></canvas>
+<header class="header"><strong>SPLOT / NOWY ROZDZIAŁ</strong><small>Świat XYZ · wspólna geometria · realna głębia</small><div id="hud">Uruchamianie…</div><div id="engine-state" class="engine-state" role="status" aria-live="polite" data-state="loading">Box3D · przygotowywanie świata</div></header>
+<button id="mobile-menu" type="button" aria-label="Otwórz narzędzia">☰</button><button id="active-mode" type="button" aria-label="Powróć do ruchu">Ruch i kontakt</button><aside class="rail"><div class="section">Działanie</div><div class="row"><button data-mode="move" class="active">Ruch</button><button id="grip">Chwyt E</button></div><div class="row"><button id="actor-contact" type="button" disabled title="Tryb badawczy Box3D: swobodne mijanie lub miękki impuls">Kontakt: swobodny</button></div><div class="row"><button id="boar-behavior" type="button" disabled title="Tryb badawczy Box3D: jedzenie albo reagowanie na zbliżenie gracza">Dzik: przy jedzeniu</button></div><div class="section">Tworzenie z części</div><div class="row"><button data-mode="panel">Płyta</button><button data-mode="box">Bryła</button><button data-mode="crate">Skrzynia</button><button data-mode="erase">Usuń</button><button data-mode="material" disabled title="Badawczo: zmień zakotwiczenie wybranej bryły w świecie Box3D">Kotwica</button><button data-mode="edit" title="Zaznacz i przeciągnij zakotwiczoną część">Popraw</button></div><div class="row"><button id="height">Podnieś: +0.0 m</button><button id="width">Szer.: 2 m</button></div><div class="row edit-nudge"><button id="edit-down" type="button" disabled>Niżej −0,25</button><button id="edit-up" type="button" disabled>Wyżej +0,25</button></div><div class="row"><button id="undo" type="button" disabled>Cofnij ↶</button><button id="redo" type="button" disabled>Ponów ↷</button></div><div class="section">Przestrzeń</div><div class="row"><button id="layer">Warstwa Q</button><button id="turn-left">↶</button><button id="turn-right">↷</button></div><div class="row"><button id="quality" type="button" title="Eksperyment obrazu: 100%, 75% lub 50% rozdzielczości bez zmiany fizyki">Obraz: 100%</button></div><div class="section">Symulacja</div><div class="row"><button id="pause">Pauza</button><button id="reset">Reset</button><button id="save">Zapis JSON</button><button id="load" type="button">Wczytaj JSON</button><input id="load-file" type="file" accept=".json,application/json" hidden></div><div class="section">Sesja badawcza</div><div class="row"><button id="test-toggle" aria-label="Rozpocznij lub zakończ lokalną sesję testową">Zacznij test</button><button id="test-export" disabled aria-label="Pobierz lokalny raport testu">Raport</button></div><div id="test-status" class="session-state" aria-live="off" aria-label="Stan lokalnej sesji Splot">Bez aktywnej rejestracji</div>
+<p>WASD — ruch względem kamery. E — chwyt. Prawy przycisk myszy lub przeciągnięcie palcem po świecie w trybie Ruch — obrót widoku w poziomie i pionie. Z/X — obrót krokowy. Kółko — zoom. Tryb „Płyta”: wskaż dwa punkty, niezależnie zmieniaj części. Q — kolejne powierzchnie przy stawianiu, osobne części przy edycji. To badawczy rozdział, nie ukończona gra ani silnik.</p></aside>
 <div class="bar"><span id="notice" class="show">Wczytywanie świata…</span><span id="target">Wybierz powierzchnię</span></div>
-<div class="mobile"><div id="joystick" class="joystick"><div id="knob" class="knob"></div></div><div class="touch-action"><button onclick="document.querySelector('#grip').click()">Chwyt</button><button onclick="document.querySelector('#layer').click()">Warstwa</button></div></div></main>
+<div class="mobile"><div id="joystick" class="joystick"><div id="knob" class="knob"></div></div><div class="touch-action"><button type="button" data-mobile-action="grip">Chwyt</button><button type="button" data-mobile-action="layer">Warstwa</button><button type="button" data-mobile-action="undo" aria-label="Cofnij ostatnią zmianę konstrukcji" disabled>Cofnij ↶</button><button type="button" data-mobile-action="redo" aria-label="Ponów ostatnią cofniętą zmianę" disabled>Ponów ↷</button></div></div></main>
 <script>
 'use strict';
 const SpatialCore=(()=>{
@@ -33,6 +33,7 @@ function createSpatialWorld({width=42,height=32}={}) {
 function validElement(w,e){
  if(!e||typeof e!=='object'||Array.isArray(e)||typeof e.id!=='string'||!/^[-_a-zA-Z0-9]{1,64}$/.test(e.id))return 'invalid-id';
  if(!['panel','box'].includes(e.kind))return 'unsupported-kind';
+ if(e.motionType!==undefined&&(e.kind!=='box'||!['anchored','dynamic'].includes(e.motionType)))return 'unsupported-motion-type';
  if(e.material!==undefined&&(typeof e.material!=='string'||!/^[-_a-zA-Z0-9]{1,32}$/.test(e.material)))return 'invalid-material';
  let points=[];
  if(e.kind==='panel'){
@@ -120,8 +121,36 @@ function castRay(world,origin,direction,{maxDistance=200,ground=true,onlySupport
 }
 function supportCandidates(world,x,y,{maxZ=31}={}){
  if(!num(x)||!num(y)||!num(maxZ))throw Error('invalid-support-query');
- return castRay(world,[x,y,maxZ],[0,0,-1],{onlySupports:true,maxDistance:Math.max(1,maxZ+3)})
-  .map(h=>({id:h.id,z:h.point[2],normal:h.normal,point:h.point}));
+ // Exact vertical intersection against canonical authored primitives.
+ // A vertical ground/support query must never regenerate all triangles
+ // of the entire scene for each of hundreds of dynamic bodies per step.
+ // General-angle castRay/picking still uses the shared triangle geometry.
+ const out=[];
+ const hit=(id,z,normal)=>{
+  if(z<maxZ-EPS&&maxZ-z<=Math.max(1,maxZ+3)+EPS)
+   out.push({id,z,normal,point:[x,y,z]});
+ };
+ for(const e of world.elements){
+  if(e.kind==='box'){
+   if(x>=e.min[0]-EPS&&x<=e.max[0]+EPS&&
+      y>=e.min[1]-EPS&&y<=e.max[1]+EPS)
+    hit(e.id,e.max[2],[0,0,1]);
+   continue;
+  }
+  const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],len=Math.hypot(dx,dy);
+  if(len<EPS)continue;
+  const ux=dx/len,uy=dy/len,qx=x-e.a[0],qy=y-e.a[1];
+  const u=qx*ux+qy*uy,v=-qx*uy+qy*ux;
+  if(u < -EPS || u > len+EPS || Math.abs(v)>e.width/2+EPS)continue;
+  const slope=(e.b[2]-e.a[2])/len,nz=1/Math.sqrt(1+slope*slope);
+  if(nz<.45)continue; // same upward-face threshold as castRay
+  const z=e.a[2]+slope*u;
+  hit(e.id,z,[-slope*ux*nz,-slope*uy*nz,nz]);
+ }
+ if(x>=0&&x<=world.width&&y>=0&&y<=world.height&&maxZ>EPS)
+  hit('ground',0,[0,0,1]);
+ out.sort((a,b)=>b.z-a.z||a.id.localeCompare(b.id));
+ return out;
 }
 // A conservative volume gate until a complete swept-volume contact solver
 // earns its place. It NEVER claims accurate rotation or rigid-body impulses.
@@ -262,9 +291,27 @@ function stepLive(w,dt,input=[0,0]){
  for(const b of w.bodies)gravityStep(w,b,dt);
  if(w.events.length>80)w.events=w.events.slice(-80);
 }
-function addCrate(w,x,y,z=0){const i=w.bodies.filter(b=>b.kind==='crate').length+1;
+function addCrate(w,x,y,z=0,{admission='legacy'}={}){
+ // IDs are identities, not counts. Restored worlds may contain sparse crate
+ // numbers; count+1 could collide with an existing body and corrupt Box3D refs.
+ let i=1;
+ for(const b of w.bodies)if(b.kind==='crate'){
+  const n=Number(b.id.slice('crate-'.length));
+  if(Number.isSafeInteger(n)&&n>=i)i=n+1;
+ }
  const p={id:'crate-'+i,kind:'crate',x,y,z,r:.43,h:.86,mass:36,support:null,vz:0,yaw:0};
- if(!clearanceAt(w.scene,{x,y,z,r:p.r,h:p.h}).free)return {ok:false,reason:'occupied'};
+ // Bounded research comparison: in actual Box3D, solver-created contacts
+ // may be intentional material interactions. Keep the historical circle
+ // gate as DEFAULT; explicitly opt into its alternative for controlled tests.
+ // Neither mode is the final creative placement policy.
+ if(admission==='solver'){
+  if(![x,y,z].every(Number.isFinite)||x-p.r<0||y-p.r<0||
+     x+p.r>w.scene.width||y+p.r>w.scene.height||z<-.01||z+p.h>30)
+   return {ok:false,reason:'bounds'};
+ }else if(admission==='legacy'){
+  if(!clearanceAt(w.scene,{x,y,z,r:p.r,h:p.h}).free)
+   return {ok:false,reason:'occupied'};
+ }else throw Error('unknown-crate-admission');
  w.bodies.push(p);return {ok:true,id:p.id};
 }
 
@@ -1216,6 +1263,499 @@ return {createBoarIntent};
 })();
 const {createBoarIntent}=BoarIntent;
 
+const PartLifecycle=(()=>{
+// Research-only first dynamic construction lifecycle for *axis-aligned boxes*.
+// No fake collapse: a released box becomes an actual Box3D dynamic rigid body.
+// Orientation remains locked until scene OBB/transform truth is implemented.
+// Scene revision tracks authoring; changing pose per physics tick does not
+// pretend the user performed an edit or rebuild collider from each step.
+const finite=x=>typeof x==='number'&&Number.isFinite(x);
+function partMotionMode(e){
+ return e?.kind==='box'&&e.motionType==='dynamic'?'dynamic':'anchored';
+}
+function setBoxMotion(world,id,motionType){
+ if(!['dynamic','anchored'].includes(motionType))return {ok:false,reason:'invalid-motion-type'};
+ const part=world.elements.find(e=>e.id===id);
+ if(!part)return {ok:false,reason:'not-found'};
+ if(part.kind!=='box')return {ok:false,reason:'box-only-research-boundary'};
+ if(partMotionMode(part)===motionType)return {ok:true,id,unchanged:true};
+ return replaceElement(world,id,{...part,motionType});
+}
+function boxCenter(e){
+ if(e?.kind!=='box')throw Error('not-box');
+ return e.min.map((v,i)=>(v+e.max[i])/2);
+}
+function translateBoxToCenter(e,p){
+ if(e?.kind!=='box'||!Array.isArray(p)||p.length!==3||!p.every(finite))throw Error('invalid-box-pose');
+ const old=boxCenter(e),delta=p.map((v,i)=>v-old[i]);
+ if(!delta.some(x=>Math.abs(x)>1e-8))return false;
+ for(let i=0;i<3;i++){e.min[i]+=delta[i];e.max[i]+=delta[i];}
+ return true;
+}
+function boxVolume(e){
+ if(e?.kind!=='box')throw Error('not-box');
+ return e.min.reduce((v,x,i)=>v*(e.max[i]-x),1);
+}
+
+return {partMotionMode,setBoxMotion,boxCenter,translateBoxToCenter,boxVolume};
+})();
+const {partMotionMode,setBoxMotion,boxCenter,translateBoxToCenter,boxVolume}=PartLifecycle;
+
+const CrateVisual=(()=>{
+// A crate has one visible top surface, not two coincident tops.
+// The Box3D contact shape is independent of this purely visual skin.
+function crateTriangles(b){
+ const lid=.07;
+ const base=trianglesFor({kind:'box',id:b.id,
+  min:[b.x-b.r,b.y-b.r,b.z],
+  max:[b.x+b.r,b.y+b.r,b.z+b.h-lid]});
+ const cap=trianglesFor({kind:'box',id:b.id,
+  min:[b.x-b.r-.018,b.y-b.r-.018,b.z+b.h-lid],
+  max:[b.x+b.r+.018,b.y+b.r+.018,b.z+b.h]});
+ // Both internal faces are sealed and must not be sent to depth rendering.
+ return [...base.filter(t=>t.face!=='top').map(t=>({...t,material:'crate'})),
+         ...cap.filter(t=>t.face!=='bottom').map(t=>({...t,material:'wood'}))];
+}
+
+// Only a dynamic CRATE's visible top is a placement target for ANOTHER
+// dynamic crate. Authored boxes and panels retain their independent anchored
+// semantics; clicking this surface never creates an implicit rigid joint.
+// Ray and visual cap share the same 0.018 m top overhang.
+function crateTopHits(bodies,cam,x,y){
+ const ray=rayFromPixel(cam,x,y),[ox,oy,oz]=ray.origin,[dx,dy,dz]=ray.direction;
+ if(dz>=-1e-9)return [];
+ const hits=[];
+ for(const b of bodies){
+  if(b.kind!=='crate')continue;
+  const top=b.z+b.h,distance=(top-oz)/dz;
+  if(distance<=1e-8||distance>200)continue;
+  const px=ox+dx*distance,py=oy+dy*distance,half=b.r+.018;
+  if(Math.abs(px-b.x)>half+1e-8||Math.abs(py-b.y)>half+1e-8)continue;
+  hits.push({id:b.id,face:'top',normal:[0,0,1],distance,point:[px,py,top]});
+ }
+ return hits.sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id));
+}
+
+
+// Erasing any outward-facing piece of a dynamic crate's rendered skin should
+// erase that BODY, without invoking static geometry behind it.
+// The two finite slabs match crateTriangles (base + protruding lid).
+function crateSurfaceHits(bodies,cam,x,y){
+ const {origin,direction}=rayFromPixel(cam,x,y),EPS=1e-8,hits=[];
+ const aabb=(min,max)=>{
+  let enter=-Infinity,exit=Infinity,axis=-1,sign=0;
+  for(let i=0;i<3;i++){
+   const d=direction[i];
+   if(Math.abs(d)<EPS){if(origin[i]<min[i]||origin[i]>max[i])return null;continue;}
+   let a=(min[i]-origin[i])/d,b=(max[i]-origin[i])/d,side=d>0?-1:1;
+   if(a>b)[a,b]=[b,a];
+   if(a>enter){enter=a;axis=i;sign=side;}
+   exit=Math.min(exit,b);if(exit<enter)return null;
+  }
+  if(enter<=EPS||enter>200)return null;
+  const normal=[0,0,0];normal[axis]=sign;
+  return {distance:enter,normal,face:axis===2?(sign>0?'top':'bottom'):'side',
+   point:origin.map((n,i)=>n+enter*direction[i])};
+ };
+ for(const b of bodies){
+  if(b.kind!=='crate')continue;
+  const r=b.r,z=b.z,x=b.x,y=b.y,cap=.018,lid=.07;
+  const candidates=[
+   aabb([x-r,y-r,z],[x+r,y+r,z+b.h-lid]),
+   aabb([x-r-cap,y-r-cap,z+b.h-lid],[x+r+cap,y+r+cap,z+b.h])
+  ].filter(Boolean).sort((a,b)=>a.distance-b.distance);
+  if(candidates.length)hits.push({...candidates[0],id:b.id});
+ }
+ return hits.sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id));
+}
+
+return {crateTriangles,crateTopHits,crateSurfaceHits};
+})();
+const {crateTriangles,crateTopHits,crateSurfaceHits}=CrateVisual;
+
+const PerfMetrics=(()=>{
+// CPU diagnostics, not GPU timing. Summarize an already bounded ring window.
+// At high refresh, many render frames have no fixed simulation step: reporting
+// median CPU per render frame alone as "physics cost" is misleading.
+function summarizePerfFrames(frames){
+ const valid=frames.filter(f=>f&&Number.isFinite(f.rafMs)&&f.rafMs>0);
+ const values=k=>valid.map(x=>x[k]).filter(Number.isFinite).sort((a,b)=>a-b);
+ const percentile=(v,q)=>v.length?v[Math.min(v.length-1,Math.floor((v.length-1)*q))]:null;
+ const out={frames:valid.length};
+ for(const k of ['rafMs','simulationCpuMs','geometryCpuMs','drawSubmissionCpuMs','triangles']){
+  const v=values(k);out[k]={median:percentile(v,.5),p95:percentile(v,.95)};
+ }
+ const sum=k=>valid.reduce((t,x)=>t+(Number.isFinite(x[k])?x[k]:0),0);
+ const steps=sum('physicsSteps'),wallMs=sum('rafMs'),simMs=sum('simulationCpuMs');
+ const stepping=valid.filter(f=>f.physicsSteps>0&&Number.isFinite(f.simulationCpuMs));
+ const active=stepping.map(f=>f.simulationCpuMs).sort((a,b)=>a-b);
+ out.physics={
+  steps,
+  framesWithSteps:stepping.length,
+  medianActiveFrameCpuMs:percentile(active,.5),
+  p95ActiveFrameCpuMs:percentile(active,.95),
+  cpuMsPerStep:steps?simMs/steps:null,
+  cpuMsPerWallSecond:wallMs>0?simMs*1000/wallMs:null,
+  windowWallMs:wallMs,
+  // This is per *render interval*, including fixed-step catch-up; not CPU %.
+  fixedStepRatePerWallSecond:wallMs>0?steps*1000/wallMs:null
+ };
+ return out;
+}
+
+return {summarizePerfFrames};
+})();
+const {summarizePerfFrames}=PerfMetrics;
+
+const AuthoringEditor=(()=>{
+// One authored scene transaction per intentional edit, not per drag frame.
+// Box3D owns dynamic poses; history must not overwrite moving solver bodies.
+const copy=v=>v===null?null:JSON.parse(JSON.stringify(v));
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+// In material tools, one selectable target per part, not per intersected face.
+// Keep raw face hits in placement tools for intentional support elevation.
+function uniquePartHits(hits){
+ const seen=new Set();
+ return hits.filter(hit=>{
+  if(!hit||typeof hit.id!=='string'||hit.id==='ground'||seen.has(hit.id))return false;
+  seen.add(hit.id);return true;
+ });
+}
+function translatedElement(e,[dx,dy,dz]){
+ if(!e||!['box','panel'].includes(e.kind))throw Error('unsupported-element');
+ if(![dx,dy,dz].every(Number.isFinite))throw Error('invalid-translation');
+ const q=copy(e);
+ const t=p=>p.map((x,i)=>x+[dx,dy,dz][i]);
+ if(q.kind==='box'){q.min=t(q.min);q.max=t(q.max);}
+ else {q.a=t(q.a);q.b=t(q.b);}
+ return q;
+}
+function screenOnHeightPlane(camera,x,y,z){
+ if(!Number.isFinite(z))return null;
+ const ray=rayFromPixel(camera,x,y);
+ if(Math.abs(ray.direction[2])<1e-8)return null;
+ const dt=(z-ray.origin[2])/ray.direction[2];
+ if(!Number.isFinite(dt)||dt<0)return null;
+ return ray.origin.map((v,i)=>v+dt*ray.direction[i]);
+}
+function createEditHistory(limit=64){
+ if(!Number.isInteger(limit)||limit<1||limit>500)throw Error('invalid-history-limit');
+ const past=[],future=[];
+ const find=(world,id)=>world.elements.find(e=>e.id===id)||null;
+ // Both expected and target are immutable snapshots. First validate current
+ // authorship identity, then use core's only authoritative scene operations.
+ const applyChange=(world,from,to)=>{
+  const id=to?.id||from?.id;
+  if(!id|| (from&&to&&from.id!==to.id))return {ok:false,reason:'identity-change'};
+  const current=find(world,id);
+  if(!same(current,from))return {ok:false,reason:'stale-part'};
+  if(current?.kind==='box'&&current.motionType==='dynamic')
+   return {ok:false,reason:'dynamic-part'};
+  if(from&&to?.kind==='box'&&to.motionType==='dynamic')
+   return {ok:false,reason:'dynamic-part'};
+  if(same(from,to))return {ok:false,reason:'no-change'};
+  if(!from)return insertElement(world,to);
+  if(!to)return removeElement(world,id);
+  return replaceElement(world,id,to);
+ };
+ // Solver body poses evolve continuously. History acts on stable ID,
+ // not old x/y/z. A removed crate reappears at its deletion-time pose;
+ // this is not simulation replay and never moves other bodies backwards.
+ const bodyChange=(live,from,to,index=null)=>{
+  if(!live?.scene||!Array.isArray(live.bodies))return {ok:false,reason:'missing-live-world'};
+  const id=to?.id||from?.id;
+  if(!id||!/^[-_a-zA-Z0-9]{1,64}$/.test(id)||from&&to)
+   return {ok:false,reason:'unsupported-body-change'};
+  for(const b of [from,to].filter(Boolean))
+   if(b.kind!=='crate'||![b.x,b.y,b.z,b.r,b.h].every(Number.isFinite)||
+      b.r<=0||b.h<=0||b.id!==id)return {ok:false,reason:'invalid-crate'};
+  const current=live.bodies.find(b=>b.id===id);
+  if(from){
+   if(!current||current.kind!=='crate')return {ok:false,reason:'stale-crate'};
+   live.bodies.splice(live.bodies.indexOf(current),1);
+   if(live.grip===id)live.grip=null;
+  }else{
+   if(!to)return {ok:false,reason:'no-change'};
+   if(current||live.scene.elements.some(e=>e.id===id))
+    return {ok:false,reason:'duplicate-id'};
+   const at=Number.isInteger(index)?Math.max(0,Math.min(index,live.bodies.length)):live.bodies.length;
+   live.bodies.splice(at,0,copy(to));
+  }
+  return {ok:true,id,kind:'crate'};
+ };
+ return {
+  apply(world,from,to){
+   const initial=copy(from),final=copy(to),r=applyChange(world,initial,final);
+   if(r.ok){past.push({kind:'part',from:initial,to:final});if(past.length>limit)past.shift();future.length=0;}
+   return r;
+  },
+  // Record the body AFTER addCrate has admitted it to the same live world.
+  recordBodyAdded(live,id){
+   const b=live?.bodies?.find(b=>b.id===id);
+   if(!b||b.kind!=='crate'||live.scene.elements.some(e=>e.id===id))
+    return {ok:false,reason:'invalid-crate-creation'};
+   past.push({kind:'crate',from:null,to:copy(b),index:live.bodies.indexOf(b)});
+   if(past.length>limit)past.shift();
+   future.length=0;
+   return {ok:true,id,kind:'crate'};
+  },
+  removeBody(live,id){
+   const b=live?.bodies?.find(b=>b.id===id);
+   if(!b||b.kind!=='crate')return {ok:false,reason:'not-crate'};
+   const index=live.bodies.indexOf(b),snapshot=copy(b),r=bodyChange(live,snapshot,null);
+   if(r.ok){
+    past.push({kind:'crate',from:snapshot,to:null,index});
+    if(past.length>limit)past.shift();
+    future.length=0;
+   }
+   return r;
+  },
+  undo(world){
+   if(!past.length)return {ok:false,reason:'empty'};
+   const c=past[past.length-1],r=c.kind==='crate'?bodyChange(world,c.to,c.from,c.index):applyChange(world.scene||world,c.to,c.from);
+   if(r.ok){past.pop();future.push(c);}return {...r,kind:c.kind};
+  },
+  redo(world){
+   if(!future.length)return {ok:false,reason:'empty'};
+   const c=future[future.length-1],r=c.kind==='crate'?bodyChange(world,c.from,c.to,c.index):applyChange(world.scene||world,c.from,c.to);
+   if(r.ok){future.pop();past.push(c);}return {...r,kind:c.kind};
+  },
+  // An external solver/lifecycle mutation must not leave stale commands
+  // at the top of the undo stack, blocking other independent construction.
+  // Keep commands on OTHER parts: a free-running crate cannot erase a
+  // valid edit to an unrelated bridge panel.
+  invalidateId(id){
+   let removed=0;
+   for(const stack of [past,future]){
+    for(let i=stack.length-1;i>=0;i--){
+     const c=stack[i];
+     if(c.from?.id===id||c.to?.id===id){stack.splice(i,1);removed++;}
+    }
+   }
+   return removed;
+  },
+  clear(){past.length=0;future.length=0;},
+  get canUndo(){return past.length>0;},
+  get canRedo(){return future.length>0;}
+ };
+}
+
+return {createEditHistory,translatedElement,screenOnHeightPlane,uniquePartHits};
+})();
+const {createEditHistory,translatedElement,screenOnHeightPlane,uniquePartHits}=AuthoringEditor;
+
+const CameraTiming=(()=>{
+// Experimental time-domain camera follow. The default game still uses
+// legacy per-rendered-frame gain until explicit Owner A/B approval.
+function followGainForSeconds(alphaAt60Hz,dtSeconds){
+ if(!Number.isFinite(dtSeconds)||dtSeconds<=0)return 0;
+ if(!(alphaAt60Hz>0&&alphaAt60Hz<1))throw Error('invalid-alpha');
+ const dt=Math.min(.08,dtSeconds);
+ return 1-Math.pow(1-alphaAt60Hz,60*dt);
+}
+function advanceCameraTarget(current,desired,dtSeconds){
+ if(!Array.isArray(current)||!Array.isArray(desired)||current.length!==3||desired.length!==3||
+  !current.every(Number.isFinite)||!desired.every(Number.isFinite))throw Error('invalid-target');
+ const xy=followGainForSeconds(.16,dtSeconds),z=followGainForSeconds(.10,dtSeconds);
+ return [current[0]+(desired[0]-current[0])*xy,
+  current[1]+(desired[1]-current[1])*xy,
+  current[2]+(desired[2]-current[2])*z];
+}
+
+return {followGainForSeconds,advanceCameraTarget};
+})();
+const {followGainForSeconds,advanceCameraTarget}=CameraTiming;
+
+const ExteriorBoxes=(()=>{
+// Render-only *experimental* exterior of anchored axis-aligned boxes.
+// The independent authored elements and their Box3D colliders remain unchanged.
+// Sloped panels, moving boxes and cross-type contacts are intentionally OUTSIDE
+// this experiment. URL opt-in: ?faces=exterior-boxes. Never a physics CSG.
+const EPS=1e-7;
+const axes=[[1,2],[0,2],[0,1]];
+const ordered=(values)=>values.sort((a,b)=>a-b).filter((v,i,a)=>i===0||v-a[i-1]>EPS);
+const quads=(e,axis,sign,u0,u1,v0,v1)=>{
+ const plane=sign===1?e.max[axis]:e.min[axis];
+ const p=(x,y,z)=>[x,y,z];
+ let corners;
+ if(axis===2)corners=sign===1?
+  [p(u0,v0,plane),p(u1,v0,plane),p(u1,v1,plane),p(u0,v1,plane)]:
+  [p(u0,v1,plane),p(u1,v1,plane),p(u1,v0,plane),p(u0,v0,plane)];
+ else if(axis===0)corners=sign===1?
+  [p(plane,u0,v0),p(plane,u1,v0),p(plane,u1,v1),p(plane,u0,v1)]:
+  [p(plane,u1,v0),p(plane,u0,v0),p(plane,u0,v1),p(plane,u1,v1)];
+ else corners=sign===1?
+  [p(u1,plane,v0),p(u0,plane,v0),p(u0,plane,v1),p(u1,plane,v1)]:
+  [p(u0,plane,v0),p(u1,plane,v0),p(u1,plane,v1),p(u0,plane,v1)];
+ const normal=[0,0,0];normal[axis]=sign;
+ const mk=(a,b,c)=>({a,b,c,normal,face:axis===2?(sign===1?'top':'bottom'):'side',
+  owner:e.id,material:e.material||'stone'});
+ return [mk(corners[0],corners[1],corners[2]),mk(corners[0],corners[2],corners[3])];
+};
+function exteriorBoxTriangles(elements,{maxCells=4096}={}){
+ if(!Array.isArray(elements)||!Number.isInteger(maxCells)||maxCells<1)throw Error('invalid-exterior-args');
+ const boxes=elements.filter(e=>e.kind==='box'&&e.motionType!=='dynamic');
+ const out=[];
+ for(const e of elements){
+  if(e.motionType==='dynamic')continue;
+  if(e.kind!=='box'){
+   out.push(...trianglesFor(e).map(t=>({...t,material:e.material||'stone'})));
+   continue;
+  }
+  for(let axis=0;axis<3;axis++)for(const sign of [-1,1]){
+   const [ua,va]=axes[axis],plane=sign===1?e.max[axis]:e.min[axis];
+   const u0=e.min[ua],u1=e.max[ua],v0=e.min[va],v1=e.max[va];
+   const blockers=[];
+   for(const other of boxes){
+    if(other===e)continue;
+    const oneSide=sign===1?
+     (other.min[axis]<plane+EPS&&other.max[axis]>plane+EPS):
+     (other.min[axis]<plane-EPS&&other.max[axis]>plane-EPS);
+    // Coincident OUTWARD faces have a deterministic first-authored winner.
+    const sameOutside=sign===1?
+     Math.abs(other.max[axis]-plane)<=EPS:
+     Math.abs(other.min[axis]-plane)<=EPS;
+    const precedence=boxes.indexOf(other)<boxes.indexOf(e);
+    if(!oneSide&&!(sameOutside&&precedence))continue;
+    const a=Math.max(u0,other.min[ua]),b=Math.min(u1,other.max[ua]);
+    const c=Math.max(v0,other.min[va]),d=Math.min(v1,other.max[va]);
+    if(b-a>EPS&&d-c>EPS)blockers.push([a,b,c,d]);
+   }
+   if(!blockers.length){out.push(...quads(e,axis,sign,u0,u1,v0,v1));continue;}
+   const us=ordered([u0,u1,...blockers.flatMap(b=>[b[0],b[1]])]);
+   const vs=ordered([v0,v1,...blockers.flatMap(b=>[b[2],b[3]])]);
+   // Pathological dense subdividing is diagnostic, not a reason to hang play.
+   // Safe conservative fallback: original face, possible internal overlaps.
+   if((us.length-1)*(vs.length-1)>maxCells){
+    out.push(...quads(e,axis,sign,u0,u1,v0,v1));continue;
+   }
+   for(let i=0;i<us.length-1;i++)for(let j=0;j<vs.length-1;j++){
+    const a=us[i],b=us[i+1],c=vs[j],d=vs[j+1];
+    if(b-a<EPS||d-c<EPS)continue;
+    const u=(a+b)/2,v=(c+d)/2;
+    if(blockers.some(q=>u>=q[0]-EPS&&u<=q[1]+EPS&&v>=q[2]-EPS&&v<=q[3]+EPS))continue;
+    out.push(...quads(e,axis,sign,a,b,c,d));
+   }
+  }
+ }
+ return out;
+}
+
+return {exteriorBoxTriangles};
+})();
+const {exteriorBoxTriangles}=ExteriorBoxes;
+
+const SceneVisualCache=(()=>{
+// Render-derived data only: NEVER own physics, picking, materials or
+// authored identities. Static authored primitives rebuild on scene revision;
+// Box3D-updated dynamic primitive geometry is regenerated on every render
+// because physics transforms intentionally do NOT increment authored revision.
+function createSceneVisualCache({exteriorBoxes=false}={}){
+ let source=null,revision=-1,anchored=[],builds=0;
+ const painted=e=>trianglesFor(e).map(t=>({...t,material:e.material||'stone'}));
+ return {
+  triangles(world){
+   if(source!==world||revision!==world.revision){
+    source=world;revision=world.revision;builds++;
+    const fixed=world.elements.filter(e=>e.motionType!=='dynamic');
+    anchored=exteriorBoxes?exteriorBoxTriangles(fixed):fixed.flatMap(painted);
+   }
+   const moving=world.elements.filter(e=>e.motionType==='dynamic').flatMap(painted);
+   return anchored.concat(moving);
+  },
+  stats(){return {staticBuilds:builds,staticTriangles:anchored.length,revision,exteriorBoxes}},
+  clear(){source=null;revision=-1;anchored=[]}
+ };
+}
+
+return {createSceneVisualCache};
+})();
+const {createSceneVisualCache}=SceneVisualCache;
+
+const SceneRestore=(()=>{
+// Splot research: import an authored scene + body positions from a local JSON
+// export. This is a FRESH PHYSICS INITIALIZATION, not a solver checkpoint.
+// Never mutate the live game before all validation is complete.
+const fmt='splot-next-live-research-1';
+const finite=n=>typeof n==='number'&&Number.isFinite(n);
+const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const fail=m=>{throw Error('Nieprawidłowy zapis Splot: '+m);};
+function restoreResearchWorld(payload){
+ const obj=typeof payload==='string'?JSON.parse(payload):payload;
+ if(!obj||Array.isArray(obj)||typeof obj!=='object'||obj.format!==fmt)
+  fail('oczekiwano Splot_Nowy_Rozdzial.json, nie raportu sesji.');
+ if(!obj.scene||!Array.isArray(obj.scene.elements)||obj.scene.elements.length>256)
+  fail('nieobsługiwane rozmiary sceny (limit badawczy: 256 części).');
+ if(!Array.isArray(obj.bodies)||obj.bodies.length>2000||obj.bodies.length<2)
+  fail('nieobsługiwana liczba ciał (limit badawczy: 2000).');
+ if(!finite(obj.time)||obj.time<0||obj.time>1e9)fail('nieprawidłowy czas świata.');
+ // Only canonical primitive fields enter the physics world. Unknown fields in
+ // external files must never become authoritative runtime data by accident.
+ const sanitized={format:obj.scene.format,width:obj.scene.width,
+  height:obj.scene.height,revision:obj.scene.revision,
+  elements:obj.scene.elements.map(e=>{
+   if(!e||typeof e!=='object')fail('nieprawidłowa część.');
+   if(e.kind==='box')return {id:e.id,kind:e.kind,
+    min:e.min,max:e.max,...(own(e,'material')?{material:e.material}:{}),
+    ...(own(e,'motionType')?{motionType:e.motionType}:{})};
+   if(e.kind==='panel')return {id:e.id,kind:e.kind,a:e.a,b:e.b,
+    width:e.width,thickness:e.thickness,
+    ...(own(e,'material')?{material:e.material}:{})};
+   fail('nieobsługiwany rodzaj części.');
+  })};
+ // importWorld rejects invalid transforms, duplicate IDs, invalid motion,
+ // non-finite geometry and truncated/out-of-bounds content.
+ const scene=importWorld(sanitized);
+ const bodyIds=new Set(),bodies=[];
+ let humanCount=0,boarCount=0;
+ for(const b of obj.bodies){
+  if(!b||typeof b!=='object'||Array.isArray(b))fail('nieprawidłowe ciało.');
+  const kind=b.kind,id=b.id;
+  if(!['human','boar','crate'].includes(kind)||typeof id!=='string'||
+      !/^[-_a-zA-Z0-9]{1,64}$/.test(id))fail('nieobsługiwane ciało.');
+  if((kind==='human'&&id!=='human')||(kind==='boar'&&id!=='boar')||
+     (kind==='crate'&&!/^crate-[1-9][0-9]*$/.test(id)))fail('niespójny identyfikator ciała.');
+  if(bodyIds.has(id))fail('powtarzający się identyfikator ciała.');
+  bodyIds.add(id);
+  if(kind==='human')humanCount++;
+  if(kind==='boar')boarCount++;
+  for(const name of ['x','y','z','r','h','mass','yaw']){
+   if(!finite(b[name]))fail('nieprawidłowe pole ciała: '+name);
+  }
+  if(b.r<.05||b.r>10||b.h<.1||b.h>20||b.mass<.01||b.mass>1e6||
+     b.x< -5||b.x>scene.width+5||b.y< -5||b.y>scene.height+5||
+     b.z< -3||b.z>40)fail('ciało poza obsługiwanymi granicami.');
+  // Old support IDs/velocities are never physically authoritative on reload.
+  bodies.push({id,kind,x:b.x,y:b.y,z:b.z,r:b.r,h:b.h,
+   mass:b.mass,yaw:b.yaw,vz:0,support:null});
+ }
+ if(humanCount!==1||boarCount!==1)fail('wymagane dokładnie po jednej postaci i dziku.');
+ // A world ID identifies one material thing across authored and solver-owned
+ // representations. Allow geometric overlaps, but never identity aliases:
+ // selection, Q, erasure and Box3D lookup must not choose a different object
+ // merely because scene and bodies reused the same name.
+ const authoredIds=new Set(scene.elements.map(e=>e.id));
+ for(const id of bodyIds)if(authoredIds.has(id))
+  fail('powtarzający się identyfikator części i ciała: '+id);
+ const world=createLiveWorld();
+ world.scene=scene;world.bodies=bodies;world.time=obj.time;
+ world.grip=null;world.events=[];world.paused=true;
+ return world;
+}
+function nextAuthoringSequence(w){
+ const ids=[...w.scene.elements.map(e=>e.id),...w.bodies.map(b=>b.id)];
+ let max=9;
+ for(const id of ids){
+  const m=typeof id==='string'&&id.match(/^(?:block|part|crate)-([0-9]+)$/);
+  if(m){const n=Number(m[1]);if(Number.isSafeInteger(n))max=Math.max(max,n);}
+ }
+ return max+1;
+}
+
+return {restoreResearchWorld,nextAuthoringSequence};
+})();
+const {restoreResearchWorld,nextAuthoringSequence}=SceneRestore;
+
 const Box3DBridge=(()=>{
 // RESEARCH CHALLENGER. Frozen Box3D Character Controller Donor v1 mathematics,
 // not a claim that Splot has adopted the Donor's accepted gameplay feel.
@@ -1225,9 +1765,10 @@ const Box3DBridge=(()=>{
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage'}={}){
+function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage',substeps=4}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
  if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
+ if(![4,8,12,16].includes(substeps))throw Error('unsupported research solver substeps');
  let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  const boarMind=createBoarIntent({mode:boarMode});
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
@@ -1235,7 +1776,7 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
  const wd=b3.b3DefaultWorldDef();
  wd.gravity=[0,-16,0];
  const engine=b3.b3CreateWorld(wd);
- const statics=new Map(),refs=new Map();
+ const statics=new Map(),dynamicParts=new Map(),refs=new Map();
  const state={revision:-1,warning:'',disposed:false};
  const shapeDef=(density=0)=>{const d=b3.b3DefaultShapeDef();d.density=density;d.baseMaterial.friction=.78;d.baseMaterial.restitution=.02;return d;};
  const makeFixed=(centerS,halfS,q=null)=>{
@@ -1258,14 +1799,51 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
  }
  const ground=makeFixed([w.scene.width/2,w.scene.height/2,-.35],
   [w.scene.width/2,.35,w.scene.height/2]);
+ function makeDynamicBox(e){
+  const center=boxCenter(e),half=e.min.map((v,i)=>(e.max[i]-v)/2);
+  const bd=b3.b3DefaultBodyDef();
+  bd.type=b3.b3BodyType.b3_dynamicBody;
+  bd.position=splotToBox3D(center);
+  // AABB scene truth cannot express arbitrary angular rotation. Lock it
+  // explicitly; this is a translation-only rigid body experiment, NOT
+  // beam/structure collapse, torque, or a complete construction solver.
+  bd.motionLocks.angularX=true;bd.motionLocks.angularY=true;bd.motionLocks.angularZ=true;
+  bd.linearDamping=.35;bd.angularDamping=1.5;
+  const rb=b3.b3CreateBody(engine,bd);
+  const halfBox=[half[0],half[2],half[1]];
+  const density=e.material==='wood'?35:80;
+  b3.b3CreateBoxShape(rb,shapeDef(density),...halfBox);
+  return {rb,element:e,volume:boxVolume(e)};
+ }
  function syncStatics(){
   if(w.scene.revision===state.revision)return;
   const current=new Map(w.scene.elements.map(e=>[e.id,e]));
-  for(const [id,entry]of statics)if(!current.has(id)||JSON.stringify(current.get(id))!==entry.hash){
-   b3.b3DestroyBody(entry.rb);statics.delete(id);
+  for(const [id,entry]of statics){
+   const e=current.get(id);
+   if(!e||partMotionMode(e)==='dynamic'||JSON.stringify(e)!==entry.hash){
+    b3.b3DestroyBody(entry.rb);statics.delete(id);
+   }
   }
-  for(const [id,e]of current)if(!statics.has(id))
-   statics.set(id,{rb:makePart(e),hash:JSON.stringify(e)});
+  for(const [id,entry]of dynamicParts){
+   const e=current.get(id);
+   // Object identity is stable across physics translations, but changes
+   // on authored replaceElement. Never recreate every tick.
+   if(!e||partMotionMode(e)!=='dynamic'||entry.element!==e){
+    b3.b3DestroyBody(entry.rb);dynamicParts.delete(id);
+    if(e&&partMotionMode(e)==='anchored')
+     w.events.push({type:'part-anchored',id,time:w.time});
+   }
+  }
+  for(const [id,e]of current){
+   if(partMotionMode(e)==='dynamic'){
+    if(!dynamicParts.has(id)){
+     dynamicParts.set(id,makeDynamicBox(e));
+     w.events.push({type:'part-dynamic',id,time:w.time});
+    }
+   }else if(!statics.has(id)){
+    statics.set(id,{rb:makePart(e),hash:JSON.stringify(e)});
+   }
+  }
   state.revision=w.scene.revision;
   // Editing remains permissive; unresolved deep overlaps are a visible debt.
   // Never disguise a teleport/reject as a solver feature.
@@ -1410,7 +1988,17 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
     }
    }
   }
-  b3.b3World_Step(engine,dt,4);
+  b3.b3World_Step(engine,dt,substeps);
+  // Canonical live geometry follows the actual solver body. Picking,
+  // rasterized faces and surface queries then see the same updated shape.
+  for(const [id,entry]of dynamicParts){
+   b3.b3Body_GetPosition(position,entry.rb);
+   const center=box3DToSplot(position);
+   if(translateBoxToCenter(entry.element,center)){
+    // Not a new authoring revision; physical-state version is separate.
+    w.scene.motionRevision=(w.scene.motionRevision||0)+1;
+   }
+  }
   human?.controller.postStep(dt);boar?.controller.postStep(dt);
   w.time+=dt;
   for(const [id,ref]of refs){
@@ -1433,6 +2021,27 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
   if(!state.disposed){b3.b3DestroyWorld(engine);state.disposed=true;}
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
+  get solverSubsteps(){return substeps},
+  // Explicit research probes, never called from normal game logic.
+  // True solver state: a mirrored Splot position/support is NOT proof
+  // that the WASM body is awake or has processed a newly authored contact.
+  researchCrateState(id){
+   const ref=refs.get(id);
+   if(ref?.kind!=='crate')return null;
+   if(typeof b3.b3Body_IsAwake!=='function')throw Error('Box3D WASM b3Body_IsAwake unavailable');
+   b3.b3Body_GetPosition(position,ref.rb);
+   b3.b3Body_GetLinearVelocity(velocity,ref.rb);
+   return {id,awake:b3.b3Body_IsAwake(ref.rb),
+    xyz:box3DToSplot(position),velocity:box3DToSplot(velocity)};
+  },
+  researchWakeCrate(id){
+   const ref=refs.get(id);
+   if(ref?.kind!=='crate')throw Error('research wake requires a live crate');
+   if(typeof b3.b3Body_SetAwake!=='function')throw Error('Box3D WASM b3Body_SetAwake unavailable');
+   b3.b3Body_SetAwake(ref.rb,true);
+   return this.researchCrateState(id);
+  },
+
   setActorContactMode(mode){
    if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
    contactMode=mode;contactNear=false;lastContactImpulse=0;
@@ -1445,7 +2054,7 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
   },
   get boarMode(){return boarMind.mode},
   get warning(){return state.warning},
-  get status(){return {parts:statics.size,bodies:refs.size,gripLaw,
+  get status(){return {parts:statics.size,bodies:refs.size,dynamicParts:dynamicParts.size,gripLaw,
    actorContact:contactMode,contactStarts,lastContactImpulse,boarMode:boarMind.mode,boarPhase:boarMind.phase,
    donor:'A-triple-prime derived; research only',events:w.events.slice(-4)}}};
 }
@@ -1493,7 +2102,7 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
   // Only compact, self-authored signals; never raw pointer paths or key values.
   append(type,data);
  }
- function observe(world,{engine='unknown',camera=null}={}){
+ function observe(world,{engine='unknown',camera=null,performance:perf=null}={}){
   if(!recording||!world)return;
   if(world!==previousWorld){
    previousWorld=world;lastWorldEvent=null;wasNear=false;
@@ -1541,7 +2150,25 @@ function createPlaytestJournal({clock=()=>performance.now(),iso=()=>new Date().t
     phase:world.boarIntent.phase,goal:world.boarIntent.goal,mode:world.boarIntent.mode,
     foodDistance:num(world.boarIntent.foodDistance),
     playerDistance:num(world.boarIntent.playerDistance)
-   }:null,parts:world.scene?.elements?.length??0});
+   }:null,parts:world.scene?.elements?.length??0,
+   dynamicParts:world.scene?.elements?.filter(e=>e.motionType==='dynamic').length??0,
+   // Optional and opt-in per-sample stage medians: not GPU time or a
+   // measure of Owner's attention. Do not record raw event timing paths.
+   perf:perf?{
+    rafP50:num(perf.rafMs?.median),simCpuP50:num(perf.simulationCpuMs?.median),
+    geometryCpuP50:num(perf.geometryCpuMs?.median),
+    submitCpuP50:num(perf.drawSubmissionCpuMs?.median),
+    triangles:num(perf.triangles?.median),
+    // Step-aware measurements: avoid the misleading zero median at 240Hz.
+    physicsSteps:num(perf.physics?.steps),
+    physicsCpuMsPerStep:num(perf.physics?.cpuMsPerStep),
+    physicsCpuMsPerWallSecond:num(perf.physics?.cpuMsPerWallSecond),
+    physicsWindowMs:num(perf.physics?.windowWallMs),
+    physicsActiveFrames:num(perf.physics?.framesWithSteps),
+    physicsActiveP95CpuMs:num(perf.physics?.p95ActiveFrameCpuMs),
+    rafP95:num(perf.rafMs?.p95),
+    geometryP95CpuMs:num(perf.geometryCpuMs?.p95)
+   }:null});
  }
  function status({visible=true,focused=true}={}){
   const ago=clock()-lastInput;
@@ -1835,20 +2462,34 @@ return {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor};
 const {SoftwareDepthRenderer,WebGLDepthRenderer,createRenderer,colorFor}=RenderAdapters;
 
 const $=s=>document.querySelector(s),canvas=$('#world'),hud=$('#hud'),toolLabel=$('#active-mode'),message=$('#notice'),buttons=[...document.querySelectorAll('[data-mode]')];
-let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,zoom=1;
+let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selection=0,selected=null,startPanel=null,buildHeight=0,buildWidth=2.0,rot=0,pitch=1.03,zoom=1,renderScale=1;
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
+const editHistory=createEditHistory(256);let editSelectedId=null,editDrag=null; // bounded per-intent snapshots: Owner-scale creator sessions
+const sceneVisual=createSceneVisualCache({exteriorBoxes:new URLSearchParams(location.search).get('faces')==='exterior-boxes'});
 const researchArgs=new URLSearchParams(location.search);
+renderScale=researchArgs.get('pixels')==='50'?.5:researchArgs.get('pixels')==='75'?.75:1;
+const engineState=$('#engine-state');
+const showEngine=(kind,label)=>{engineState.dataset.state=kind;engineState.textContent=label;};
+const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
 // Prevent all background stepping while an external WASM module is fetched.
-if(['ascent','fall','edit','grip'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage'};
-const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0};
+if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage',
+  substeps:['8','12','16'].includes(researchArgs.get('substeps'))?Number(researchArgs.get('substeps')):4};
+const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0,lastY:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();
 for(const name of ['pointerdown','keydown','wheel']){
  document.addEventListener(name,e=>{
   if(e.isTrusted)playtest.interact(name==='keydown'?'keyboard':name==='wheel'?'wheel':'pointer');
  },{capture:true,passive:true});
+}
+function refreshMaterialUI(){
+ const btn=document.querySelector('[data-mode="material"]');
+ const can=physicsState==='box3d'&&!!bridge?.syncStatics;
+ btn.disabled=!can;
+ btn.title=can?'Wskaż bryłę, aby uwolnić lub zakotwiczyć w bieżącym położeniu':'Dostępne tylko w Box3D R&D';
+ if(!can&&mode==='material')setMode('move');
 }
 function refreshActorContactUI(){
  const btn=$('#actor-contact'),supported=physicsState==='box3d'&&Boolean(bridge?.setActorContactMode);
@@ -1905,70 +2546,320 @@ $('#test-export').onclick=()=>{
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
 const actionText=t=>{message.textContent=t;message.classList.add('show');lastNotice=performance.now()};
-function setMode(m){playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;selected=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część'}[m]||m);document.body.classList.remove('menu-open');
- for(const b of buttons)b.classList.toggle('active',b.dataset.mode===m);
+function setMode(m){if(m==='material'&&physicsState!=='box3d'){actionText('Uwalnianie brył wymaga Box3D R&D.');return;}playtest.event('tool',{mode:m});mode=m;startPanel=null;selection=0;targetSetSignature=null;selected=null;editDrag=null;editSelectedId=null;toolLabel.textContent=({move:'Ruch i kontakt',panel:'Rysuj belkę / płytę',box:'Postaw bryłę',crate:'Postaw skrzynię',erase:'Usuń wskazaną część',material:'Kotwica / uwolnij bryłę',edit:'Popraw zakotwiczoną część'}[m]||m);document.body.classList.remove('menu-open');document.body.classList.toggle('editing',m==='edit');
+ for(const b of buttons)b.classList.toggle('active',b.dataset.mode===m);refreshEditButtons();
+}
+function refreshEditButtons(){
+ const current=world.scene.elements.find(e=>e.id===editSelectedId);
+ const editable=mode==='edit'&&current&&!(current.kind==='box'&&current.motionType==='dynamic');
+ $('#edit-up').disabled=$('#edit-down').disabled=!editable;
+ $('#undo').disabled=$('[data-mobile-action="undo"]').disabled=!editHistory.canUndo;
+ $('#redo').disabled=$('[data-mobile-action="redo"]').disabled=!editHistory.canRedo;
+}
+function commitPartEdit(from,to,reason='move'){
+ const r=editHistory.apply(world.scene,from,to);
+ if(r.ok){
+  bridge?.syncStatics?.();playtest.event('part-edit',{id:to?.id||from?.id,operation:reason});
+  actionText('Zmieniono część '+(to?.id||from?.id)+'. Można cofnąć.');
+ }else actionText('Edycja nieudana: '+r.reason);
+ refreshEditButtons();return r;
+}
+for(const [id,dz] of [['#edit-up',.25],['#edit-down',-.25]]){
+ $(id).onclick=()=>{
+  const e=world.scene.elements.find(x=>x.id===editSelectedId);
+  if(!e)return;
+  commitPartEdit(e,translatedElement(e,[0,0,dz]),'raise');
+ };
+}
+for(const [id,op] of [['#undo','undo'],['#redo','redo']]){
+ $(id).onclick=()=>{
+  editDrag=null;
+  const r=editHistory[op](world);
+  if(r.ok){
+   if(r.kind==='crate')bridge?.syncBodies?.();
+   else bridge?.syncStatics?.();
+   selection=0;refreshSelection();
+   playtest.event('authoring-history',{action:op,kind:r.kind,id:r.id});
+   actionText(op==='undo'?'Cofnięto '+(r.kind==='crate'?'operację na skrzyni':'edycję części')+'.':
+    'Ponowiono '+(r.kind==='crate'?'operację na skrzyni':'edycję części')+'.');
+  }
+  else actionText('Nie można '+(op==='undo'?'cofnąć':'ponowić')+': '+r.reason);
+  refreshEditButtons();
+ };
 }
 for(const b of buttons)b.addEventListener('click',()=>setMode(b.dataset.mode));
 $('#mobile-menu').onclick=()=>document.body.classList.toggle('menu-open');$('#active-mode').onclick=()=>setMode('move');
 const rotate=d=>{rot+=d;actionText('Kamera · obrót '+Math.round(rot*180/Math.PI)+'°')};
 $('#turn-left').onclick=()=>rotate(-Math.PI/6);$('#turn-right').onclick=()=>rotate(Math.PI/6);
-$('#pause').onclick=()=>{paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
-$('#grip').onclick=()=>{const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
+const quality=$('#quality');
+const labelRenderScale=()=>{quality.textContent='Obraz: '+Math.round(renderScale*100)+'%';};
+labelRenderScale();
+quality.onclick=()=>{
+ renderScale=renderScale===1?.75:renderScale===.75?.5:1;
+ labelRenderScale();
+ playtest.event('render-resolution',{scale:renderScale});
+ actionText('Obraz '+Math.round(renderScale*100)+'% · tylko rozdzielczość; świat i Box3D bez zmian.');
+};
+$('#pause').onclick=()=>{if(physicsState.startsWith('loading-'))return;paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
+$('#grip').onclick=()=>{if(physicsState.startsWith('loading-')){actionText('Fizyka wczytuje się.');return;}const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
 $('#layer').onclick=()=>{selection++;refreshSelection();};
-$('#reset').onclick=()=>{playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();
+// The second finger on a touch action must fire even while joystick owns
+// the first pointer. Compatibility click may not be generated in multitouch;
+// if generated after touch, it must not toggle the action twice.
+for(const [name,target] of [['grip','#grip'],['layer','#layer'],['undo','#undo'],['redo','#redo']]){
+ const button=$('[data-mobile-action="'+name+'"]');
+ const activate=()=>$(target).click();
+ button.addEventListener('pointerdown',event=>{
+  if(event.pointerType==='touch'||event.pointerType==='pen'){
+   event.preventDefault();
+   activate();
+  }
+ });
+ button.addEventListener('click',event=>{
+  if(event.pointerType==='touch'||event.pointerType==='pen')return;
+  activate();
+ });
+}
+let resetArmedUntil=0;
+$('#reset').onclick=()=>{
+ if(physicsState.startsWith('loading-')){actionText('Reset po załadowaniu właściwej fizyki.');return;}
+ // The current scene may contain hours of unsaved construction; one stray
+ // R beside WASD must never wipe it. Confirmation is limited to RESET,
+ // not to experimental geometry, overlapping materials or other play.
+ const now=performance.now();
+ if(now>resetArmedUntil){
+  resetArmedUntil=now+6000;
+  const armed=resetArmedUntil;
+  $('#reset').textContent='Potwierdź reset';
+  actionText('Reset usunie bieżący świat i historię cofania. Ponów w ciągu 6 s, aby potwierdzić. Zapisz JSON, jeśli chcesz zachować konstrukcję.');
+  setTimeout(()=>{if(resetArmedUntil===armed){resetArmedUntil=0;$('#reset').textContent='Reset';}},6000);
+  return;
+ }
+ resetArmedUntil=0;$('#reset').textContent='Reset';
+ playtest.event('reset',{engine:physicsState});bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();bridge=null;world=createLiveWorld();editHistory.clear();editSelectedId=null;editDrag=null;
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
- camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
-function cursorPos(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.x)/r.width*canvas.width,y:(e.clientY-r.y)/r.height*canvas.height};}
-let cursor=null;
-function refreshSelection(){if(!cam||!cursor)return;const hits=pickPixel(world.scene,cam,cursor.x,cursor.y);
- selected=hits.length?hits[selection%hits.length]:null;
- const a=selected;$('#target').textContent=a?`${a.id} • ${a.point[2].toFixed(2)} m • warstwa ${selection%hits.length+1}/${hits.length}`:'Brak powierzchni pod kursorem';
+// A local exported JSON restarts PHYSICS from these positions, not velocities.
+// Create the new physics while the previous world is still owned. A malformed
+// file or constructor failure cannot destroy an active Owner experiment.
+$('#load').onclick=()=>$('#load-file').click();
+$('#load-file').onchange=async()=>{
+ const file=$('#load-file').files?.[0];
+ if(!file)return;
+ try{
+  if(file.size>8*1024*1024)throw Error('Plik większy niż 8 MB; nie wczytano.');
+  if(physicsState.startsWith('loading-'))throw Error('Poczekaj na załadowanie fizyki.');
+  const nextWorld=restoreResearchWorld(await file.text());
+  // Import is a destructive swap, not an automatic consequence of file selection.
+  // The active world, solver and undo history survive a declined confirmation.
+  if(!window.confirm('Wczytanie pliku zastąpi cały bieżący świat i wyczyści historię cofania. Niezapisane zmiany zostaną utracone. Kontynuować?')){
+   actionText('Anulowano wczytywanie. Bieżący świat pozostał bez zmian.');
+   return;
+  }
+  let nextBridge=null;
+  if(physicsState==='box3d'){
+   if(!box3dLibrary)throw Error('Box3D nie jest gotowy.');
+   nextBridge=createBox3DBridge(nextWorld,box3dLibrary,box3dOptions);
+  }else if(physicsState==='rapier'){
+   if(!rapierLibrary)throw Error('Rapier nie jest gotowy.');
+   nextBridge=createRapierBridge(nextWorld,rapierLibrary);
+  }
+  const old=bridge;bridge=nextBridge;world=nextWorld;
+   editHistory.clear();editSelectedId=null;editDrag=null;
+  old?.dispose?.();if(old?.engine?.free)old.engine.free();
+  sequence=nextAuthoringSequence(world);
+  acc=0;last=performance.now();frameMetrics.length=0;prevMetricFrame=0;latestPerf=null;
+  const human=getBody(world,'human');
+  camTarget=[human.x,human.y,human.z+.7];
+  keys.clear();stick.x=0;stick.y=0;stick.active=null;look.id=null;
+  selected=null;cursor=null;cursorUv=null;selection=0;startPanel=null;
+  paused=true;world.paused=true;$('#pause').textContent='Uruchom';
+  setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
+  playtest.event('scene-loaded',{parts:world.scene.elements.length,bodies:world.bodies.length,
+   mode:'fresh-physics-paused'});
+  actionText('Wczytano '+world.scene.elements.length+' części i '+world.bodies.length+
+   ' ciał. Świat zatrzymany — fizyka ruszy od nowa po „Uruchom”.');
+ }catch(err){
+  actionText('Nie wczytano świata: '+String(err.message||err).slice(0,190));
+ }finally{$('#load-file').value='';}
+};
+// CSS-normalized pointer position is independent of image render quality.
+let cursorUv=null;
+function cursorPos(e){
+ const r=canvas.getBoundingClientRect();
+ cursorUv=[(e.clientX-r.x)/r.width,(e.clientY-r.y)/r.height];
+ return {x:cursorUv[0]*canvas.width,y:cursorUv[1]*canvas.height};
 }
-function clickWorld(p){cursor=p;refreshSelection();const a=selected;
+let cursor=null,targetSetSignature=null;
+let lastHoverRecheckAt=0,lastHoverWorldSignature=null;
+function refreshSelection(){if(!cam||!cursor)return;
+ // The backing canvas size can change without another pointer event.
+ // Reproject the LAST CSS position into its current render-resolution pixels.
+ if(cursorUv){cursor.x=cursorUv[0]*canvas.width;cursor.y=cursorUv[1]*canvas.height;}
+ const rawHits=pickPixel(world.scene,cam,cursor.x,cursor.y);
+ // Authored editing still selects authored identities; ONLY physical
+ // crate placement additionally sees other physical crate tops.
+ // Placement sees support tops; removal sees the whole visible crate skin.
+ // Depth-ordered authored hits still allow deliberate deeper Q selection.
+ const crateHits=physicsState==='box3d'
+  ?mode==='crate'?crateTopHits(world.bodies,cam,cursor.x,cursor.y)
+   :['edit','erase','material'].includes(mode)
+    ?crateSurfaceHits(world.bodies,cam,cursor.x,cursor.y):[]
+  :[];
+ const ordered=crateHits.length?
+  [...rawHits,...crateHits].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)):rawHits;
+ const partTool=['edit','erase','material'].includes(mode);
+ const hits=partTool?uniquePartHits(ordered):ordered;
+ // Q selects a layer inside the current depth-ordered material hit group.
+ // Never carry an invisible second-layer target into a different pile.
+ if(partTool){
+  const signature=hits.map(hit=>hit.id).join('|');
+  if(targetSetSignature!==null&&signature!==targetSetSignature)selection=0;
+  targetSetSignature=signature;
+ }
+ selected=hits.length?hits[selection%hits.length]:null;
+ const a=selected;$('#target').textContent=a?`${a.id} • Z ${a.point[2].toFixed(2)} m • ${partTool?'element':'warstwa'} ${selection%hits.length+1}/${hits.length}`:
+  (partTool?'Brak części pod kursorem':'Brak powierzchni pod kursorem');
+}
+function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Ładowanie fizyki — świat jeszcze zatrzymany.');return;}cursor=p;refreshSelection();const a=selected;
  if(mode==='move')return;
  if(!a){actionText('Nie wskazano fizycznej powierzchni.');return;}
  if(mode==='panel'){
   const xyz=[...a.point];xyz[2]+=buildHeight;
   if(!startPanel){startPanel=xyz;actionText('Pierwszy koniec ustawiony. Wskaż drugi punkt.');return;}
   const e={id:'part-'+sequence++,kind:'panel',a:startPanel,b:xyz,width:buildWidth,thickness:.26,material:'wood'};
-  const result=insertElement(world.scene,e);playtest.event('build-panel',{ok:result.ok,id:e.id});startPanel=null;
+  const result=editHistory.apply(world.scene,null,e);refreshEditButtons();playtest.event('build-panel',{ok:result.ok,id:e.id});startPanel=null;
   actionText(result.ok?'Powstał niezależny element XYZ.':'Odmowa: '+result.reason);return;
  }
  if(mode==='box'){
-  const [x,y,z]=a.point,r=insertElement(world.scene,{id:'block-'+sequence++,kind:'box',min:[x-.6,y-.6,z],max:[x+.6,y+.6,z+1.1],material:'stone'});
-  playtest.event('build-box',{ok:r.ok});actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
+  const [x,y,z]=a.point,r=editHistory.apply(world.scene,null,{id:'block-'+sequence++,kind:'box',min:[x-.6,y-.6,z+buildHeight],max:[x+.6,y+.6,z+buildHeight+1.1],material:'stone'});refreshEditButtons();
+  playtest.event('build-box',{ok:r.ok,reason:r.reason??null});actionText(r.ok?'Bryła ma rzeczywisty obrys, kontakt i powierzchnię.':'Odmowa: '+r.reason);return;
  }
- if(mode==='crate'){const r=addCrate(world,a.point[0],a.point[1],a.point[2]);playtest.event('build-crate',{ok:r.ok});actionText(r.ok?'Nowa skrzynia w świecie.':'Odmowa: '+r.reason);return;}
+ if(mode==='material'){
+  if(!bridge?.syncStatics){actionText('Fizyka części wymaga aktywnego Box3D.');return;}
+  const e=world.scene.elements.find(x=>x.id===a.id);
+  if(!e||e.kind!=='box'){
+   actionText(world.bodies.some(b=>b.kind==='crate'&&b.id===a.id)?
+    'Skrzynia już podlega Box3D. Q pozwala wskazać część konstrukcji za nią.':
+    'Na tym etapie można uwolnić tylko bryłę. Płyty wymagają modelu rotacji i momentu.');return;
+  }
+  const old=partMotionMode(e),next=old==='dynamic'?'anchored':'dynamic';
+  const r=setBoxMotion(world.scene,e.id,next);
+  if(r.ok){editHistory.invalidateId(e.id);refreshEditButtons();bridge.syncStatics();playtest.event('part-motion-change',{id:e.id,from:old,to:next});
+   actionText(next==='dynamic'?'Uwolniono bryłę. Box3D prowadzi grawitację i kontakt; obrót jest świadomie zablokowany.':
+    'Zakotwiczono bryłę w aktualnym miejscu.');}
+  else actionText('Błąd zmiany stanu: '+r.reason);
+  return;
+ }
+ if(mode==='crate'){
+  const r=addCrate(world,a.point[0],a.point[1],a.point[2],
+   {admission:physicsState==='box3d'&&researchArgs.get('admission')!=='legacy'?'solver':'legacy'});
+  if(r.ok){editHistory.recordBodyAdded(world,r.id);bridge?.syncBodies?.();selection=0;refreshSelection();}
+  refreshEditButtons();
+  playtest.event('build-crate',{ok:r.ok,reason:r.reason??null});
+  actionText(r.ok?'Nowa skrzynia w świecie. Można cofnąć.':'Odmowa: '+r.reason);return;
+ }
+ if(mode==='edit'){actionText('Zaznacz i przeciągnij zakotwiczoną część. Pion: przyciski ±0,25 m.');return;}
  if(mode==='erase'){
+  const crateIndex=world.bodies.findIndex(b=>b.kind==='crate'&&b.id===a.id);
+  if(crateIndex!==-1){
+   const crate=world.bodies[crateIndex],r=editHistory.removeBody(world,crate.id);
+   if(r.ok){bridge?.syncBodies?.();selection=0;refreshSelection();}
+   refreshEditButtons();
+   playtest.event('delete-crate',{id:crate.id,ok:r.ok});
+   actionText(r.ok?'Skrzynia usunięta. Można cofnąć bez cofania fizyki.':
+    'Nie udało się usunąć skrzyni: '+r.reason);
+   return;
+  }
   if(a.id==='ground'){actionText('Grunt nie jest elementem edytora.');return;}
-  const r=removeElement(world.scene,a.id);playtest.event('delete-part',{ok:r.ok,id:a.id});
+  const e=world.scene.elements.find(x=>x.id===a.id);
+  const external=e?.kind==='box'&&e.motionType==='dynamic';
+  const r=external?removeElement(world.scene,a.id):editHistory.apply(world.scene,e||null,null);
+  if(r.ok&&external)editHistory.invalidateId(a.id);
+  if(r.ok){selection=0;refreshSelection();}
+  refreshEditButtons();playtest.event('delete-part',{ok:r.ok,id:a.id});
   actionText(r.ok?'Element usunięty; ciała zareagują na utratę podparcia.':'Odmowa: '+r.reason);
  }
 }
 canvas.addEventListener('pointermove',e=>{
- if(look.id===e.pointerId){rotate((e.clientX-look.lastX)*.009);look.lastX=e.clientX;return;}
+ if(look.id===e.pointerId){
+  const dx=e.clientX-look.lastX,dy=e.clientY-look.lastY;
+  rot+=dx*.009;
+  // Drag up to inspect top faces, down to inspect side faces.
+  // Stay clear of invalid camera poles (including ray picking).
+  pitch=Math.max(.38,Math.min(1.43,pitch-dy*.007));
+  look.lastX=e.clientX;look.lastY=e.clientY;
+  return;
+ }
+ if(editDrag?.pointerId===e.pointerId){
+  const p=cursorPos(e),q=screenOnHeightPlane(cam,p.x,p.y,editDrag.planeZ);
+  if(q)editDrag.delta=[q[0]-editDrag.origin[0],q[1]-editDrag.origin[1],0];
+  return;
+ }
  if(mode!=='move'){cursor=cursorPos(e);refreshSelection();}
 });
-canvas.addEventListener('pointerdown',e=>{e.preventDefault();if(e.button===2){look.id=e.pointerId;look.lastX=e.clientX;canvas.setPointerCapture(e.pointerId);return;}
- clickWorld(cursorPos(e));});
-canvas.addEventListener('pointerup',e=>{if(look.id===e.pointerId)look.id=null;});
+canvas.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ if(physicsState.startsWith('loading-')){actionText('Najpierw wczytaj fizykę.');return;}
+ if(e.button===2){look.id=e.pointerId;look.lastX=e.clientX;look.lastY=e.clientY;canvas.setPointerCapture(e.pointerId);return;}
+ // On a phone the free play canvas is the natural camera control.
+ // Right-mouse orbit remains intact; authoring touch still targets parts.
+ // A captured joystick uses a DIFFERENT pointer on its own element.
+ if(mode==='move'&&(e.pointerType==='touch'||e.pointerType==='pen')){
+  if(look.id!==null)return;
+  look.id=e.pointerId;look.lastX=e.clientX;look.lastY=e.clientY;
+  canvas.setPointerCapture(e.pointerId);
+  return;
+ }
+ if(mode==='edit'){
+  cursor=cursorPos(e);refreshSelection();
+  const a=selected,part=a&&world.scene.elements.find(p=>p.id===a.id);
+  if(!part){editSelectedId=null;
+   actionText(a&&world.bodies.some(b=>b.kind==='crate'&&b.id===a.id)?
+    'Wskazano fizyczną skrzynię. Chwytaj ją lub wybierz Q część za nią.':
+    'Wskaż część konstrukcji, nie grunt.');
+   refreshEditButtons();return;}
+  if(part.kind==='box'&&part.motionType==='dynamic'){
+   editSelectedId=null;actionText('Część dynamiczną prowadzi Box3D — zakotwicz ją przed edycją.');refreshEditButtons();return;
+  }
+  editSelectedId=part.id;refreshEditButtons();
+  const origin=screenOnHeightPlane(cam,cursor.x,cursor.y,a.point[2]);
+  if(origin){editDrag={pointerId:e.pointerId,id:part.id,from:JSON.parse(JSON.stringify(part)),
+   origin,planeZ:a.point[2],delta:[0,0,0]};canvas.setPointerCapture(e.pointerId);}
+  actionText('Zaznaczono '+part.id+'. Przeciągnij, aby przesunąć.');
+  return;
+ }
+ clickWorld(cursorPos(e));
+});
+function finishEditDrag(e,commit){
+ if(!editDrag||editDrag.pointerId!==e.pointerId)return;
+ const d=editDrag;editDrag=null;
+ if(commit&&Math.hypot(d.delta[0],d.delta[1])>.035)
+  commitPartEdit(d.from,translatedElement(d.from,d.delta),'drag');
+ refreshEditButtons();
+}
+canvas.addEventListener('pointerup',e=>{if(look.id===e.pointerId)look.id=null;finishEditDrag(e,true);});
+canvas.addEventListener('pointercancel',e=>{if(look.id===e.pointerId)look.id=null;finishEditDrag(e,false);});
+
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.55,Math.min(2.3,zoom*(e.deltaY<0?1.09:.91)));},{passive:false});
 window.addEventListener('keydown',e=>{
  const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' ','tab'].includes(k))e.preventDefault();
+ if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();$(e.shiftKey?'#redo':'#undo').click();return;}
+ if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();$('#redo').click();return;}
  if(e.repeat&&['e','q','z','x','v','p','r','1','2','3','4','5',' '].includes(k))return;
  if(k==='e')$('#grip').click();else if(k==='q')$('#layer').click();
  else if(k==='z')$('#turn-left').click();else if(k==='x')$('#turn-right').click();
  else if(k===' '){$('#pause').click()}else if(k==='r')$('#reset').click();
- else if('12345'.includes(k))setMode(['move','panel','box','crate','erase'][Number(k)-1]);
+ else if('123456'.includes(k))setMode(['move','panel','box','crate','erase','material'][Number(k)-1]);
  else keys.add(k);
 });
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
@@ -2003,8 +2894,7 @@ function box(x,y,z,rx,ry,h,material){return trianglesFor({kind:'box',id:'visual-
 function actorsMesh(){let out=[];
  for(const b of world.bodies){
   if(b.kind==='crate'){
-   out.push(...box(b.x,b.y,b.z,b.r,b.r,b.h,'crate'));
-   out.push(...box(b.x,b.y,b.z+b.h-.07,b.r+.018,b.r+.018,.07,'wood'));
+   out.push(...crateTriangles(b));
   }else if(b.kind==='boar'){
    out.push(...box(b.x,b.y,b.z+.15,.42,.3,.55,'boar'));
    out.push(...box(b.x+.32,b.y,b.z+.25,.25,.24,.28,'skin'));
@@ -2024,9 +2914,57 @@ function renderOverlay(cam){const ctx=$('#overlay').getContext('2d'),w=$('#overl
  if(selected&&mode!=='move'){const p=projectPoint(cam,selected.point),k=$('#overlay').width/cam.width;
   ctx.beginPath();ctx.arc(p.x*k,p.y*k,9*k,0,Math.PI*2);ctx.strokeStyle='#ffd59e';ctx.lineWidth=2*k;ctx.stroke();
  }
+ // A persistent selected-part outline, distinct from the drag's proposed pose.
+ // These are visual cues only: the scene and Box3D collider change on commit.
+ const outline=(e,color,dashed=false)=>{
+  let pts,edges;
+  if(e.kind==='box'){
+   pts=[[e.min[0],e.min[1],e.min[2]],[e.max[0],e.min[1],e.min[2]],
+    [e.max[0],e.max[1],e.min[2]],[e.min[0],e.max[1],e.min[2]],
+    [e.min[0],e.min[1],e.max[2]],[e.max[0],e.min[1],e.max[2]],
+    [e.max[0],e.max[1],e.max[2]],[e.min[0],e.max[1],e.max[2]]];
+   edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  }else{
+   const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],len=Math.hypot(dx,dy);
+   if(len<1e-8)return;
+   const sx=-dy/len*e.width/2,sy=dx/len*e.width/2;
+   pts=[[e.a[0]-sx,e.a[1]-sy,e.a[2]],[e.b[0]-sx,e.b[1]-sy,e.b[2]],
+    [e.b[0]+sx,e.b[1]+sy,e.b[2]],[e.a[0]+sx,e.a[1]+sy,e.a[2]]];
+   edges=[[0,1],[1,2],[2,3],[3,0]];
+  }
+  const k=$('#overlay').width/cam.width;
+  ctx.strokeStyle=color;ctx.lineWidth=2*k;
+  ctx.setLineDash(dashed?[6*k,3*k]:[]);
+  for(const [a,b] of edges){
+   const x=projectPoint(cam,pts[a]),y=projectPoint(cam,pts[b]);
+   ctx.beginPath();ctx.moveTo(x.x*k,x.y*k);ctx.lineTo(y.x*k,y.y*k);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+ };
+ if(mode==='edit'&&editSelectedId){
+  const e=world.scene.elements.find(p=>p.id===editSelectedId);
+  if(e)outline(e,'#ffd59e');
+ }
+ // The click target is a MATERIAL OBJECT, not the small point on its surface.
+ // Highlight the full currently targeted body before erase/material actions,
+ // including solver-owned crates; selecting another Q-layer updates this cue.
+ if(selected&&['erase','material','edit','crate'].includes(mode)){
+  const crate=world.bodies.find(b=>b.kind==='crate'&&b.id===selected.id);
+  if(crate){
+   const r=crate.r;
+   outline({kind:'box',min:[crate.x-r,crate.y-r,crate.z],
+    max:[crate.x+r,crate.y+r,crate.z+crate.h]},
+    '#ffd59e',selection>0);
+  }else if(mode==='erase'||mode==='material'){
+   const part=world.scene.elements.find(e=>e.id===selected.id);
+   if(part)outline(part,'#ffd59e',selection>0);
+  }
+ }
+ if(editDrag&&Math.hypot(...editDrag.delta)>.035)
+  outline(translatedElement(editDrag.from,editDrag.delta),'#d7f4bd',true);
  if(startPanel){const p=projectPoint(cam,startPanel),k=$('#overlay').width/cam.width;ctx.beginPath();ctx.arc(p.x*k,p.y*k,7*k,0,Math.PI*2);ctx.strokeStyle='#d6e3bf';ctx.stroke();}
 }
-function viewport(){const r=canvas.getBoundingClientRect(),gl=renderer.mode==='webgl-depth';const ratio=gl?Math.min(window.devicePixelRatio||1,2):Math.min(.75,Math.max(.46,.70/(Math.max(1,(r.width*r.height)/(970*700)))));
+function viewport(){const r=canvas.getBoundingClientRect(),gl=renderer.mode==='webgl-depth';const ratio=(gl?Math.min(window.devicePixelRatio||1,2):Math.min(.75,Math.max(.46,.70/(Math.max(1,(r.width*r.height)/(970*700))))))*renderScale;
  const w=Math.max(100,Math.round(r.width*ratio)),h=Math.max(100,Math.round(r.height*ratio));
  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
  const overlay=$('#overlay'),dpr=window.devicePixelRatio||1;
@@ -2039,26 +2977,82 @@ function keyDirection(){let dx=Number(keys.has('d')||keys.has('arrowright'))-Num
  const right=cam.right,up=cam.up;let vx=right[0]*dx+up[0]*dy,vy=right[1]*dx+up[1]*dy;
  const len=Math.hypot(vx,vy),power=Math.min(1,Math.hypot(dx,dy));return len?[vx/len*power,vy/len*power]:[0,0];
 }
-function frame(t){let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
+// Read-only rolling diagnostic. Rendering cost measures CPU submission;
+// rAF frame spacing is not a GPU timestamp and not an isolated physics rate.
+const frameMetrics=[];let prevMetricFrame=0,latestPerf=null;
+function profile(){return {...summarizePerfFrames(frameMetrics),renderer:renderer.mode,renderScale,canvasPixels:canvas.width*canvas.height,cameraMode:timeCamera?'seconds':'legacy'};}
+function frame(t){
+ const rafMs=prevMetricFrame?t-prevMetricFrame:NaN;prevMetricFrame=t;
+ let elapsed=Math.min(.08,(t-last)/1000);last=t;acc+=elapsed;
  const info=viewport(),p=getBody(world,'human');
- camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;
- cam=makeCamera({target:camTarget,azimuth:rot,elevation:1.03,...info});
+ if(timeCamera)camTarget=advanceCameraTarget(camTarget,[p.x,p.y,p.z+.7],elapsed);
+ else {camTarget[0]+=(p.x-camTarget[0])*.16;camTarget[1]+=(p.y-camTarget[1])*.16;camTarget[2]+=(p.z+.7-camTarget[2])*.10;}
+ cam=makeCamera({target:camTarget,azimuth:rot,elevation:pitch,...info});
+ const physicsStart=performance.now();
+ let physicsSteps=0;
  if(!paused){let iter=0;while(acc>=1/60&&iter<4){
   if(bridge)bridge.advance(1/60,keyDirection());else stepLive(world,1/60,keyDirection());
-  acc-=1/60;iter++;}}
+  acc-=1/60;iter++;physicsSteps++;}}
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
- const tris=floorGeometry.concat(sceneTriangles(world.scene).map(t=>({...t,material:paletteColor(world.scene.elements.find(x=>x.id===t.owner)||{})})),actorsMesh());
+ // Camera and solver material can move under a stationary pointer.
+ // Do not raycast every render frame; probe only during authoring and at 8 Hz.
+ if(cursor&&mode!=='move'&&!editDrag&&look.id===null&&t>=lastHoverRecheckAt){
+  lastHoverRecheckAt=t+125;
+  let cratePose='';
+  for(const b of world.bodies)if(b.kind==='crate')
+   cratePose+=b.id+':'+Math.round(b.x*100)+','+Math.round(b.y*100)+','+Math.round(b.z*100)+';';
+  const signature=[mode,rot,pitch,zoom,info.width,info.height,
+   ...camTarget.map(v=>v.toFixed(3)),world.scene.revision,world.scene.motionRevision||0,
+   cratePose].join('|');
+  if(signature!==lastHoverWorldSignature){
+   refreshSelection();
+   lastHoverWorldSignature=signature;
+  }
+ }
+ const simulationCpuMs=performance.now()-physicsStart;
+ const geometryStart=performance.now();
+ const tris=floorGeometry.concat(sceneVisual.triangles(world.scene),actorsMesh());
+ const geometryCpuMs=performance.now()-geometryStart;
+ const drawStart=performance.now();
  renderer.render(tris,cam);renderOverlay(cam);
- playtest.observe(world,{engine:physicsState,camera:cam});
- if(t-lastHud>260){updatePlaytestStatus();const a=getBody(world,'human');hud.textContent=`Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części · ${renderer.lastCost.toFixed(0)} ms CPU`;
+ const drawSubmissionCpuMs=performance.now()-drawStart;
+ frameMetrics.push({frameTimeMs:t,rafMs,physicsSteps,simulationCpuMs,geometryCpuMs,drawSubmissionCpuMs,triangles:tris.length});
+ // A fixed number of frames meant 0.75 s at 240 Hz, 3 s at 60 Hz.
+ // Keep a time-based ~2 s window; bound memory even under odd clocks.
+ while(frameMetrics.length&&(frameMetrics[0].frameTimeMs<t-2000||frameMetrics.length>1000))frameMetrics.shift();
+ // Profile is derived twice per second, not sorted once per render frame.
+ if(t-lastHud>260)latestPerf=profile();
+ playtest.observe(world,{engine:physicsState,camera:cam,performance:latestPerf});
+ if(t-lastHud>260){
+  updatePlaytestStatus();const a=getBody(world,'human');
+  const debug=researchArgs.get('perf')==='1',m=latestPerf;
+  const suffix=debug&&m?` · physics ${m.physics.cpuMsPerStep?.toFixed(2)??'n/a'} ms/krok (${m.physics.steps} kroków) · geometry ${m.geometryCpuMs.median?.toFixed(1)} ms/kl · submit ${m.drawSubmissionCpuMs.median?.toFixed(1)} ms/kl · rAF ${m.rafMs.median?.toFixed(1)} ms`:'';
+  // On a phone, engine identity lives in its own status row. A full
+  // research HUD would obscure the mode/menu controls on a 320px viewport.
+  hud.textContent=window.innerWidth<=760&&!debug?
+   `Z ${a.z.toFixed(1)} m · ${world.scene.elements.length} części`:
+   `Z ${a.z.toFixed(2)} m · ${a.support??'spadanie'} · ${renderer.mode} · ${physicsState} · ${world.scene.elements.length} części${suffix}`;
   if(t-lastNotice>2900&&!researchArgs.get('probe'))message.classList.remove('show');lastHud=t;}
  frameCount++;requestAnimationFrame(frame);
 }
 setMode('move');actionText('Splot Next: ruszaj, pchaj, chwytaj, konstruuj. Wszystko w tej samej przestrzeni XYZ.');
 async function startPhysicsChallenger(){
- const choice=researchArgs.get('physics');
- if(choice!=='rapier'&&choice!=='box3d')return;
- physicsState='loading-'+choice;actionText('Ładowanie '+choice+' · badawcza fizyka, ta sama gra.');
+ // Box3D is the playable R&D default. Legacy remains deliberately
+ // selectable for A/B, never an accidental alternative interpretation.
+ const requested=researchArgs.get('physics');
+ const choice=requested==='legacy'?'legacy':requested==='rapier'?'rapier':'box3d';
+ if(choice==='legacy'){
+  showEngine('legacy','LEGACY · fizyka porównawcza (wybrana ręcznie)');
+  actionText('Tryb legacy — tylko porównanie. Splot Box3D uruchomisz bez parametru.');
+  return;
+ }
+ const initialPaused=paused,pauseButton=$('#pause'),resetButton=$('#reset');
+ // No unrecorded legacy sim time or movement while fetching WebAssembly.
+ paused=true;world.paused=true;acc=0;
+ pauseButton.disabled=true;resetButton.disabled=true;pauseButton.textContent='Ładowanie…';
+ physicsState='loading-'+choice;
+ showEngine('loading','Ładowanie '+(choice==='box3d'?'Box3D':'Rapier')+' · świat zatrzymany');
+ actionText('Ładowanie '+choice+' · zaczekaj na właściwą fizykę.');
  try{
   if(choice==='rapier'){
    const module=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0?bundle');
@@ -2071,10 +3065,11 @@ async function startPhysicsChallenger(){
    bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
   }
   physicsState=choice;
-  refreshActorContactUI();refreshBoarUI();
+  showEngine('ready',(choice==='box3d'?'Box3D':'Rapier')+' · aktywna fizyka badawcza');
+  refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   actionText(choice+' aktywny · kontakt R&D, ten sam renderer/edytor. Nie jest to zatwierdzony solver.');
   const probe=researchArgs.get('probe');
-  if(['ascent','fall','edit','grip'].includes(probe)){
+  if(['ascent','fall','edit','grip','material','material-stack'].includes(probe)){
    bridge?.dispose?.();if(bridge?.engine?.free)bridge.engine.free();
    world=createLiveWorld(); // identical deterministic setup for every backend
    const human=getBody(world,'human'),crate=getBody(world,'crate-1');
@@ -2084,7 +3079,62 @@ async function startPhysicsChallenger(){
    bridge=choice==='rapier'?createRapierBridge(world,rapierLibrary):createBox3DBridge(world,box3dLibrary,box3dOptions);
    world.paused=false;
    let ok=false,detail='';
-   if(probe==='ascent'){
+   if(probe==='material-stack'){
+    if(choice==='box3d'){
+     // Falsifies a falling-only "success": one player-authored object
+     // must support another, then lose that support when removed.
+     const baseId='stack-base',topId='stack-top';
+     const lower=insertElement(world.scene,{id:baseId,kind:'box',
+      min:[9,6,1],max:[10.2,7.2,2],material:'stone'});
+     const upper=insertElement(world.scene,{id:topId,kind:'box',
+      min:[9,6,4],max:[10.2,7.2,5.1],material:'wood'});
+     bridge.syncStatics();
+     for(let i=0;i<30;i++)bridge.advance(1/60,[0,0]);
+     const up=setBoxMotion(world.scene,topId,'dynamic');bridge.syncStatics();
+     for(let i=0;i<180;i++)bridge.advance(1/60,[0,0]);
+     const held=world.scene.elements.find(e=>e.id===topId),onBase=held?.min[2];
+     const removed=removeElement(world.scene,baseId);bridge.syncStatics();
+     for(let i=0;i<180;i++)bridge.advance(1/60,[0,0]);
+     const falling=world.scene.elements.find(e=>e.id===topId),onGround=falling?.min[2];
+     const groundedSupport=supportCandidates(world.scene,9.6,6.6)
+      .some(h=>h.id===topId&&Math.abs(h.z-1.1)<.12);
+     const stop=setBoxMotion(world.scene,topId,'anchored');bridge.syncStatics();
+     const fixedBottom=world.scene.elements.find(e=>e.id===topId)?.min[2];
+     for(let i=0;i<60;i++)bridge.advance(1/60,[0,0]);
+     const finalBottom=world.scene.elements.find(e=>e.id===topId)?.min[2];
+     ok=lower.ok&&upper.ok&&up.ok&&removed.ok&&stop.ok&&
+      Math.abs(onBase-2)<.12&&Math.abs(onGround)<.12&&
+      groundedSupport&&Math.abs(fixedBottom-finalBottom)<.02;
+     detail='stack-top-on-base='+onBase?.toFixed(2)+
+      ' after-support-removal='+onGround?.toFixed(2)+
+      ' reanchor='+finalBottom?.toFixed(2)+
+      ' shared-support-query='+groundedSupport;
+    }else{ok=false;detail='material-stack unsupported by Rapier';}
+   }else if(probe==='material'){
+    if(choice==='box3d'){
+     const id='research-falling-block';
+     insertElement(world.scene,{id,kind:'box',min:[9,6,4],max:[10.2,7.2,5.1],material:'wood'});
+     bridge.syncStatics();
+     for(let i=0;i<60;i++)bridge.advance(1/60,[0,0]);
+     const initial=world.scene.elements.find(e=>e.id===id),stationary=initial?.min[2];
+     const oldRevision=world.scene.revision;
+     const released=setBoxMotion(world.scene,id,'dynamic');bridge.syncStatics();
+     const editRevision=world.scene.revision;
+     for(let i=0;i<180;i++)bridge.advance(1/60,[0,0]);
+     const moved=world.scene.elements.find(e=>e.id===id);
+     const bottom=moved?.min[2],stableId=moved?.id===id;
+     const postPhysicsRevision=world.scene.revision;
+     const anchored=setBoxMotion(world.scene,id,'anchored');bridge.syncStatics();
+     const anchoredBottom=world.scene.elements.find(e=>e.id===id)?.min[2];
+     for(let i=0;i<60;i++)bridge.advance(1/60,[0,0]);
+     const finalBottom=world.scene.elements.find(e=>e.id===id)?.min[2];
+     ok=released.ok&&anchored.ok&&stableId&&Math.abs(stationary-4)<.001&&
+      Math.abs(bottom)<.10&&Math.abs(anchoredBottom-finalBottom)<.02&&
+      editRevision===oldRevision+1&&postPhysicsRevision===editRevision;
+     detail='static-z='+stationary?.toFixed(2)+' fall-z='+bottom?.toFixed(2)+
+      ' reanchor-z='+finalBottom?.toFixed(2)+' id='+stableId+' auth-revision='+postPhysicsRevision;
+    }else{ok=false;detail='material lifecycle unsupported by Rapier';}
+   }else if(probe==='ascent'){
     for(let i=0;i<225;i++)bridge.advance(1/60,[1,0]);
     ok=human.x>19&&human.z>1.8;
     detail='ramp→deck / x='+human.x.toFixed(2)+' z='+human.z.toFixed(2)+' support='+human.support;
@@ -2113,13 +3163,20 @@ async function startPhysicsChallenger(){
    paused=true;world.paused=true;
    physicsMessage=(ok?'PASS':'FAIL')+' / '+choice+' / '+detail;actionText(physicsMessage);
   }
+  if(!['ascent','fall','edit','grip','material','material-stack'].includes(probe)){
+   paused=initialPaused;world.paused=initialPaused;acc=0;
+  }
+  pauseButton.disabled=false;resetButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
  }catch(err){
-  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();
+  bridge?.dispose?.();bridge=null;physicsState='legacy-fallback';refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
+  paused=initialPaused;world.paused=initialPaused;acc=0;
+  pauseButton.disabled=false;resetButton.disabled=false;pauseButton.textContent=paused?'Uruchom':'Pauza';
+  showEngine('fallback','AWARIA '+(choice==='box3d'?'Box3D':'Rapier')+' · starsza fizyka AWARYJNA');
   physicsMessage=String(err?.stack||err);
-  actionText(choice+' nieudany; fallback to legacy. '+physicsMessage.slice(0,130));
+  actionText('AWARIA '+choice+': uruchomiono fizykę awaryjną (legacy). '+physicsMessage.slice(0,120));
  }
 }
-refreshActorContactUI();refreshBoarUI();requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},setMode,reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get renderScale(){return renderScale},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,get visualStats(){return sceneVisual.stats()},clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
 
 </script></body></html>

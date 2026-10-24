@@ -8,13 +8,15 @@ import {supportCandidates,clearanceAt} from './spatial-core.mjs';
 import {splotToBox3D,box3DToSplot,panelQuaternionInBox3D} from './box3d-basis.mjs';
 import {compliantActorImpulse} from './actor-contact.mjs';
 import {createBoarIntent} from './boar-intent.mjs';
+import {partMotionMode,boxCenter,translateBoxToCenter,boxVolume} from './part-lifecycle.mjs';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 function bodyKey(x){return x.id;}
-export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage'}={}){
+export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage',substeps=4}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
  if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
+ if(![4,8,12,16].includes(substeps))throw Error('unsupported research solver substeps');
  let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  const boarMind=createBoarIntent({mode:boarMode});
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
@@ -22,7 +24,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
  const wd=b3.b3DefaultWorldDef();
  wd.gravity=[0,-16,0];
  const engine=b3.b3CreateWorld(wd);
- const statics=new Map(),refs=new Map();
+ const statics=new Map(),dynamicParts=new Map(),refs=new Map();
  const state={revision:-1,warning:'',disposed:false};
  const shapeDef=(density=0)=>{const d=b3.b3DefaultShapeDef();d.density=density;d.baseMaterial.friction=.78;d.baseMaterial.restitution=.02;return d;};
  const makeFixed=(centerS,halfS,q=null)=>{
@@ -45,14 +47,51 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
  }
  const ground=makeFixed([w.scene.width/2,w.scene.height/2,-.35],
   [w.scene.width/2,.35,w.scene.height/2]);
+ function makeDynamicBox(e){
+  const center=boxCenter(e),half=e.min.map((v,i)=>(e.max[i]-v)/2);
+  const bd=b3.b3DefaultBodyDef();
+  bd.type=b3.b3BodyType.b3_dynamicBody;
+  bd.position=splotToBox3D(center);
+  // AABB scene truth cannot express arbitrary angular rotation. Lock it
+  // explicitly; this is a translation-only rigid body experiment, NOT
+  // beam/structure collapse, torque, or a complete construction solver.
+  bd.motionLocks.angularX=true;bd.motionLocks.angularY=true;bd.motionLocks.angularZ=true;
+  bd.linearDamping=.35;bd.angularDamping=1.5;
+  const rb=b3.b3CreateBody(engine,bd);
+  const halfBox=[half[0],half[2],half[1]];
+  const density=e.material==='wood'?35:80;
+  b3.b3CreateBoxShape(rb,shapeDef(density),...halfBox);
+  return {rb,element:e,volume:boxVolume(e)};
+ }
  function syncStatics(){
   if(w.scene.revision===state.revision)return;
   const current=new Map(w.scene.elements.map(e=>[e.id,e]));
-  for(const [id,entry]of statics)if(!current.has(id)||JSON.stringify(current.get(id))!==entry.hash){
-   b3.b3DestroyBody(entry.rb);statics.delete(id);
+  for(const [id,entry]of statics){
+   const e=current.get(id);
+   if(!e||partMotionMode(e)==='dynamic'||JSON.stringify(e)!==entry.hash){
+    b3.b3DestroyBody(entry.rb);statics.delete(id);
+   }
   }
-  for(const [id,e]of current)if(!statics.has(id))
-   statics.set(id,{rb:makePart(e),hash:JSON.stringify(e)});
+  for(const [id,entry]of dynamicParts){
+   const e=current.get(id);
+   // Object identity is stable across physics translations, but changes
+   // on authored replaceElement. Never recreate every tick.
+   if(!e||partMotionMode(e)!=='dynamic'||entry.element!==e){
+    b3.b3DestroyBody(entry.rb);dynamicParts.delete(id);
+    if(e&&partMotionMode(e)==='anchored')
+     w.events.push({type:'part-anchored',id,time:w.time});
+   }
+  }
+  for(const [id,e]of current){
+   if(partMotionMode(e)==='dynamic'){
+    if(!dynamicParts.has(id)){
+     dynamicParts.set(id,makeDynamicBox(e));
+     w.events.push({type:'part-dynamic',id,time:w.time});
+    }
+   }else if(!statics.has(id)){
+    statics.set(id,{rb:makePart(e),hash:JSON.stringify(e)});
+   }
+  }
   state.revision=w.scene.revision;
   // Editing remains permissive; unresolved deep overlaps are a visible debt.
   // Never disguise a teleport/reject as a solver feature.
@@ -197,7 +236,17 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
     }
    }
   }
-  b3.b3World_Step(engine,dt,4);
+  b3.b3World_Step(engine,dt,substeps);
+  // Canonical live geometry follows the actual solver body. Picking,
+  // rasterized faces and surface queries then see the same updated shape.
+  for(const [id,entry]of dynamicParts){
+   b3.b3Body_GetPosition(position,entry.rb);
+   const center=box3DToSplot(position);
+   if(translateBoxToCenter(entry.element,center)){
+    // Not a new authoring revision; physical-state version is separate.
+    w.scene.motionRevision=(w.scene.motionRevision||0)+1;
+   }
+  }
   human?.controller.postStep(dt);boar?.controller.postStep(dt);
   w.time+=dt;
   for(const [id,ref]of refs){
@@ -220,6 +269,27 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
   if(!state.disposed){b3.b3DestroyWorld(engine);state.disposed=true;}
  }
  return {engine,advance,dispose,syncStatics,syncBodies,
+  get solverSubsteps(){return substeps},
+  // Explicit research probes, never called from normal game logic.
+  // True solver state: a mirrored Splot position/support is NOT proof
+  // that the WASM body is awake or has processed a newly authored contact.
+  researchCrateState(id){
+   const ref=refs.get(id);
+   if(ref?.kind!=='crate')return null;
+   if(typeof b3.b3Body_IsAwake!=='function')throw Error('Box3D WASM b3Body_IsAwake unavailable');
+   b3.b3Body_GetPosition(position,ref.rb);
+   b3.b3Body_GetLinearVelocity(velocity,ref.rb);
+   return {id,awake:b3.b3Body_IsAwake(ref.rb),
+    xyz:box3DToSplot(position),velocity:box3DToSplot(velocity)};
+  },
+  researchWakeCrate(id){
+   const ref=refs.get(id);
+   if(ref?.kind!=='crate')throw Error('research wake requires a live crate');
+   if(typeof b3.b3Body_SetAwake!=='function')throw Error('Box3D WASM b3Body_SetAwake unavailable');
+   b3.b3Body_SetAwake(ref.rb,true);
+   return this.researchCrateState(id);
+  },
+
   setActorContactMode(mode){
    if(!['ghost','compliant'].includes(mode))throw Error('unknown actor contact law');
    contactMode=mode;contactNear=false;lastContactImpulse=0;
@@ -232,7 +302,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
   },
   get boarMode(){return boarMind.mode},
   get warning(){return state.warning},
-  get status(){return {parts:statics.size,bodies:refs.size,gripLaw,
+  get status(){return {parts:statics.size,bodies:refs.size,dynamicParts:dynamicParts.size,gripLaw,
    actorContact:contactMode,contactStarts,lastContactImpulse,boarMode:boarMind.mode,boarPhase:boarMind.phase,
    donor:'A-triple-prime derived; research only',events:w.events.slice(-4)}}};
 }

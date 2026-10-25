@@ -31,6 +31,7 @@ on:
       - 'tests/browser-next-panel-cues.mjs'
       - 'tests/browser-next-R6-durable-world.mjs'
       - 'tests/browser-next-R7-mobile-loop.mjs'
+      - 'tests/browser-next-boar-perception.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -254,6 +255,19 @@ jobs:
           path: |
             /tmp/splot-R7-*.png
             /tmp/splot-R7-loop.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Check boar sight against real authored wall in Box3D
+        if: contains(github.event.head_commit.message, '[boar-sight]')
+        run: node tests/browser-next-boar-perception.mjs
+      - name: Preserve only synthetic sight/memory experiment artifacts
+        if: always() && contains(github.event.head_commit.message, '[boar-sight]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-boar-perception
+          path: |
+            /tmp/splot-boar-*.png
+            /tmp/splot-boar-perception.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

@@ -22,6 +22,7 @@ on:
       - 'tests/browser-next-contact-ddmin.mjs'
       - 'tests/browser-next-crate-ddmin.mjs'
       - 'tests/browser-next-contact-chain.mjs'
+      - 'tests/browser-next-materialization-ab.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -130,6 +131,17 @@ jobs:
         with:
           name: splot-contact-chain
           path: /tmp/splot-contact-chain.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Compare opt-in matter-creation semantics on matched failure witness
+        if: contains(github.event.head_commit.message, '[material-ab]')
+        run: node tests/browser-next-materialization-ab.mjs
+      - name: Preserve synthetic materialization A/B evidence
+        if: always() && contains(github.event.head_commit.message, '[material-ab]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-materialization-ab
+          path: /tmp/splot-materialization-ab.json
           if-no-files-found: warn
           retention-days: 14
       - name: Archive temporary synthetic camera visual evidence

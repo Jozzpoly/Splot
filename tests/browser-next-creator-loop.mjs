@@ -55,18 +55,33 @@ try{
  // Real, initially anchored elevated ramp/deck; target a single known face.
  await page.locator('[data-mode="edit"]').click();
  const deck=await page.evaluate(()=>structuredClone(
-  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')));
- assert.ok(deck&&deck.kind==='panel','real elevated part available');
- const midpoint=[(deck.a[0]+deck.b[0])/2,(deck.a[1]+deck.b[1])/2,
-  (deck.a[2]+deck.b[2])/2];
- const point=await xy(midpoint);
+  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp')));
+ assert.ok(deck&&deck.kind==='panel','real elevated ramp available');
+ const selectedPoint=await page.evaluate(()=>{
+  const scene=window.__splotNext.world.scene,c=window.__splotNext.camera,
+   el=document.querySelector('#world'),r=el.getBoundingClientRect();
+  const candidates=[];
+  for(const x of [14,14.5,15,15.5,16,16.5,17]){
+   const point=[x,13,2.4*(x-13)/5],v=projectPoint(c,point);
+   const px=r.left+v.x/el.width*r.width,py=r.top+v.y/el.height*r.height;
+   const elem=document.elementFromPoint(px,py);
+   const hits=pickPixel(scene,c,v.x,v.y).slice(0,5).map(h=>h.id);
+   candidates.push({point,x:px,y:py,element:elem?.id||elem?.tagName,hits});
+  }
+  const match=candidates.find(p=>p.element==='world'&&p.hits[0]==='footbridge-ramp');
+  return {match,candidates};
+ });
+ console.log('CREATOR SELECTABLE RAMP',JSON.stringify(selectedPoint));
+ assert.ok(selectedPoint.match,'fixture must choose a truly visible ray-hit ramp, not a guessed point');
+ const midpoint=selectedPoint.match.point;
+ const point={x:selectedPoint.match.x,y:selectedPoint.match.y};
  await page.mouse.move(point.x,point.y);
  await page.waitForTimeout(170);
  const firstTarget=await page.locator('#target').textContent();
  const hoverAlpha=await alpha();
  await page.screenshot({path:'/tmp/splot-creator-next-hover-before.png'});
  report.hover={firstTarget,hoverAlpha};
- assert.match(firstTarget,/footbridge-deck/,'pointing at deck should identify deck');
+ assert.match(firstTarget,/footbridge-ramp/,'pointing at visible ramp should identify the ramp');
  // The expected interaction is a full targeted-part cue BEFORE destructive
  // click, not just a tiny dot. Fixed geometry can be measured by alpha pixels.
  const noSelectionAfterHover=await page.evaluate(()=>({
@@ -103,18 +118,18 @@ try{
  await page.mouse.move(to.x,to.y,{steps:8});
  await page.mouse.up();
  const changed=await page.evaluate(()=>structuredClone(
-  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')));
+  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp')));
  report.edit={moved:Math.hypot(changed.a[0]-deck.a[0],changed.a[1]-deck.a[1]),
   idPreserved:changed.id===deck.id};
- assert.ok(report.edit.moved>.4,'physical pointer must translate same deck panel');
+ assert.ok(report.edit.moved>.4,'physical pointer must translate same ramp panel');
  assert.equal(report.edit.idPreserved,true);
  await page.locator('#undo').click();
  const undone=await page.evaluate(()=>structuredClone(
-  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')));
+  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp')));
  assert.deepEqual(undone,deck,'undo restores real panel');
  await page.locator('#redo').click();
  const redone=await page.evaluate(()=>structuredClone(
-  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-deck')));
+  window.__splotNext.world.scene.elements.find(e=>e.id==='footbridge-ramp')));
  assert.deepEqual(redone,changed,'redo restores edited panel');
  report.edit.undoRedo=true;
  await page.screenshot({path:'/tmp/splot-creator-next-edited.png'});

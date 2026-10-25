@@ -33,6 +33,7 @@ on:
       - 'tests/browser-next-R7-mobile-loop.mjs'
       - 'tests/browser-next-boar-perception.mjs'
       - 'tests/browser-next-dynamic-sight.mjs'
+      - 'tests/browser-next-actor-facing.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -282,6 +283,19 @@ jobs:
           path: |
             /tmp/splot-R9-*.png
             /tmp/splot-R9-crates.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify opt-in visual actor heading matches actual movement
+        if: contains(github.event.head_commit.message, '[actor-facing]')
+        run: node tests/browser-next-actor-facing.mjs
+      - name: Preserve actor heading visual and physics A/B
+        if: always() && contains(github.event.head_commit.message, '[actor-facing]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-actor-facing
+          path: |
+            /tmp/splot-R10-*.png
+            /tmp/splot-R10-facing.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

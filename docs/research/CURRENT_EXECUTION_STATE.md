@@ -1,6 +1,6 @@
 # Splot Next — CURRENT AGENT EXECUTION
 
-**Agent-only sparse bootstrap · 24 October 2026 · source of current research direction**
+**Agent-only sparse bootstrap · 25 October 2026 · source of current research direction**
 
 ## Verified live truth
 - Active [PR #5](https://github.com/Jozzpoly/Splot/pull/5): **DRAFT**, branch `research/material-part-lifecycle-2026-10-20`, base donor research `research/box3d-donor-live-parity-2026-10-20`; do NOT merge or touch `main` without Owner authorization.
@@ -25,8 +25,18 @@ Actual Chrome+Box3D 0.1.1 at **60 Hz × 8 substeps**, same root world (human, bo
 - Control **same material, no explicit waking**: four solids added, zero bodies explicitly woken; no motion or escape, but unresolved sleeping overlaps remain. Control **no new solids**: no motion or escape. Both controls start from the same world.
 - These are pathological synthetic overlaps; game feel and actual construction safety remain unverified. No default game behavior altered.
 
+## 25 October — bounded materialization A/B (research PASS, material-contact problem OPEN)
+- Eight opt-in Chrome + actual Box3D 0.1.1 scenarios, **both real default 4 substeps and research 8 substeps**, 60 Hz, 180 settling + 660 running ticks: [CI #40193079285](https://github.com/Jozzpoly/Splot/actions/runs/40193079285) PASS, code `f63c42d`, evidence artifact `splot-materialization-ab` (14-day retention). Stable full geometry, four anchored boxes, seven added crates (same authored seed and schedule per variant); test validates final geometry to <1e-6.
+- Variants and whether ANY crate leaves supported world bounds: **instant creation + local wake: FAIL at 4 and 8**; **create all then wake: FAIL at 4, no escape at 8**; **stagger 4 builds at ticks 15/75/135/195: no escape at either 4 or 8**; **rise 4 anchored blocks vertically over 24 solver steps each: no escape at either 4 or 8**.
+- This is **not successful contact reconciliation**. All four policies leave **5–8 approximate crate↔static AABB overlaps** at the end. Especially dangerous: batch waking reduces catastrophic motion only in one solver setting. Avoid promoting solver rate or batch waking from one scenario.
+- Baseline witness at 8 substeps retains strict tick 44 speed, tick 60 XY exit, tick 93 below-ground. At 4 substeps events differ (XY escape tick 82 and below-ground tick 121): do not conflate signatures.
+- The vertical-extrusion variant directly mutates a *research fixture* across 24 ticks; it is **not implemented in the playable game**. Staggered creation also changes construction timing and would materially affect Owner experience. Comparison is not a head-to-head cost benchmark. Actual solver states after settling can differ with 4 vs 8 substeps despite identical authored seeds. No Owner playtest of these semantics exists.
+- The work has reached diminishing returns for synthetic fixture optimization. Important unanswered question is which semantics, if any, could be fun, controllable and causally legible in real construction, while preventing both catastrophic ejections and dormant unresolved overlap.
+
 ## Decision for next autonomous run
-Do not keep minimizing arbitrary stress fixtures, blindly raise solver rates, or celebrate green CI as proof of physical validity. If the *actual pinned* `box3d.js@0.1.1` exposes contact manifolds/normal impulses, inspect the tick 39–44 graph; otherwise record the ABI limitation rather than substitute approximations. Then evaluate only a few reversible, explicit materially-grounded materialization semantics against both the fixture and intended playful creation, without choosing policy on the Owner's behalf.
+**Do not automatically extend the synthetic contact campaign.** The minimal witness, matched controls and 4×/8× creation-semantics A/B provide a sufficient present diagnosis: temporal construction changes the result but none of the tested policies reconciles crowded contacts. No new physics default or materialization policy is authorized or justified.
+
+**Prioritize the playable creator loop:** source-backed review of part visibility, selected-layer/outline, camera perception and edit→Undo→run on a small meaningful authored structure, then an Owner freeplay gate on the actual current build (desktop/phone). Reuse existing `?faces=exterior-boxes`, `?camera=seconds`, `?pixels=75` research A/B where relevant; do not turn those into defaults without evidence. Prefer one strong end-to-end example over more simulator-only stress. Owner feedback may override this plan.
 
 The strategic project objective is **a playable, organic, permissively editable world**, not victory over one synthetic fixture. Actual Owner testing of construction feel, physics, renderer legibility, and desktop/mobile is an OPEN gate. Splot remains autonomous from Jaskinia.
 

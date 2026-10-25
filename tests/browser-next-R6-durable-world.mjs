@@ -126,6 +126,8 @@ try{
  await phone.locator('#mobile-menu').click();
  await phone.locator('#pause').click();
  assert.equal(await phone.evaluate(()=>window.__splotNext.world.paused),false);
+ assert.match(await phone.locator('#notice').textContent(),/Symulacja uruchomiona/,
+  'after recovery, visible feedback must not misleadingly say the world is paused');
  await phone.locator('#mobile-menu').click();
  const joystick=await phone.locator('#joystick').boundingBox();
  assert.ok(joystick&&joystick.width>90,'visible mobile joystick');

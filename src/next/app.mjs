@@ -153,7 +153,8 @@ quality.onclick=()=>{
  playtest.event('render-resolution',{scale:renderScale});
  actionText('Obraz '+Math.round(renderScale*100)+'% · tylko rozdzielczość; świat i Box3D bez zmian.');
 };
-$('#pause').onclick=()=>{if(physicsState.startsWith('loading-'))return;paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza'};
+$('#pause').onclick=()=>{if(physicsState.startsWith('loading-'))return;paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza';
+ actionText(paused?'Świat zatrzymany — możesz budować i poprawiać.':'Symulacja uruchomiona — materia znów reaguje.');};
 $('#grip').onclick=()=>{if(physicsState.startsWith('loading-')){actionText('Fizyka wczytuje się.');return;}const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};

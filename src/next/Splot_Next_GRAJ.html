@@ -2472,6 +2472,8 @@ renderScale=researchArgs.get('pixels')==='50'?.5:researchArgs.get('pixels')==='7
 const engineState=$('#engine-state');
 const showEngine=(kind,label)=>{engineState.dataset.state=kind;engineState.textContent=label;};
 const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
+const ownPresenceExperiment=researchArgs.get('visibility')==='player-occlusion'; // R&D only, never default
+let lastPresenceProbe=-Infinity,presenceInfo=null;
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
 const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage',
@@ -2921,6 +2923,31 @@ function actorsMesh(){let out=[];
 }
 function renderOverlay(cam){const ctx=$('#overlay').getContext('2d'),w=$('#overlay').width,h=$('#overlay').height;
  ctx.clearRect(0,0,w,h);
+ // Research-only own-player position cue when an authored solid is truly
+ // between the camera and the player's torso. Never expose hidden NPCs.
+ // Does NOT remove any depth-tested faces or alter actual ray picking.
+ if(ownPresenceExperiment&&presenceInfo?.occluded){
+  const actor=getBody(world,'human'),k=w/cam.width;
+  if(actor){
+   const feet=projectPoint(cam,[actor.x,actor.y,actor.z]);
+   const top=projectPoint(cam,[actor.x,actor.y,actor.z+actor.h]);
+   const cx=(feet.x+top.x)*.5*k,cy=(feet.y+top.y)*.5*k;
+   const span=Math.hypot(top.x-feet.x,top.y-feet.y)*k;
+   ctx.save();
+   ctx.fillStyle='rgba(169,224,189,.11)';
+   ctx.strokeStyle='rgba(190,240,208,.92)';
+   ctx.lineWidth=Math.max(1.5,1.8*k);
+   ctx.setLineDash([5*k,4*k]);
+   ctx.beginPath();ctx.ellipse(cx,cy,Math.max(10*k,span*.25),Math.max(16*k,span*.65),0,0,Math.PI*2);
+   ctx.fill();ctx.stroke();ctx.setLineDash([]);
+   ctx.beginPath();ctx.arc(top.x*k,top.y*k,Math.max(4*k,span*.11),0,Math.PI*2);ctx.stroke();
+   ctx.font=`${Math.max(10,11*k)}px system-ui`;
+   ctx.fillStyle='rgba(211,246,220,.95)';
+   ctx.fillText('POSTAĆ ZA: '+String(presenceInfo.blocker||'?').slice(0,24),
+    Math.max(8*k,Math.min(w-180*k,cx+16*k)),Math.max(20*k,cy-12*k));
+   ctx.restore();
+  }
+ }
  if(selected&&mode!=='move'){const p=projectPoint(cam,selected.point),k=$('#overlay').width/cam.width;
   ctx.beginPath();ctx.arc(p.x*k,p.y*k,9*k,0,Math.PI*2);ctx.strokeStyle='#ffd59e';ctx.lineWidth=2*k;ctx.stroke();
  }
@@ -3030,6 +3057,15 @@ function frame(t){
   }
  }
  const simulationCpuMs=performance.now()-physicsStart;
+ // 8 Hz bounded material-occlusion query in the OPT-IN presence experiment,
+ // not one expensive raycast per render frame or one per actor.
+ if(ownPresenceExperiment&&t-lastPresenceProbe>=125){
+  const actor=getBody(world,'human');
+  const c=actor?occlusionToPoint(world.scene,cam,
+   [actor.x,actor.y,actor.z+actor.h*.55]):null;
+  presenceInfo={occluded:!!c&&!c.visible,blocker:c?.blocker?.id||null};
+  lastPresenceProbe=t;
+ }
  const geometryStart=performance.now();
  const tris=floorGeometry.concat(sceneVisual.triangles(world.scene),actorsMesh());
  const geometryCpuMs=performance.now()-geometryStart;
@@ -3197,6 +3233,6 @@ async function startPhysicsChallenger(){
  }
 }
 refreshActorContactUI();refreshBoarUI();refreshMaterialUI();requestAnimationFrame(frame);void startPhysicsChallenger();
-window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get renderScale(){return renderScale},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,get visualStats(){return sceneVisual.stats()},clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
+window.__splotNext={get world(){return world},get renderer(){return renderer.mode},get mode(){return mode},get camera(){return cam},get physics(){return physicsState},get renderScale(){return renderScale},get physicsMessage(){return physicsMessage},get challenger(){return bridge},get playtest(){return {status:playtest.status({visible:!document.hidden,focused:document.hasFocus()}),report:playtest.report()}},get errors(){return []},profile,get visualStats(){return sceneVisual.stats()},get presenceInfo(){return presenceInfo},clearProfile:()=>{frameMetrics.length=0;prevMetricFrame=0},setMode,partMotion:(id,action)=>{if(physicsState!=='box3d'||!bridge)return {ok:false,reason:'box3d-only'};const r=setBoxMotion(world.scene,id,action);if(r.ok){editHistory.invalidateId(id);refreshEditButtons();bridge.syncStatics();}return r},reset:()=>$('#reset').click(),pause:()=>$('#pause').click(),step:(n,dir=[0,0])=>{for(let i=0;i<n;i++){if(bridge)bridge.advance(1/60,dir);else stepLive(world,1/60,dir)}},build:(element)=>insertElement(world.scene,element)};
 
 </script></body></html>

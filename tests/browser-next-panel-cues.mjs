@@ -35,6 +35,40 @@ try{
    visual:state.visual,gripLaw:state.gripLaw}));
   await page.close();
  }
+ // Stronger than triangle counts: the exact running WebGL depth renderer
+ // must produce measurably different visible pixels from a SAME-state scene.
+ // Both candidates use identical camera and physics, in the same page.
+ const same=await ctx.newPage();
+ await same.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html',{waitUntil:'domcontentloaded'});
+ await same.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ const pixelEvidence=await same.evaluate(()=>{
+  const g=window.__splotNext,scene=g.world.scene,cam=g.camera;
+  const draw=flag=>{
+   const canvas=document.createElement('canvas');
+   canvas.width=1000;canvas.height=700;
+   const renderer=new WebGLDepthRenderer(canvas);
+   renderer.render(createSceneVisualCache({plankSeams:flag}).triangles(scene),cam);
+   renderer.gl.finish();
+   const pixels=new Uint8Array(canvas.width*canvas.height*4);
+   renderer.gl.readPixels(0,0,canvas.width,canvas.height,
+    renderer.gl.RGBA,renderer.gl.UNSIGNED_BYTE,pixels);
+   return pixels;
+  };
+  const a=draw(false),b=draw(true);
+  let changed=0,bright=0,maxRgbDelta=0;
+  for(let i=0;i<a.length;i+=4){
+   const delta=Math.max(Math.abs(a[i]-b[i]),Math.abs(a[i+1]-b[i+1]),Math.abs(a[i+2]-b[i+2]));
+   maxRgbDelta=Math.max(maxRgbDelta,delta);
+   if(delta>=12)changed++;
+   if(delta>=30)bright++;
+  }
+  return {changedPixels:changed,highContrastPixels:bright,maxRgbDelta,
+   totalPixels:a.length/4};
+ });
+ console.log('R5 SAME-CAMERA DEPTH FRAMEBUFFER DELTA',JSON.stringify(pixelEvidence));
+ assert.ok(pixelEvidence.changedPixels>100,
+  'render-only cues must be genuinely visible, not just geometry in RAM');
+ await same.close();
  const [a,b]=outcomes;
  assert.equal(a.engine,'box3d');assert.equal(b.engine,'box3d');
  assert.equal(a.renderer,b.renderer);
@@ -44,7 +78,7 @@ try{
  assert.ok(b.visual.staticTriangles>=a.visual.staticTriangles+16,
   'two original wood surfaces must gain true depth-rendered guides');
  await writeFile('/tmp/splot-R5-panel-cues.json',JSON.stringify({schema:'splot-r5-plank-AB-v1',
-  note:'Only visual evidence. NOT Owner art approval.',outcomes},null,2));
+  note:'Only visual evidence. NOT Owner art approval.',outcomes,pixelEvidence},null,2));
  console.log('PASS R5 real WebGL/Box3D default vs opt-in material guides');
  await ctx.close();
 }finally{await browser.close();await new Promise(r=>server.close(r));}

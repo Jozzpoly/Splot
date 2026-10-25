@@ -27,9 +27,10 @@ try{
    b.x=16;b.y=18;b.z=0;b.yaw=n;
    return {boar:[b.x,b.y,b.z],yaw:b.yaw,physics:g.physics};
   },yaw);
-  await put(0);await page.waitForTimeout(350);
+  // Prevent the camera's frame-smoothing from masquerading as actor pixels.
+  await put(0);await page.waitForTimeout(2600);
   const before=await page.locator('#world').screenshot({path:'/tmp/splot-R10-'+mode+'-east.png'});
-  await put(Math.PI/2);await page.waitForTimeout(250);
+  await put(Math.PI/2);await page.waitForTimeout(600);
   const after=await page.locator('#world').screenshot({path:'/tmp/splot-R10-'+mode+'-north.png'});
   report.cases.push({mode,changed:!before.equals(after),bytes:[before.length,after.length]});
   console.log('R10 FACING FRAMES',JSON.stringify(report.cases.at(-1)));

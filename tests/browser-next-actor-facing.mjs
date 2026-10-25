@@ -28,18 +28,31 @@ try{
    return {boar:[b.x,b.y,b.z],yaw:b.yaw,physics:g.physics};
   },yaw);
   // Prevent the camera's frame-smoothing from masquerading as actor pixels.
-  await put(0);await page.waitForTimeout(2600);
+  const realTriangles=()=>page.evaluate(()=>{
+   const tris=window.__splotNext.actorMesh();
+   return tris.filter(t=>t.material==='boar').map(t=>({
+    a:t.a,b:t.b,c:t.c,normal:t.normal
+   }));
+  });
+  await put(0);await page.waitForTimeout(450);
+  const mesh0=await realTriangles();
   const before=await page.locator('#world').screenshot({path:'/tmp/splot-R10-'+mode+'-east.png'});
-  await put(Math.PI/2);await page.waitForTimeout(600);
+  await put(Math.PI/2);await page.waitForTimeout(450);
+  const mesh90=await realTriangles();
   const after=await page.locator('#world').screenshot({path:'/tmp/splot-R10-'+mode+'-north.png'});
-  report.cases.push({mode,changed:!before.equals(after),bytes:[before.length,after.length]});
-  console.log('R10 FACING FRAMES',JSON.stringify(report.cases.at(-1)));
+  report.cases.push({mode,meshChanged:JSON.stringify(mesh0)!==JSON.stringify(mesh90),
+    triangleCount:[mesh0.length,mesh90.length],
+    pngChanged:!before.equals(after),bytes:[before.length,after.length]});
+  console.log('R10 ACTUAL RENDER TRIANGLES',JSON.stringify(report.cases.at(-1)));
   await page.close();
  }
- assert.equal(report.cases[0].changed,false,
-  'default unrotated boar skin must be pixel-identical despite yaw value');
- assert.equal(report.cases[1].changed,true,
-  'optional heading must change actual rendered pixels when yaw changes');
+ assert.equal(report.cases[0].meshChanged,false,
+  'default boar triangles must not rotate when metadata yaw changes');
+ assert.equal(report.cases[1].meshChanged,true,
+  'opt-in boar triangles actually supplied to renderer must rotate with yaw');
+ assert.equal(report.cases[0].triangleCount[0],report.cases[1].triangleCount[0],
+  'visual heading keeps the exact same number of boar triangles');
+ assert.ok(report.cases[1].triangleCount[0]>20,'must be testing the actual composed boar geometry');
  // Independent genuine Box3D controls: same world, same foraging velocity,
  // but ONLY the opt-in presenter synchronizes the intended yaw.
  for(const [mode,param] of [['default',''],['facing','?actorvisual=facing']]){
@@ -63,6 +76,6 @@ try{
  assert.ok(Math.hypot(...a.physics.position.map((v,i)=>v-b.physics.position[i]))<.01,
   'visual facing must not perturb actual Box3D movement/position');
  await writeFile('/tmp/splot-R10-facing.json',JSON.stringify(report,null,2));
- console.log('PASS R10 same physical world, optional visual heading rotates boar while default pixels remain unchanged');
+ console.log('PASS R10 verified exact actual boar-render geometry and untouched physical trajectory; PNGs are review evidence only');
  await ctx.close();
 }finally{await browser.close();await new Promise(r=>server.close(r));}

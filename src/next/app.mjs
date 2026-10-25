@@ -16,7 +16,8 @@ let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selectio
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const editHistory=createEditHistory(256);let editSelectedId=null,editDrag=null; // bounded per-intent snapshots: Owner-scale creator sessions
-const sceneVisual=createSceneVisualCache({exteriorBoxes:new URLSearchParams(location.search).get('faces')==='exterior-boxes'});
+const sceneVisual=createSceneVisualCache({exteriorBoxes:new URLSearchParams(location.search).get('faces')==='exterior-boxes',
+ plankSeams:new URLSearchParams(location.search).get('surfaces')==='planks'});
 const researchArgs=new URLSearchParams(location.search);
 renderScale=researchArgs.get('pixels')==='50'?.5:researchArgs.get('pixels')==='75'?.75:1;
 const engineState=$('#engine-state');

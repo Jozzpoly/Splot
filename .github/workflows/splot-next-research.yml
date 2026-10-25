@@ -28,6 +28,7 @@ on:
       - 'tests/browser-next-living-R3.mjs'
       - 'tests/browser-next-grip-field-ab.mjs'
       - 'tests/browser-next-grip-wall.mjs'
+      - 'tests/browser-next-panel-cues.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -212,6 +213,19 @@ jobs:
           path: |
             /tmp/splot-grip-wall-*.png
             /tmp/splot-grip-wall.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Compare R5 wood-panel material cues in real Chrome
+        if: contains(github.event.head_commit.message, '[plank-ab]')
+        run: node tests/browser-next-panel-cues.mjs
+      - name: Preserve paired R5 material images and geometry control
+        if: always() && contains(github.event.head_commit.message, '[plank-ab]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-r5-panel-cues
+          path: |
+            /tmp/splot-R5-*.png
+            /tmp/splot-R5-panel-cues.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

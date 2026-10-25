@@ -55,3 +55,19 @@ test('changing anchored to dynamic must move to uncached geometry on scene revis
  assert.equal(cache.stats().staticBuilds,2);
  assert.ok(Math.abs(cache.triangles(w).find(t=>t.owner==='anchored'&&t.face==='top').a[2]-3)<1e-8);
 });
+
+test('opt-in wood-panel seams are visual only and preserve physics authoring truth',()=>{
+ const w=createSpatialWorld({width:42,height:32});
+ const e={id:'walkway',kind:'panel',a:[8,9,0],b:[13,9,2],width:2.5,thickness:.25,material:'wood'};
+ assert.equal(insertElement(w,e).ok,true);
+ const before=JSON.stringify(w),raw=createSceneVisualCache(),planks=createSceneVisualCache({plankSeams:true});
+ const defaultTriangles=raw.triangles(w),extra=planks.triangles(w);
+ assert.equal(defaultTriangles.length,12);
+ const guides=extra.filter(t=>t.face==='visual-only-plank-guide');
+ assert.ok(guides.length>=6&&guides.length%2===0);
+ assert.ok(guides.every(t=>t.owner==='walkway'&&t.material==='wood-seam'));
+ assert.ok(guides.every(t=>[t.a,t.b,t.c].flat().every(Number.isFinite)));
+ assert.deepEqual(extra.filter(t=>t.face!=='visual-only-plank-guide'),defaultTriangles);
+ assert.equal(JSON.stringify(w),before,'no mutation of authoring geometry');
+ assert.equal(raw.stats().plankSeams,false);assert.equal(planks.stats().plankSeams,true);
+});

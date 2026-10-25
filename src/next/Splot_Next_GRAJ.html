@@ -1650,7 +1650,29 @@ const SceneVisualCache=(()=>{
 // authored identities. Static authored primitives rebuild on scene revision;
 // Box3D-updated dynamic primitive geometry is regenerated on every render
 // because physics transforms intentionally do NOT increment authored revision.
-function createSceneVisualCache({exteriorBoxes=false}={}){
+// Render-only opt-in guides: surface seams are not separate authored parts,
+// colliders, picking targets or support surfaces.
+function panelPlankSeams(e){
+ if(e.kind!=='panel'||e.material!=='wood')return [];
+ const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],dz=e.b[2]-e.a[2],len=Math.hypot(dx,dy);
+ if(len<1.65)return [];
+ const across=[-dy/len,dx/len],slope=dz/len;
+ const n=[-slope*dx/len,-slope*dy/len,1],mag=Math.hypot(...n),normal=n.map(v=>v/mag);
+ const p=(dist,offset)=>{
+  const t=dist/len;
+  return [e.a[0]+dx*t+across[0]*offset,
+   e.a[1]+dy*t+across[1]*offset,e.a[2]+dz*t+.012];
+ };
+ const triangles=[],stride=Math.max(.83,len/24),half=.012,width=e.width*.475;
+ for(let dist=stride;dist<len-.25;dist+=stride){
+  const a=p(dist-half,-width),b=p(dist+half,-width),
+   c=p(dist+half,width),d=p(dist-half,width);
+  const props={owner:e.id,material:'wood-seam',face:'visual-only-plank-guide',normal};
+  triangles.push({...props,a,b,c},{...props,a,b:c,c:d});
+ }
+ return triangles;
+}
+function createSceneVisualCache({exteriorBoxes=false,plankSeams=false}={}){
  let source=null,revision=-1,anchored=[],builds=0;
  const painted=e=>trianglesFor(e).map(t=>({...t,material:e.material||'stone'}));
  return {
@@ -1658,12 +1680,13 @@ function createSceneVisualCache({exteriorBoxes=false}={}){
    if(source!==world||revision!==world.revision){
     source=world;revision=world.revision;builds++;
     const fixed=world.elements.filter(e=>e.motionType!=='dynamic');
-    anchored=exteriorBoxes?exteriorBoxTriangles(fixed):fixed.flatMap(painted);
+    anchored=(exteriorBoxes?exteriorBoxTriangles(fixed):fixed.flatMap(painted)).concat(
+     plankSeams?fixed.flatMap(panelPlankSeams):[]);
    }
    const moving=world.elements.filter(e=>e.motionType==='dynamic').flatMap(painted);
    return anchored.concat(moving);
   },
-  stats(){return {staticBuilds:builds,staticTriangles:anchored.length,revision,exteriorBoxes}},
+  stats(){return {staticBuilds:builds,staticTriangles:anchored.length,revision,exteriorBoxes,plankSeams}},
   clear(){source=null;revision=-1;anchored=[]}
  };
 }
@@ -2367,7 +2390,7 @@ const {createRapierBridge}=RapierBridge;
 const RenderAdapters=(()=>{
 // Swappable render backend. The scene owns triangles and world coordinates.
 // Neither backend may decide support, collision, pick targets or game state.
-const palette={wood:[154,123,82],stone:[113,121,112],steel:[115,149,162],soil:[58,77,68],leaf:[73,111,88],player:[92,182,154],boar:[181,119,97],crate:[190,146,96],skin:[213,173,136],shadow:[35,51,49],mark:[243,197,118]};
+const palette={wood:[154,123,82],'wood-seam':[93,71,52],stone:[113,121,112],steel:[115,149,162],soil:[58,77,68],leaf:[73,111,88],player:[92,182,154],boar:[181,119,97],crate:[190,146,96],skin:[213,173,136],shadow:[35,51,49],mark:[243,197,118]};
 const normalized=v=>{const k=Math.hypot(...v)||1;return v.map(a=>a/k)};
 const LIGHT=normalized([-.4,-.7,1.1]);
 function colorFor(triangle){
@@ -2466,7 +2489,8 @@ let world=createLiveWorld(),renderer=createRenderer(canvas),mode='move',selectio
 let camTarget=[14.5,14,0],cam=null,last=performance.now(),acc=0,lastHud=0,lastNotice=0,sequence=10,paused=false,frameCount=0;
 let bridge=null,rapierLibrary=null,box3dLibrary=null,physicsState='legacy',physicsMessage='';
 const editHistory=createEditHistory(256);let editSelectedId=null,editDrag=null; // bounded per-intent snapshots: Owner-scale creator sessions
-const sceneVisual=createSceneVisualCache({exteriorBoxes:new URLSearchParams(location.search).get('faces')==='exterior-boxes'});
+const sceneVisual=createSceneVisualCache({exteriorBoxes:new URLSearchParams(location.search).get('faces')==='exterior-boxes',
+ plankSeams:new URLSearchParams(location.search).get('surfaces')==='planks'});
 const researchArgs=new URLSearchParams(location.search);
 renderScale=researchArgs.get('pixels')==='50'?.5:researchArgs.get('pixels')==='75'?.75:1;
 const engineState=$('#engine-state');

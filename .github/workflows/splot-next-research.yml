@@ -27,6 +27,7 @@ on:
       - 'tests/browser-next-player-occlusion.mjs'
       - 'tests/browser-next-living-R3.mjs'
       - 'tests/browser-next-grip-field-ab.mjs'
+      - 'tests/browser-next-grip-wall.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -198,6 +199,19 @@ jobs:
           path: |
             /tmp/splot-grip-*.png
             /tmp/splot-grip-field-ab.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Exercise actual default grip against an authored blocking wall
+        if: contains(github.event.head_commit.message, '[grip-wall]')
+        run: node tests/browser-next-grip-wall.mjs
+      - name: Preserve lived contact comparison evidence
+        if: always() && contains(github.event.head_commit.message, '[grip-wall]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-grip-wall
+          path: |
+            /tmp/splot-grip-wall-*.png
+            /tmp/splot-grip-wall.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

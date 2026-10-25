@@ -49,11 +49,41 @@ try{
      physics:g.physics,worldParts:g.world.scene.elements.map(e=>e.id)};
   });
   await page.screenshot({path:enabled?'/tmp/splot-occlusion-on.png':'/tmp/splot-occlusion-off.png'});
+  let restored=null;
+  if(enabled){
+   // Real UI action: delete the roof, not a direct mutation of scene.elements.
+   await page.locator('[data-mode="erase"]').click();
+   const centre=await page.evaluate(()=>{
+    const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human'),
+     el=document.querySelector('#world'),r=el.getBoundingClientRect(),
+     q=projectPoint(g.camera,[h.x,h.y,2.65]);
+    return {x:r.left+q.x/el.width*r.width,y:r.top+q.y/el.height*r.height};
+   });
+   await page.mouse.click(centre.x,centre.y);
+   await page.mouse.move(4,4);
+   await page.waitForFunction(()=>{
+    const g=window.__splotNext;
+    return !g.world.scene.elements.some(e=>e.id==='synthetic-occlusion-roof')&&
+     g.presenceInfo?.occluded===false;
+   },null,{timeout:5000});
+   restored=await page.evaluate(()=>{
+    const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+    const state=occlusionToPoint(g.world.scene,g.camera,[h.x,h.y,h.z+h.h*.55]);
+    return {visible:state.visible,blocker:state.blocker?.id||null,
+      worldRevision:g.world.scene.revision,physics:g.physics,
+      hasRoof:g.world.scene.elements.some(e=>e.id==='synthetic-occlusion-roof'),
+      presence:g.presenceInfo};
+   });
+   await page.screenshot({path:'/tmp/splot-occlusion-revealed.png'});
+  }
   await page.close();
-  return {setup:state,visual:opaque};
+  return {setup:state,visual:opaque,restored};
  };
  const off=await measure(false),on=await measure(true);
  report.off=off;report.on=on;
+ assert.equal(on.restored?.visible,true,'erasing the material should expose own player');
+ assert.equal(on.restored?.hasRoof,false,'real erase must delete exactly synthetic blocker');
+ assert.equal(on.restored?.physics,'box3d','ordinary creator interaction keeps Box3D solver');
  assert.equal(off.visual.occlusion,'synthetic-occlusion-roof','actual ray must find roof');
  assert.equal(on.visual.occlusion,off.visual.occlusion,'same occluder in both variants');
  // The idle boar is autonomous and may move during independent CDN startup.

@@ -48,11 +48,39 @@ try{
   const moved=end.crate[0]-gripped.crate[0];
   const playerMoved=end.player[0]-gripped.player[0];
   const firstRelease=samples.find(x=>x.grip===null);
+  // Same physical body + same owned input: turn at 90 degrees and reverse,
+  // not just one straight-line impulse response.
+  const turns=[];
+  for(const [key,duration] of [['w',800],['d',800]]){
+   const previous=await position();
+   await page.keyboard.down(key);
+   await page.waitForTimeout(duration);
+   await page.keyboard.up(key);
+   const current=await position();
+   turns.push({key,previous,current});
+  }
+  if(law==='intent-force'){
+   assert.equal(turns[0].current.grip,'crate-1',
+    'candidate must hold physical crate through a 90-degree turn');
+   assert.equal(turns[1].current.grip,'crate-1',
+    'candidate must preserve grip on reversal');
+   assert.ok(turns[0].current.crate[1]-turns[0].previous.crate[1]>1,
+    'actual crate must travel with the player during northward turn');
+   assert.ok(turns[1].current.crate[0]-turns[1].previous.crate[0]>1,
+    'actual crate must travel during eastward reversal');
+   await page.keyboard.press('e');
+   const released=await position();
+   assert.equal(released.grip,null,'intentional E must release physical body');
+   await page.keyboard.press('e');
+   const resumed=await position();
+   assert.equal(resumed.grip,'crate-1','player should be able to regrab at normal reach');
+   turns.push({key:'release-regrab',previous:released,current:resumed});
+  }
   results.push({law,initial:start,gripped,final:end,playerDisplacement:playerMoved,
-   crateDisplacement:moved,firstRelease,trace:samples});
+   crateDisplacement:moved,firstRelease,trace:samples,turns});
   console.log('GRIP FIELD',law,JSON.stringify({start,gripped,
    playerDisplacement:playerMoved,crateDisplacement:moved,
-   last:end,firstRelease}));
+   last:end,firstRelease,turns}));
   await page.screenshot({path:'/tmp/splot-grip-'+law+'.png'});
   await writeFile('/tmp/splot-grip-field-ab.json',JSON.stringify({schema:'splot-grip-field-AB-v1',results},null,2));
   await page.close();

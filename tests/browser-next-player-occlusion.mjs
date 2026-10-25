@@ -145,6 +145,63 @@ try{
  assert.ok(report.portrait.alpha>200,'portrait overlay must be present');
  await phone.screenshot({path:'/tmp/splot-occlusion-portrait.png'});
  await mobileCtx.close();
+ // R3 counterexample: follow the actual default human controller around the
+ // ramp (via open ground), walk beneath the ORIGINAL deck, then walk out.
+ // No actor teleport and no authored synthetic roof in this trial.
+ const route=await context.newPage();
+ await route.goto(base+'?visibility=player-occlusion',{waitUntil:'domcontentloaded'});
+ await route.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ await route.locator('#pause').click();
+ const path=await route.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+  const positions=[{stage:'start',xyz:[h.x,h.y,h.z],support:h.support}];
+  g.world.paused=false;
+  for(const [stage,n,dir] of [
+   ['clear-ramp-side',40,[0,1]],
+   ['travel-beside-deck',160,[1,0]],
+   ['enter-below-deck',45,[0,-1]]
+  ]){
+   g.step(n,dir);
+   positions.push({stage,xyz:[h.x,h.y,h.z],support:h.support});
+  }
+  g.world.paused=true;
+  return positions;
+ });
+ await route.waitForTimeout(800);
+ const under=await route.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human'),
+   q=occlusionToPoint(g.world.scene,g.camera,[h.x,h.y,h.z+h.h*.55]);
+  return {xyz:[h.x,h.y,h.z],support:h.support,
+   blocker:q.blocker?.id||null,visible:q.visible,presence:g.presenceInfo};
+ });
+ await route.screenshot({path:'/tmp/splot-occlusion-actual-deck.png'});
+ report.underDeckRoute={path,under};
+ console.log('OCCLUSION ACTUAL DECK',JSON.stringify(report.underDeckRoute));
+ assert.ok(under.xyz[0]>18.5&&under.xyz[0]<27.6&&under.xyz[1]>11&&under.xyz[1]<15,
+  'R3 route should arrive beneath actual platform in playable world');
+ assert.ok(under.xyz[2]<.5,'player must remain BELOW deck rather than walking across top');
+ assert.equal(under.blocker,'footbridge-deck',
+  'actual bridge should be between camera and player torso');
+ assert.equal(under.presence?.blocker,'footbridge-deck',
+  'optional cue should report original authored deck, not synthetic roof');
+ // Exit the shadow by returning to the open southern edge, without teleport.
+ const afterExit=await route.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+  g.world.paused=false;g.step(80,[0,1]);g.world.paused=true;
+  return [h.x,h.y,h.z];
+ });
+ await route.waitForTimeout(450);
+ const emerged=await route.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human'),
+   o=occlusionToPoint(g.world.scene,g.camera,[h.x,h.y,h.z+h.h*.55]);
+  return {xyz:[h.x,h.y,h.z],blockedBy:o.blocker?.id||null,visible:o.visible,presence:g.presenceInfo};
+ });
+ report.underDeckRoute.afterExit=afterExit;
+ report.underDeckRoute.emerged=emerged;
+ await route.screenshot({path:'/tmp/splot-occlusion-exit-deck.png'});
+ assert.ok(emerged.xyz[1]>15.5&&emerged.visible===true&&!emerged.presence?.occluded,
+  'player must regain unaugmented view after physically leaving platform shadow');
+ await route.close();
  await writeFile('/tmp/splot-occlusion-ab.json',JSON.stringify(report,null,2));
  console.log('OCCLUSION A/B',JSON.stringify(report));
  console.log('PASS actual Chrome own-presence visual research gated by raycast; ordinary rendering unchanged');

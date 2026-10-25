@@ -91,6 +91,7 @@ try{
     const inserted=[],awakened=new Set(),pending=[];
     const focusIds=[242,252,260,261,262,270,271].map(n=>'crate-'+n);
     const trace=[];
+    const peaks=Object.fromEntries(focusIds.map(id=>[id,{tick:0,speed:0}]));
     let firstOutside=null,firstUnder=null,firstFast=null;
     for(let tick=1;tick<=660;tick++){
      const index=tick-1;
@@ -140,7 +141,7 @@ try{
        }
       }
      }
-     const previous=tick<=110?new Map(focusIds.map(id=>[id,g.challenger.researchCrateState(id)])):null;
+     const previous=tick<=260?new Map(focusIds.map(id=>[id,g.challenger.researchCrateState(id)])):null;
      g.challenger.advance(1/60,[0,0]);
      if(previous){
       trace.push({tick,added:currentPart?.id||null,
@@ -158,6 +159,11 @@ try{
          nearCrates,staticOverlaps};
        })});
      }
+     for(const id of focusIds){
+      const q=g.challenger.researchCrateState(id);
+      const v=Math.hypot(...q.velocity);
+      if(v>peaks[id].speed)peaks[id]={tick,speed:v,velocity:q.velocity};
+     }
      for(const b of crates){
       if(!firstOutside&&(b.x<-.1||b.y<-.1||
        b.x>w.scene.width+.1||b.y>w.scene.height+.1||b.z<-2||b.z>30))
@@ -165,7 +171,7 @@ try{
       if(!firstUnder&&b.z<-2)
        firstUnder={tick,id:b.id,x:b.x,y:b.y,z:b.z};
      }
-     if(tick<=120&&!firstFast){
+     if(!firstFast){
       for(const id of ['crate-270','crate-260']){
        const q=g.challenger.researchCrateState(id);
        if(!q)continue;
@@ -184,7 +190,7 @@ try{
       .map(e=>({crate:b.id,solid:e.id})));
     const state=crates.map(b=>({id:b.id,xyz:[b.x,b.y,b.z],
       awake:g.challenger.researchCrateState(b.id).awake}));
-    return {variant,before,trace,unresolved,state,firstOutside,firstUnder,firstFast,
+    return {variant,before,trace,unresolved,state,peaks,firstOutside,firstUnder,firstFast,
      inserted:inserted.length,awakened:awakened.size,
      finalParts:w.scene.elements.length,finalTime:w.time,
      finite:final.every(b=>[b.x,b.y,b.z].every(Number.isFinite))};
@@ -218,7 +224,7 @@ try{
   variant:t.variant,strictWitness:exact(t),inserted:t.inserted,
   awakenedCount:t.awakened,firstFast:t.firstFast,firstOutside:t.firstOutside,
   firstUnder:t.firstUnder,unresolvedCount:t.unresolved.length,
-  unresolved:t.unresolved,finalCrateStates:t.state,
+  unresolved:t.unresolved,finalCrateStates:t.state,fullRunVelocityPeaks:t.peaks,
   topDeltas:t.trace.flatMap(s=>s.bodies.map(b=>({
    tick:s.tick,id:b.id,dv:b.dvHorizontal,velocity:b.velocity,
    approximateNeighbours:b.nearCrates,staticOverlaps:b.staticOverlaps
@@ -226,7 +232,7 @@ try{
  }));
  for(const r of results)assert.equal(r.inserted,4,'each variant must finish full material creation');
  const artifact={schema:'splot-materialization-comparison-v1',
-  note:'Synthetic materialization fixtures. A no-escape result does not prove contact resolution or game safety.',
+  note:'Synthetic materialization fixtures. No-escape is not contact resolution. Peak speeds monitor all 7 selected crates over 660 steps; the detailed velocity-delta trace spans 260 ticks.',
   provenance:{source:'matched 4 anchored solids + 7 added crates',seed:'same fresh standalone game',
    engine:'Box3D 0.1.1',dt:'1/60',substeps:8,
    preSteps:180,totalPostSteps:660,
@@ -239,6 +245,8 @@ try{
  for(const r of results)console.log('MATERIALIZATION RESULT',JSON.stringify({
   variant:r.variant,strictWitness:r.strictWitness,fast:r.firstFast,
   outside:r.firstOutside,under:r.firstUnder,woken:r.awakenedCount,
-  remainingOverlaps:r.unresolvedCount,topDeltas:r.topDeltas.slice(0,3)}));
+  remainingOverlaps:r.unresolvedCount,
+  greatestBodySpeed:Object.entries(r.fullRunVelocityPeaks).sort((a,b)=>b[1].speed-a[1].speed)[0],
+  topDeltas:r.topDeltas.slice(0,3)}));
  console.log('PASS MATERIALIZATION A/B: baseline failure reproduced and three alternatives measured');
 }finally{await browser.close();await new Promise(r=>server.close(r));}

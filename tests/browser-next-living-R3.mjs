@@ -17,7 +17,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(r=>server.listen(port,'127.0.0.1',r));
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN||'/usr/bin/google-chrome',args:['--no-sandbox','--disable-dev-shm-usage']});
-const evidence={schema:'splot-living-R3-one-session-v1',note:'Scripted real UI rehearsal; NOT Owner playtest or proof of physical safety',steps:[]};
+const evidence={schema:'splot-living-R3-one-session-v1',note:'Scripted real UI rehearsal in OPT-IN intent-force, NOT Owner playtest, not current default and not physical safety proof',steps:[]};
 const remember=async(stage,page,measure)=>{
  const state=await page.evaluate(()=>{const g=window.__splotNext,w=g.world;
   return {physics:g.physics,paused:w.paused,
@@ -37,7 +37,7 @@ const remember=async(stage,page,measure)=>{
 try{
  const context=await browser.newContext({viewport:{width:1200,height:800},deviceScaleFactor:1});
  const page=await context.newPage();
- await page.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html',
+ await page.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html?griplaw=intent-force',
    {waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
  const screen=async p=>page.evaluate(v=>{

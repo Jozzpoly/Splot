@@ -32,6 +32,7 @@ on:
       - 'tests/browser-next-R6-durable-world.mjs'
       - 'tests/browser-next-R7-mobile-loop.mjs'
       - 'tests/browser-next-boar-perception.mjs'
+      - 'tests/browser-next-dynamic-sight.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -268,6 +269,19 @@ jobs:
           path: |
             /tmp/splot-boar-*.png
             /tmp/splot-boar-perception.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Compare boar perception of live stacked Box3D crates
+        if: contains(github.event.head_commit.message, '[crate-sight]')
+        run: node tests/browser-next-dynamic-sight.mjs
+      - name: Retain synthetic physical crate sight A/B
+        if: always() && contains(github.event.head_commit.message, '[crate-sight]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-dynamic-sight
+          path: |
+            /tmp/splot-R9-*.png
+            /tmp/splot-R9-crates.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

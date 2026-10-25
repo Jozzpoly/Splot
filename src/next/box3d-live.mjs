@@ -14,14 +14,36 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 // Opt-in research only: eye rays against authored solids, not a universal
 // NPC sensor (loose solver-owned crates are not in this test).
-function boarSeesPlayer(scene,boar,player){
+// Perception-only segment cast versus solver-mirrored dynamic crate volumes.
+// Real Box3D still owns their movement and actual contact.
+function crateOnSightRay(origin,unit,length,crate){
+ if(crate.kind!=='crate')return false;
+ const lo=[crate.x-crate.r,crate.y-crate.r,crate.z],
+   hi=[crate.x+crate.r,crate.y+crate.r,crate.z+crate.h];
+ let enter=0,exit=length-.06;
+ for(let i=0;i<3;i++){
+  if(Math.abs(unit[i])<1e-9){
+   if(origin[i]<lo[i]||origin[i]>hi[i])return false;
+   continue;
+  }
+  const p=(lo[i]-origin[i])/unit[i],q=(hi[i]-origin[i])/unit[i];
+  enter=Math.max(enter,Math.min(p,q));exit=Math.min(exit,Math.max(p,q));
+  if(enter>exit)return false;
+ }
+ return exit>.015&&enter<exit;
+}
+function boarSeesPlayer(scene,boar,player,crates=[]){
  if(!boar||!player||Math.hypot(player.x-boar.x,player.y-boar.y)>3.5||
     boar.z>=player.z+player.h||player.z>=boar.z+boar.h)return false;
  const eye=[boar.x,boar.y,boar.z+boar.h*.72];
  for(const f of [.35,.76]){
   const dest=[player.x,player.y,player.z+player.h*f],
     dir=dest.map((v,i)=>v-eye[i]),len=Math.hypot(...dir);
-  if(len<.08||!castRay(scene,eye,dir,{ground:false,maxDistance:len-.06}).length)return true;
+  if(len<.08)return true;
+  const staticBlocked=castRay(scene,eye,dir,{ground:false,maxDistance:len-.06}).length>0;
+  const unit=dir.map(v=>v/len);
+  const dynamicBlocked=crates.some(crate=>crateOnSightRay(eye,unit,len,crate));
+  if(!staticBlocked&&!dynamicBlocked)return true;
  }
  return false;
 }
@@ -181,13 +203,14 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
   human?.controller.preStep(dt,intentFor(humanInput[0],humanInput[1]));
   if(norm(...input)>.001&&human)human.b.yaw=Math.atan2(input[1],input[0]);
   if(boar){
-   if(boarMind.mode==='responsive-los'&&
+   if(boarMind.mode.startsWith('responsive-los')&&
      (w.time>=nextSightCheck||sightSceneRevision!==w.scene.revision)){
-      sawPlayer=boarSeesPlayer(w.scene,boar.b,human?.b);
+      sawPlayer=boarSeesPlayer(w.scene,boar.b,human?.b,
+        boarMind.mode==='responsive-los-crates'?w.bodies.filter(b=>b.kind==='crate'):[]);
       sightSceneRevision=w.scene.revision;nextSightCheck=w.time+.1;
    }
    const decision=boarMind.choose({boar:boar.b,player:human?.b,food:w.food,
-     time:w.time,playerVisible:boarMind.mode==='responsive-los'&&sawPlayer});
+     time:w.time,playerVisible:boarMind.mode.startsWith('responsive-los')&&sawPlayer});
    boar.controller.preStep(dt,intentFor(decision.dir[0],decision.dir[1]));
    w.boarIntent={phase:decision.phase,goal:decision.goal,
     foodDistance:decision.foodDistance,playerDistance:decision.playerDistance,

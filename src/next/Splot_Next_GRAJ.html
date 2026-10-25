@@ -1220,7 +1220,7 @@ const BoarIntent=(()=>{
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const normalized=(x,y)=>{const d=Math.hypot(x,y);return d>1e-7?[x/d,y/d]:[0,0];};
 function createBoarIntent({mode='forage'}={}){
- if(!['forage','responsive','responsive-los'].includes(mode))throw Error('unsupported boar mode');
+ if(!['forage','responsive','responsive-los','responsive-los-crates'].includes(mode))throw Error('unsupported boar mode');
  let selected=mode,phase='travel',alertUntil=-Infinity;
  let transitions=0,lastSeen=null;
  function choose({boar,player,food,time=0,playerVisible=false}){
@@ -1236,7 +1236,7 @@ function createBoarIntent({mode='forage'}={}){
     alertUntil=Math.max(alertUntil,trigger?time+1.0:alertUntil);
     next='wary';
    }else next=foodDistance>.8?'travel':'feeding';
-  }else if(selected==='responsive-los'){
+  }else if(selected.startsWith('responsive-los')){
    const seen=playerVisible===true&&Number.isFinite(playerDistance);
    const trigger=seen&&playerDistance<2.4;
    if(trigger){lastSeen={x:player.x,y:player.y};alertUntil=time+1;}
@@ -1248,7 +1248,7 @@ function createBoarIntent({mode='forage'}={}){
   let dir=[0,0];
   if(next==='travel')dir=normalized(food.x-boar.x,food.y-boar.y);
   if(next==='wary'){
-   const threat=selected==='responsive-los'?lastSeen:player;
+   const threat=selected.startsWith('responsive-los')?lastSeen:player;
    let dx=boar.x-threat.x,dy=boar.y-threat.y;
    if(Math.hypot(dx,dy)<1e-7){
     dx=boar.x-food.x;dy=boar.y-food.y;
@@ -1258,12 +1258,12 @@ function createBoarIntent({mode='forage'}={}){
   }
   return {dir,phase,changed,goal:next==='wary'?'distance-from-player':'food',
    playerDistance:Number.isFinite(playerDistance)?playerDistance:null,
-   playerVisible:selected==='responsive-los'?Boolean(playerVisible):null,
-   lastSeen:selected==='responsive-los'&&lastSeen?{...lastSeen}:null,
+   playerVisible:selected.startsWith('responsive-los')?Boolean(playerVisible):null,
+   lastSeen:selected.startsWith('responsive-los')&&lastSeen?{...lastSeen}:null,
    foodDistance,transitions};
  }
  return {choose,setMode(next){
-  if(!['forage','responsive','responsive-los'].includes(next))throw Error('unsupported boar mode');
+  if(!['forage','responsive','responsive-los','responsive-los-crates'].includes(next))throw Error('unsupported boar mode');
   selected=next;phase='travel';alertUntil=-Infinity;lastSeen=null;
  },get mode(){return selected},get phase(){return phase}};
 }
@@ -1798,14 +1798,36 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
 // Opt-in research only: eye rays against authored solids, not a universal
 // NPC sensor (loose solver-owned crates are not in this test).
-function boarSeesPlayer(scene,boar,player){
+// Perception-only segment cast versus solver-mirrored dynamic crate volumes.
+// Real Box3D still owns their movement and actual contact.
+function crateOnSightRay(origin,unit,length,crate){
+ if(crate.kind!=='crate')return false;
+ const lo=[crate.x-crate.r,crate.y-crate.r,crate.z],
+   hi=[crate.x+crate.r,crate.y+crate.r,crate.z+crate.h];
+ let enter=0,exit=length-.06;
+ for(let i=0;i<3;i++){
+  if(Math.abs(unit[i])<1e-9){
+   if(origin[i]<lo[i]||origin[i]>hi[i])return false;
+   continue;
+  }
+  const p=(lo[i]-origin[i])/unit[i],q=(hi[i]-origin[i])/unit[i];
+  enter=Math.max(enter,Math.min(p,q));exit=Math.min(exit,Math.max(p,q));
+  if(enter>exit)return false;
+ }
+ return exit>.015&&enter<exit;
+}
+function boarSeesPlayer(scene,boar,player,crates=[]){
  if(!boar||!player||Math.hypot(player.x-boar.x,player.y-boar.y)>3.5||
     boar.z>=player.z+player.h||player.z>=boar.z+boar.h)return false;
  const eye=[boar.x,boar.y,boar.z+boar.h*.72];
  for(const f of [.35,.76]){
   const dest=[player.x,player.y,player.z+player.h*f],
     dir=dest.map((v,i)=>v-eye[i]),len=Math.hypot(...dir);
-  if(len<.08||!castRay(scene,eye,dir,{ground:false,maxDistance:len-.06}).length)return true;
+  if(len<.08)return true;
+  const staticBlocked=castRay(scene,eye,dir,{ground:false,maxDistance:len-.06}).length>0;
+  const unit=dir.map(v=>v/len);
+  const dynamicBlocked=crates.some(crate=>crateOnSightRay(eye,unit,len,crate));
+  if(!staticBlocked&&!dynamicBlocked)return true;
  }
  return false;
 }
@@ -1965,13 +1987,14 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
   human?.controller.preStep(dt,intentFor(humanInput[0],humanInput[1]));
   if(norm(...input)>.001&&human)human.b.yaw=Math.atan2(input[1],input[0]);
   if(boar){
-   if(boarMind.mode==='responsive-los'&&
+   if(boarMind.mode.startsWith('responsive-los')&&
      (w.time>=nextSightCheck||sightSceneRevision!==w.scene.revision)){
-      sawPlayer=boarSeesPlayer(w.scene,boar.b,human?.b);
+      sawPlayer=boarSeesPlayer(w.scene,boar.b,human?.b,
+        boarMind.mode==='responsive-los-crates'?w.bodies.filter(b=>b.kind==='crate'):[]);
       sightSceneRevision=w.scene.revision;nextSightCheck=w.time+.1;
    }
    const decision=boarMind.choose({boar:boar.b,player:human?.b,food:w.food,
-     time:w.time,playerVisible:boarMind.mode==='responsive-los'&&sawPlayer});
+     time:w.time,playerVisible:boarMind.mode.startsWith('responsive-los')&&sawPlayer});
    boar.controller.preStep(dt,intentFor(decision.dir[0],decision.dir[1]));
    w.boarIntent={phase:decision.phase,goal:decision.goal,
     foodDistance:decision.foodDistance,playerDistance:decision.playerDistance,
@@ -2531,7 +2554,7 @@ const ownPresenceExperiment=researchArgs.get('visibility')==='player-occlusion';
 let lastPresenceProbe=-Infinity,presenceInfo=null;
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='baseline'?'baseline':'intent-force',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive-los'?'responsive-los':researchArgs.get('boar')==='responsive'?'responsive':'forage',
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='baseline'?'baseline':'intent-force',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive-los-crates'?'responsive-los-crates':researchArgs.get('boar')==='responsive-los'?'responsive-los':researchArgs.get('boar')==='responsive'?'responsive':'forage',
   substeps:['8','12','16'].includes(researchArgs.get('substeps'))?Number(researchArgs.get('substeps')):4};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0,lastY:0};
 const paletteColor=e=>e.material||'stone';
@@ -2569,7 +2592,7 @@ function refreshBoarUI(){
  const btn=$('#boar-behavior'),supported=physicsState==='box3d'&&Boolean(bridge?.setBoarMode);
  btn.disabled=!supported;
  const mode=supported?bridge.boarMode:box3dOptions.boarMode;
- btn.textContent=supported?(mode==='responsive-los'?'Dzik: widzi części (R&D)':mode==='responsive'?'Dzik: reaguje':'Dzik: żeruje'):'Dzik: Box3D';
+ btn.textContent=supported?(mode==='responsive-los-crates'?'Dzik: widzi skrzynie (R&D)':mode==='responsive-los'?'Dzik: widzi części (R&D)':mode==='responsive'?'Dzik: reaguje':'Dzik: żeruje'):'Dzik: Box3D';
  btn.classList.toggle('active',supported&&mode==='responsive');
 }
 $('#boar-behavior').onclick=()=>{

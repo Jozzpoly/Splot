@@ -58,3 +58,13 @@ test('old responsive behavior remains the distance-only control',()=>{
  assert.equal(m.choose({boar:{x:10,y:10,z:0,h:.75},
  player:{x:11.5,y:10,z:0,h:1.6},food:{x:15,y:10},time:1,playerVisible:false}).phase,'wary');
 });
+
+test('opt-in crate-sensitive vision shares last-seen memory without altering old modes',()=>{
+ const m=createBoarIntent({mode:'responsive-los-crates'});
+ const boar={x:10,y:10,z:0,h:.75},player={x:11.5,y:10,z:0,h:1.6},food={x:15,y:10};
+ assert.equal(m.choose({boar,player,food,time:1,playerVisible:false}).phase,'travel');
+ assert.equal(m.choose({boar,player,food,time:1.1,playerVisible:true}).phase,'wary');
+ assert.deepEqual(m.choose({boar,player:{...player,x:8,y:12},food,time:1.2,playerVisible:false}).lastSeen,{x:11.5,y:10});
+ m.setMode('responsive-los');
+ assert.equal(m.choose({boar,player,food,time:2,playerVisible:false}).phase,'travel');
+});

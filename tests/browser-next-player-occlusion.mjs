@@ -56,9 +56,18 @@ try{
  report.off=off;report.on=on;
  assert.equal(off.visual.occlusion,'synthetic-occlusion-roof','actual ray must find roof');
  assert.equal(on.visual.occlusion,off.visual.occlusion,'same occluder in both variants');
- assert.deepEqual(on.setup.before.bodies,off.setup.before.bodies,'fresh Box3D physics starts identical');
+ // The idle boar is autonomous and may move during independent CDN startup.
+ // Compare the controlled player's pose and resting physical crate, not boar
+ // animation phase: it has no causal relation to this stationary roof ray.
+ for(const id of ['human','crate-1']){
+  const a=on.setup.before.bodies.find(b=>b.id===id),
+   b=off.setup.before.bodies.find(b=>b.id===id);
+  assert.ok(a&&b&&Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z)<1e-5,
+   'same player/resting crate physics for '+id);
+ }
  assert.deepEqual(on.visual.worldParts,off.visual.worldParts,'purely visual option cannot change authored parts');
  assert.equal(on.visual.physics,'box3d');
+ console.log('OCCLUSION A/B INITIAL',JSON.stringify({off:off.visual,on:on.visual}));
  assert.ok(on.visual.alphaCount>=off.visual.alphaCount+100,
    'RED: an opt-in owned-player occlusion cue should be visible only behind a real blocker');
  // Follow-up control: no overhead blocker -> no cue, to avoid always-on HUD noise.

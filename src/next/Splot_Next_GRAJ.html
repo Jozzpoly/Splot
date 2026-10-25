@@ -2698,7 +2698,7 @@ function cursorPos(e){
  cursorUv=[(e.clientX-r.x)/r.width,(e.clientY-r.y)/r.height];
  return {x:cursorUv[0]*canvas.width,y:cursorUv[1]*canvas.height};
 }
-let cursor=null,targetSetSignature=null;
+let cursor=null,targetSetSignature=null,creationForeground=null;
 let lastHoverRecheckAt=0,lastHoverWorldSignature=null;
 function refreshSelection(){if(!cam||!cursor)return;
  // The backing canvas size can change without another pointer event.
@@ -2716,6 +2716,13 @@ function refreshSelection(){if(!cam||!cursor)return;
   :[];
  const ordered=crateHits.length?
   [...rawHits,...crateHits].sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id)):rawHits;
+ // Construction deliberately still targets the authored surface BEHIND a
+ // physical crate: no implicit static-on-dynamic joint or collision ban.
+ // But the Owner must see that foreground material before committing.
+ const frontCrate=(physicsState==='box3d'&&['box','panel'].includes(mode))
+  ?crateSurfaceHits(world.bodies,cam,cursor.x,cursor.y)[0]:null;
+ creationForeground=frontCrate&&
+  (!ordered.length||frontCrate.distance+1e-5<ordered[0].distance)?frontCrate:null;
  const partTool=['edit','erase','material'].includes(mode);
  const hits=partTool?uniquePartHits(ordered):ordered;
  // Q selects a layer inside the current depth-ordered material hit group.
@@ -2728,6 +2735,9 @@ function refreshSelection(){if(!cam||!cursor)return;
  selected=hits.length?hits[selection%hits.length]:null;
  const a=selected;$('#target').textContent=a?`${a.id} • Z ${a.point[2].toFixed(2)} m • ${partTool?'element':'warstwa'} ${selection%hits.length+1}/${hits.length}`:
   (partTool?'Brak części pod kursorem':'Brak powierzchni pod kursorem');
+ if(creationForeground)
+  $('#target').textContent='Przed: '+creationForeground.id+
+   ' · cel ZA: '+(a?.id||'brak')+(a?' · Z '+a.point[2].toFixed(2)+' m':'');
 }
 function clickWorld(p){if(physicsState.startsWith('loading-')){actionText('Ładowanie fizyki — świat jeszcze zatrzymany.');return;}cursor=p;refreshSelection();const a=selected;
  if(mode==='move')return;
@@ -2962,6 +2972,13 @@ function renderOverlay(cam){const ctx=$('#overlay').getContext('2d'),w=$('#overl
    if(part&&!(mode==='edit'&&part.id===editSelectedId))
     outline(part,mode==='edit'?'#bdf1d0':'#ffd59e',selection>0);
   }
+ }
+ // Dashed foreground crate warns that the actual build point is BEHIND it.
+ // It is not an edit selection and does not change the intended action.
+ if(creationForeground&&['box','panel'].includes(mode)){
+  const b=world.bodies.find(q=>q.kind==='crate'&&q.id===creationForeground.id);
+  if(b)outline({kind:'box',min:[b.x-b.r,b.y-b.r,b.z],
+   max:[b.x+b.r,b.y+b.r,b.z+b.h]},'#e3b794',true);
  }
  if(editDrag&&Math.hypot(...editDrag.delta)>.035)
   outline(translatedElement(editDrag.from,editDrag.delta),'#d7f4bd',true);

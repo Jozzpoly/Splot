@@ -23,6 +23,7 @@ on:
       - 'tests/browser-next-crate-ddmin.mjs'
       - 'tests/browser-next-contact-chain.mjs'
       - 'tests/browser-next-materialization-ab.mjs'
+      - 'tests/browser-next-creator-loop.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -144,6 +145,19 @@ jobs:
           path: /tmp/splot-materialization-ab.json
           if-no-files-found: warn
           retention-days: 14
+      - name: Rehearse the creator loop and collect K2/Next visual comparison
+        if: contains(github.event.head_commit.message, '[creator-loop]')
+        run: node tests/browser-next-creator-loop.mjs
+      - name: Preserve creator-loop visual evidence even when a UX hypothesis fails
+        if: always() && contains(github.event.head_commit.message, '[creator-loop]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-living-creator-rehearsal
+          path: |
+            /tmp/splot-creator-*.png
+            /tmp/splot-creator-loop.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Archive temporary synthetic camera visual evidence
         if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual]')
         uses: actions/upload-artifact@v4

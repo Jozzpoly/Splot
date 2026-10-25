@@ -85,13 +85,17 @@ try{
  const layout=async()=>page.evaluate(()=>{
   const rect=s=>{const r=document.querySelector(s).getBoundingClientRect();
    return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
-  return {pause:rect('#mobile-pause'),mode:rect('#active-mode'),menu:rect('#mobile-menu'),viewport:innerWidth};
+  return {pause:rect('#mobile-pause'),mode:rect('#active-mode'),menu:rect('#mobile-menu'),engine:rect('#engine-state'),hud:rect('#hud'),viewport:innerWidth};
  });
  const check=state=>{
   assert.ok(state.pause.width>=44&&state.pause.height>=44);
   assert.ok(state.pause.left>=0&&state.pause.right<=state.viewport);
   assert.ok(state.pause.left>=state.mode.right-1,'pause must not overlay mode control');
   assert.ok(state.pause.top>=state.menu.bottom-1,'pause cannot overlap the tool drawer trigger');
+  assert.ok(state.engine.right<=state.mode.left+1,
+   'narrow phone must still show active physics identity beside mode control');
+  assert.ok(state.hud.right<=state.mode.left+1,
+   'narrow phone must still show world HUD without masking');
  };
  result.layout393=await layout();check(result.layout393);
  await page.setViewportSize({width:320,height:640});

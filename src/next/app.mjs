@@ -505,9 +505,12 @@ function renderOverlay(cam){const ctx=$('#overlay').getContext('2d'),w=$('#overl
    outline({kind:'box',min:[crate.x-r,crate.y-r,crate.z],
     max:[crate.x+r,crate.y+r,crate.z+crate.h]},
     '#ffd59e',selection>0);
-  }else if(mode==='erase'||mode==='material'){
+  }else if(['erase','material','edit'].includes(mode)){
    const part=world.scene.elements.find(e=>e.id===selected.id);
-   if(part)outline(part,'#ffd59e',selection>0);
+   // Expose the full material identity BEFORE committing an edit gesture.
+   // Keep the already-chosen part distinct when pointing at another object.
+   if(part&&!(mode==='edit'&&part.id===editSelectedId))
+    outline(part,mode==='edit'?'#bdf1d0':'#ffd59e',selection>0);
   }
  }
  if(editDrag&&Math.hypot(...editDrag.delta)>.035)

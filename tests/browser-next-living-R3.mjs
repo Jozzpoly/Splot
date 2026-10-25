@@ -125,8 +125,24 @@ try{
  await page.locator('#pause').click();
  await page.locator('[data-mode="erase"]').click();
  const baseSide=[(base.min[0]+base.max[0])/2,base.min[1],.5];
- await click(baseSide);
- const afterDelete=await remember('09-remove-support',page,{event:'delete real base with visible erase tool'});
+ const basePixel=await screen(baseSide);
+ await page.mouse.move(basePixel.x,basePixel.y);
+ await page.waitForTimeout(100);
+ const firstErasingTarget=await page.locator('#target').textContent();
+ const layers=[firstErasingTarget];
+ for(let i=0;i<5&&!layers.at(-1).includes('block-10');i++){
+  await page.locator('#layer').click();
+  layers.push(await page.locator('#target').textContent());
+ }
+ const intended=layers.at(-1);
+ console.log('LIVING R3 SUPPORT TARGET',JSON.stringify({first:firstErasingTarget,layers,intended}));
+ assert.match(intended,/block-10/,
+  'Q must deliberately select authored lower support BEFORE destructive click');
+ // When Q selected the hidden support, mouse click on SAME ray must preserve
+ // chosen layer and must not silently revert to the first physical surface.
+ await page.mouse.click(basePixel.x,basePixel.y);
+ const afterDelete=await remember('09-remove-support',page,
+  {event:'deliberate Q-layer erase real base',layers});
  assert.ok(!afterDelete.parts.some(x=>x.id==='block-10'),'support removed through UI');
  await page.locator('#pause').click();
  await page.waitForTimeout(1500);

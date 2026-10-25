@@ -19,10 +19,14 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.CH
 const results=[];
 try{
  const context=await browser.newContext({viewport:{width:1200,height:800}});
- for(const law of ['baseline','intent-force']){
+ for(const law of ['baseline','intent-force','default']){
   const page=await context.newPage();
-  await page.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html?griplaw='+law,{waitUntil:'domcontentloaded'});
+  const url='http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html'+
+   (law==='default'?'':'?griplaw='+law);
+  await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const realLaw=await page.evaluate(()=>window.__splotNext.challenger.status.gripLaw);
+  assert.equal(realLaw,law==='default'?'intent-force':law,'explicit/control physics law');
   const position=()=>page.evaluate(()=>{const w=window.__splotNext.world,
     a=w.bodies.find(b=>b.id==='human'),c=w.bodies.find(b=>b.id==='crate-1');
     return {t:w.time,player:[a.x,a.y,a.z],crate:[c.x,c.y,c.z],
@@ -60,7 +64,7 @@ try{
    turns.push({key,previous,current});
   }
   console.log('GRIP TURN OBSERVATION',law,JSON.stringify(turns));
-  if(law==='intent-force'){
+  if(law==='intent-force'||law==='default'){
    assert.equal(turns[0].current.grip,'crate-1',
     'candidate must hold physical crate through a 90-degree turn');
    assert.equal(turns[1].current.grip,'crate-1',
@@ -104,7 +108,9 @@ try{
   await writeFile('/tmp/splot-grip-field-ab.json',JSON.stringify({schema:'splot-grip-field-AB-v1',results},null,2));
   await page.close();
  }
- assert.equal(results.length,2);
+ assert.equal(results.length,3);
+ assert.ok(results.find(x=>x.law==='baseline').final.message.includes('Chwyt zerwany'),
+  'auto-dropped material must NOT leave stale \"Trzymasz skrzynię\" status');
  assert.ok(results.every(x=>x.final.player.every(Number.isFinite)&&x.final.crate.every(Number.isFinite)));
  console.log('PASS documented real-keyboard grip A/B, no gameplay defaults modified');
  await context.close();

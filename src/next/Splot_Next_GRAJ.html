@@ -2476,7 +2476,7 @@ const ownPresenceExperiment=researchArgs.get('visibility')==='player-occlusion';
 let lastPresenceProbe=-Infinity,presenceInfo=null;
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
-const box3dOptions={gripLaw:researchArgs.get('griplaw')==='intent-force'?'intent-force':'baseline',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage',
+const box3dOptions={gripLaw:researchArgs.get('griplaw')==='baseline'?'baseline':'intent-force',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive'?'responsive':'forage',
   substeps:['8','12','16'].includes(researchArgs.get('substeps'))?Number(researchArgs.get('substeps')):4};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0,lastY:0};
 const paletteColor=e=>e.material||'stone';
@@ -2702,6 +2702,7 @@ function cursorPos(e){
 }
 let cursor=null,targetSetSignature=null,creationForeground=null;
 let lastHoverRecheckAt=0,lastHoverWorldSignature=null;
+let autoGripReleaseWorld=world,lastAutoGripRelease=null;
 function refreshSelection(){if(!cam||!cursor)return;
  // The backing canvas size can change without another pointer event.
  // Reproject the LAST CSS position into its current render-resolution pixels.
@@ -3041,6 +3042,19 @@ function frame(t){
   if(bridge)bridge.advance(1/60,keyDirection());else stepLive(world,1/60,keyDirection());
   acc-=1/60;iter++;physicsSteps++;}}
  else {acc=0;if(bridge){bridge.syncStatics();bridge.syncBodies();}}
+ // Real solver motion can break a grasp without a second press of E.
+ // Report the material event once; stale "Trzymasz skrzynię" feedback is
+ // deceptive during uninterrupted player-controlled transport.
+ const release=world.events.findLast(e=>e.type==='release'&&
+  ['separation','contact'].includes(e.reason));
+ if(autoGripReleaseWorld!==world){
+  autoGripReleaseWorld=world;lastAutoGripRelease=release;
+ }else if(release&&release!==lastAutoGripRelease){
+  lastAutoGripRelease=release;
+  const reason=release.reason==='contact'?'kontakt z przeszkodą':'skrzynia za daleko';
+  actionText('Chwyt zerwany — '+reason+'. Podejdź bliżej i naciśnij E.');
+  playtest.event('auto-grip-release',{id:release.id||null,reason:release.reason});
+ }
  // Camera and solver material can move under a stationary pointer.
  // Do not raycast every render frame; probe only during authoring and at 8 Hz.
  if(cursor&&mode!=='move'&&!editDrag&&look.id===null&&t>=lastHoverRecheckAt){

@@ -29,7 +29,7 @@ try{
   },yaw);
   // Prevent the camera's frame-smoothing from masquerading as actor pixels.
   const realTriangles=()=>page.evaluate(()=>{
-   const tris=window.__splotNext.actorMesh();
+   const tris=window.__splotNext.actorMesh;
    return tris.filter(t=>t.material==='boar').map(t=>({
     a:t.a,b:t.b,c:t.c,normal:t.normal
    }));

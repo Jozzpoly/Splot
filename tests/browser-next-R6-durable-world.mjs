@@ -62,8 +62,8 @@ try{
  // After saving, make a genuine unsaved edit. Declining import must preserve it.
  await act('box',[6,6,0]);
  const modified=await capture(page,'02-unsaved-extra');
- assert.ok(modified.parts.some(p=>p.id==='block-12'),
-  'sequence after crate-11 should assign block-12 before import');
+ assert.ok(modified.parts.some(p=>p.id==='block-11'),
+  'sequence after authored block-10 must assign block-11; physical crate IDs use a separate counter');
  const fileChooser=async accept=>{
   const dialogHandler=async d=>{if(accept)await d.accept();else await d.dismiss();};
   page.once('dialog',dialogHandler);
@@ -90,7 +90,7 @@ try{
  const newAfter=await capture(page,'05-continued-authoring');
  const added=newAfter.parts.filter(p=>!saved.scene.elements.some(q=>q.id===p.id));
  assert.equal(added.length,1);
- assert.equal(added[0].id,'block-12','next authoring ID remains unique after import');
+ assert.equal(added[0].id,'block-11','next authoring ID remains unique after import');
  await page.locator('#undo').click();
  assert.deepEqual((await capture(page,'06-after-undo')).parts,saved.scene.elements,
   'original imported construction survives subsequent edit/undo');

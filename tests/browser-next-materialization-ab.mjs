@@ -32,19 +32,19 @@ try{
   });
  }finally{await seedPage.close();}
  const trials=[];
- const runCandidate=async (variant,indices)=>{
+ const runCandidate=async (variant,indices,substeps=8)=>{
   const page=await browser.newPage({viewport:{width:1120,height:730}});
   try{
-   await page.goto(uri,{waitUntil:'domcontentloaded'});
+   await page.goto(uri.replace('substeps=8','substeps='+substeps),{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
    page.once('dialog',d=>d.accept());
    await page.locator('#load-file').setInputFiles({name:'Splot_Nowy_Rozdzial.json',
     mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
    await page.waitForFunction(()=>document.querySelector('#pause')?.textContent==='Uruchom',
     null,{timeout:30000});
-   const result=await page.evaluate(({variant,indices})=>{
+   const result=await page.evaluate(({variant,indices,substeps})=>{
     const g=window.__splotNext,w=g.world;
-    if(g.challenger.solverSubsteps!==8)throw Error('not 8-substep Box3D');
+    if(g.challenger.solverSubsteps!==substeps)throw Error('incorrect Box3D substep count');
     w.paused=false;
     for(let i=0;i<80;i++){
      if(!indices.includes(i))continue;
@@ -188,16 +188,23 @@ try{
     const unresolved=crates.flatMap(b=>w.scene.elements
       .filter(e=>e.id.startsWith('research-box-')&&overlaps(b,e))
       .map(e=>({crate:b.id,solid:e.id})));
+    const maxFinalGeometryError=Math.max(...[14,36,37,38].flatMap(i=>{
+     const expected=parts[i],actual=w.scene.elements.find(e=>e.id===expected.id);
+     if(!actual)throw Error('missing completed geometry '+expected.id);
+     return [...expected.min.map((v,k)=>Math.abs(v-actual.min[k])),
+      ...expected.max.map((v,k)=>Math.abs(v-actual.max[k]))];
+    }));
     const state=crates.map(b=>({id:b.id,xyz:[b.x,b.y,b.z],
       awake:g.challenger.researchCrateState(b.id).awake}));
-    return {variant,before,trace,unresolved,state,peaks,firstOutside,firstUnder,firstFast,
+    return {variant,substeps,before,trace,unresolved,state,peaks,maxFinalGeometryError,firstOutside,firstUnder,firstFast,
      inserted:inserted.length,awakened:awakened.size,
      finalParts:w.scene.elements.length,finalTime:w.time,
      finite:final.every(b=>[b.x,b.y,b.z].every(Number.isFinite))};
-   },{variant,indices});
+   },{variant,indices,substeps});
    assert.equal(result.finite,true);
    assert.ok(Math.abs(result.finalTime-14)<.00001);
    assert.equal(result.finalParts,7+result.inserted);
+   assert.ok(result.maxFinalGeometryError<1e-6,'same final geometry for all creation variants');
    assert.ok(result.before.some(b=>b.id==='crate-270'),'witness body must never be removed');
    trials.push({...result,indices});
    console.log('CONTACT MATERIAL SUBSET TRIAL',JSON.stringify({
@@ -220,11 +227,19 @@ try{
  const batch=await runCandidate('batch-wake-after-four',fixed);
  const stagger=await runCandidate('staggered-creation',fixed);
  const extrusion=await runCandidate('24-step-vertical-extrusion',fixed);
+ // The actual Splot default remains four solver substeps. Compare the same
+ // policies on that real default; different settled solver states are possible.
+ const fourDefault=await Promise.all([
+  runCandidate('instant-local-wake',fixed,4),
+  runCandidate('batch-wake-after-four',fixed,4),
+  runCandidate('staggered-creation',fixed,4),
+  runCandidate('24-step-vertical-extrusion',fixed,4)
+ ]);
  const results=trials.map(t=>({
-  variant:t.variant,strictWitness:exact(t),inserted:t.inserted,
+  variant:t.variant,substeps:t.substeps,strictWitness:exact(t),inserted:t.inserted,
   awakenedCount:t.awakened,firstFast:t.firstFast,firstOutside:t.firstOutside,
   firstUnder:t.firstUnder,unresolvedCount:t.unresolved.length,
-  unresolved:t.unresolved,finalCrateStates:t.state,fullRunVelocityPeaks:t.peaks,
+  unresolved:t.unresolved,finalCrateStates:t.state,fullRunVelocityPeaks:t.peaks,maxFinalGeometryError:t.maxFinalGeometryError,
   topDeltas:t.trace.flatMap(s=>s.bodies.map(b=>({
    tick:s.tick,id:b.id,dv:b.dvHorizontal,velocity:b.velocity,
    approximateNeighbours:b.nearCrates,staticOverlaps:b.staticOverlaps
@@ -234,7 +249,7 @@ try{
  const artifact={schema:'splot-materialization-comparison-v1',
   note:'Synthetic materialization fixtures. No-escape is not contact resolution. Peak speeds monitor all 7 selected crates over 660 steps; the detailed velocity-delta trace spans 260 ticks.',
   provenance:{source:'matched 4 anchored solids + 7 added crates',seed:'same fresh standalone game',
-   engine:'Box3D 0.1.1',dt:'1/60',substeps:8,
+   engine:'Box3D 0.1.1',dt:'1/60',substepsCompared:[8,4],
    preSteps:180,totalPostSteps:660,
    collisionPolicy:'local wake for new material only; batch waits for fourth part',
    extrusion:'full footprint, rising top from 0.02m to authored height over 24 fixed ticks',
@@ -243,10 +258,10 @@ try{
   results};
  await writeFile('/tmp/splot-materialization-ab.json',JSON.stringify(artifact,null,2));
  for(const r of results)console.log('MATERIALIZATION RESULT',JSON.stringify({
-  variant:r.variant,strictWitness:r.strictWitness,fast:r.firstFast,
+  variant:r.variant,substeps:r.substeps,strictWitness:r.strictWitness,fast:r.firstFast,
   outside:r.firstOutside,under:r.firstUnder,woken:r.awakenedCount,
   remainingOverlaps:r.unresolvedCount,
   greatestBodySpeed:Object.entries(r.fullRunVelocityPeaks).sort((a,b)=>b[1].speed-a[1].speed)[0],
   topDeltas:r.topDeltas.slice(0,3)}));
- console.log('PASS MATERIALIZATION A/B: baseline failure reproduced and three alternatives measured');
+ console.log('PASS MATERIALIZATION A/B: eight and four substeps with matched authored geometry and explicit observation-only outcomes');
 }finally{await browser.close();await new Promise(r=>server.close(r));}

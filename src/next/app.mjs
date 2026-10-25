@@ -22,13 +22,15 @@ const researchArgs=new URLSearchParams(location.search);
 renderScale=researchArgs.get('pixels')==='50'?.5:researchArgs.get('pixels')==='75'?.75:1;
 const engineState=$('#engine-state');
 const showEngine=(kind,label)=>{engineState.dataset.state=kind;engineState.textContent=label;};
+const facingActors=researchArgs.get('actorvisual')==='facing'; // R&D presentation only
 const timeCamera=researchArgs.get('camera')==='seconds'; // explicit A/B, legacy default
 const ownPresenceExperiment=researchArgs.get('visibility')==='player-occlusion'; // R&D only, never default
 let lastPresenceProbe=-Infinity,presenceInfo=null;
 // Prevent all background stepping while an external WASM module is fetched.
 if(['ascent','fall','edit','grip','material','material-stack'].includes(researchArgs.get('probe'))){paused=true;world.paused=true;$('#pause').textContent='Uruchom';}
 const box3dOptions={gripLaw:researchArgs.get('griplaw')==='baseline'?'baseline':'intent-force',actorContact:researchArgs.get('actors')==='compliant'?'compliant':'ghost',boarMode:researchArgs.get('boar')==='responsive-los-crates'?'responsive-los-crates':researchArgs.get('boar')==='responsive-los'?'responsive-los':researchArgs.get('boar')==='responsive'?'responsive':'forage',
-  substeps:['8','12','16'].includes(researchArgs.get('substeps'))?Number(researchArgs.get('substeps')):4};
+  substeps:['8','12','16'].includes(researchArgs.get('substeps'))?Number(researchArgs.get('substeps')):4,
+  actorFacing:facingActors};
 const keys=new Set(),stick={active:null,x:0,y:0},look={id:null,lastX:0,lastY:0};
 const paletteColor=e=>e.material||'stone';
 const playtest=createPlaytestJournal();
@@ -466,14 +468,29 @@ function groundMesh(){const result=[];
 }
 const floorGeometry=groundMesh();
 function box(x,y,z,rx,ry,h,material){return trianglesFor({kind:'box',id:'visual-body',min:[x-rx,y-ry,z],max:[x+rx,y+ry,z+h]}).map(t=>({...t,material}));}
+// Same triangles, same material and silhouette parts. Orientation alters
+// visible pose only; solver-owned collision shapes are never rotated here.
+function faceActorTriangles(tris,b){
+ if(!facingActors||!Number.isFinite(b.yaw))return tris;
+ const a=b.yaw,c=Math.cos(a),s=Math.sin(a);
+ const point=p=>{
+  const x=p[0]-b.x,y=p[1]-b.y;
+  return [b.x+x*c-y*s,b.y+x*s+y*c,p[2]];
+ };
+ return tris.map(t=>({...t,a:point(t.a),b:point(t.b),c:point(t.c),
+  normal:[t.normal[0]*c-t.normal[1]*s,t.normal[0]*s+t.normal[1]*c,t.normal[2]]}));
+}
 function actorsMesh(){let out=[];
  for(const b of world.bodies){
   if(b.kind==='crate'){
    out.push(...crateTriangles(b));
   }else if(b.kind==='boar'){
-   out.push(...box(b.x,b.y,b.z+.15,.42,.3,.55,'boar'));
-   out.push(...box(b.x+.32,b.y,b.z+.25,.25,.24,.28,'skin'));
-   out.push(...box(b.x-.26,b.y-.23,b.z,.1,.08,.25,'boar'),...box(b.x+.25,b.y+.23,b.z,.1,.08,.25,'boar'));
+   const mesh=[
+    ...box(b.x,b.y,b.z+.15,.42,.3,.55,'boar'),
+    ...box(b.x+.32,b.y,b.z+.25,.25,.24,.28,'skin'),
+    ...box(b.x-.26,b.y-.23,b.z,.1,.08,.25,'boar'),
+    ...box(b.x+.25,b.y+.23,b.z,.1,.08,.25,'boar')];
+   out.push(...faceActorTriangles(mesh,b));
   }else{
    out.push(...box(b.x,b.y,b.z,.24,.23,.92,'player'));
    out.push(...box(b.x,b.y,b.z+1.00,.19,.19,.44,'skin'));

@@ -48,7 +48,7 @@ function boarSeesPlayer(scene,boar,player,crates=[]){
  return false;
 }
 function bodyKey(x){return x.id;}
-export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage',substeps=4}={}){
+export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage',actorFacing=false,substeps=4}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
  if(!['ghost','compliant'].includes(actorContact))throw Error('unknown actor contact law');
  if(![4,8,12,16].includes(substeps))throw Error('unsupported research solver substeps');
@@ -211,6 +211,10 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
    }
    const decision=boarMind.choose({boar:boar.b,player:human?.b,food:w.food,
      time:w.time,playerVisible:boarMind.mode.startsWith('responsive-los')&&sawPlayer});
+   // Opt-in visual grammar: heading comes from the actor's real intention,
+   // not from a billboard fixed along the global X axis.
+   if(actorFacing&&norm(...decision.dir)>.05)
+     boar.b.yaw=Math.atan2(decision.dir[1],decision.dir[0]);
    boar.controller.preStep(dt,intentFor(decision.dir[0],decision.dir[1]));
    w.boarIntent={phase:decision.phase,goal:decision.goal,
     foodDistance:decision.foodDistance,playerDistance:decision.playerDistance,

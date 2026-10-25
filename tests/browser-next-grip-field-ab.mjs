@@ -75,10 +75,25 @@ try{
    await page.keyboard.press('e');
    const released=await position();
    assert.equal(released.grip,null,'intentional E must release physical body');
+   // Re-grab is a NEW reach query (<1.45m). At turn end, crate and actor
+   // can be 1.455m apart and a literal E would correctly refuse. The
+   // player must physically approach the body again, not get a silent snap.
+   const approach=[];
+   for(let n=0;n<8;n++){
+    const p=await position();if(p.distance<1.30)break;
+    const dx=p.crate[0]-p.player[0],dy=p.crate[1]-p.player[1];
+    const key=Math.abs(dx)>Math.abs(dy)?dx>0?'d':'a':dy>0?'w':'s';
+    await page.keyboard.down(key);
+    await page.waitForTimeout(130);
+    await page.keyboard.up(key);
+    approach.push({key,position:await position()});
+   }
+   const inReach=await position();
+   assert.ok(inReach.distance<1.45,'player really approaches within pickup range');
    await page.keyboard.press('e');
    const resumed=await position();
-   assert.equal(resumed.grip,'crate-1','player should be able to regrab at normal reach');
-   turns.push({key:'release-regrab',previous:released,current:resumed});
+   assert.equal(resumed.grip,'crate-1','player should regrab after physically approaching');
+   turns.push({key:'release-regrab',previous:released,approach,current:resumed});
   }
   results.push({law,initial:start,gripped,final:end,playerDisplacement:playerMoved,
    crateDisplacement:moved,firstRelease,trace:samples,turns});

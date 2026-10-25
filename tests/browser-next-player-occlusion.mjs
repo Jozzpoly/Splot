@@ -202,6 +202,58 @@ try{
  assert.ok(emerged.xyz[1]>15.5&&emerged.visible===true&&!emerged.presence?.occluded,
   'player must regain unaugmented view after physically leaving platform shadow');
  await route.close();
+ // Player-facing R3 verification: the same route through actual DOM
+ // keyboard input, plus in-game camera controls. No g.step/teleport here.
+ const keyboard=await context.newPage();
+ await keyboard.goto(base+'?visibility=player-occlusion',{waitUntil:'domcontentloaded'});
+ await keyboard.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ const move=async(key,test)=>{
+  await keyboard.keyboard.down(key);
+  try{await keyboard.waitForFunction(test,null,{timeout:9000,polling:100});}
+  finally{await keyboard.keyboard.up(key);}
+ };
+ const human=()=>window.__splotNext.world.bodies.find(b=>b.id==='human');
+ await move('w',()=>human().y>16.4);
+ await move('d',()=>human().x>22.4);
+ await move('s',()=>human().y<14.25);
+ await keyboard.waitForTimeout(650);
+ const keyUnder=await keyboard.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+  const q=occlusionToPoint(g.world.scene,g.camera,[h.x,h.y,h.z+h.h*.55]);
+  return {xyz:[h.x,h.y,h.z],support:h.support,rayBlocker:q.blocker?.id||null,
+   cue:g.presenceInfo,physics:g.physics};
+ });
+ report.WASD={under:keyUnder};
+ console.log('OCCLUSION WASD UNDER',JSON.stringify(keyUnder));
+ assert.equal(keyUnder.physics,'box3d');
+ assert.ok(keyUnder.xyz[2]<.5,'WASD should enter below platform, not climb it');
+ assert.equal(keyUnder.rayBlocker,'footbridge-deck',
+  'WASD and real camera should occlude own player beneath the original platform');
+ assert.equal(keyUnder.cue?.blocker,'footbridge-deck');
+ await keyboard.screenshot({path:'/tmp/splot-occlusion-WASD-under.png'});
+ // Camera rotation changes the real ray while the player stands still.
+ await keyboard.locator('#turn-left').click();
+ await keyboard.waitForTimeout(450);
+ report.WASD.rotated=await keyboard.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+  return {ray:occlusionToPoint(g.world.scene,g.camera,[h.x,h.y,h.z+h.h*.55]).blocker?.id||null,
+   cue:g.presenceInfo,xyz:[h.x,h.y,h.z]};
+ });
+ assert.equal(report.WASD.rotated.cue?.blocker,report.WASD.rotated.ray,
+  'camera orbit must update own-player occlusion instead of stale pre-orbit state');
+ await keyboard.locator('#turn-right').click();
+ await move('w',()=>human().y>17);
+ await keyboard.waitForTimeout(450);
+ report.WASD.emerged=await keyboard.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+  return {xyz:[h.x,h.y,h.z],
+   cue:g.presenceInfo,
+   ray:occlusionToPoint(g.world.scene,g.camera,[h.x,h.y,h.z+h.h*.55]).blocker?.id||null};
+ });
+ assert.equal(report.WASD.emerged.ray,null,'WASD exit must expose human');
+ assert.equal(report.WASD.emerged.cue?.occluded,false,'cue should disappear after keyboard exit');
+ await keyboard.screenshot({path:'/tmp/splot-occlusion-WASD-exit.png'});
+ await keyboard.close();
  await writeFile('/tmp/splot-occlusion-ab.json',JSON.stringify(report,null,2));
  console.log('OCCLUSION A/B',JSON.stringify(report));
  console.log('PASS actual Chrome own-presence visual research gated by raycast; ordinary rendering unchanged');

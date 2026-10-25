@@ -24,6 +24,7 @@ on:
       - 'tests/browser-next-contact-chain.mjs'
       - 'tests/browser-next-materialization-ab.mjs'
       - 'tests/browser-next-creator-loop.mjs'
+      - 'tests/browser-next-player-occlusion.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -156,6 +157,19 @@ jobs:
           path: |
             /tmp/splot-creator-*.png
             /tmp/splot-creator-loop.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify opt-in player occlusion research in real Chrome
+        if: contains(github.event.head_commit.message, '[presence-ab]')
+        run: node tests/browser-next-player-occlusion.mjs
+      - name: Keep paired occlusion screenshots and measurements
+        if: always() && contains(github.event.head_commit.message, '[presence-ab]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-presence-occlusion-ab
+          path: |
+            /tmp/splot-occlusion-*.png
+            /tmp/splot-occlusion-ab.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

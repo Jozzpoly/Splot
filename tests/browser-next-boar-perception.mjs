@@ -20,6 +20,7 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.CH
 const report={schema:'boar-material-perception-v1',scope:'same fixture real Box3D, not NPC cognition or Owner feel',cases:[]};
 try{
  const ctx=await browser.newContext({viewport:{width:1100,height:740}});
+ let walkFixture=null;
  for(const mode of ['responsive','responsive-los']){
   for(const blocked of [true,false]){
    const page=await ctx.newPage();
@@ -40,6 +41,7 @@ try{
     }
     return JSON.stringify(o);
    },blocked);
+   if(mode==='responsive-los'&&blocked)walkFixture=payload;
    const chooser=page.waitForEvent('filechooser');
    await page.locator('#load').click();
    const fc=await chooser;
@@ -95,6 +97,44 @@ try{
    await page.close();
   }
  }
+ // Real player traversal: walk AROUND the obstacle through actual WASD,
+ // with the boar stationary at the food until the player comes into sight.
+ const game=await ctx.newPage();
+ await game.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html?boar=responsive-los',{waitUntil:'domcontentloaded'});
+ await game.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ const chooser=game.waitForEvent('filechooser');await game.locator('#load').click();
+ const file=await chooser;game.once('dialog',dialog=>dialog.accept());
+ await file.setFiles({name:'synthetic-boar-WASD.json',mimeType:'application/json',buffer:Buffer.from(walkFixture)});
+ await game.waitForFunction(()=>window.__splotNext.world.bodies.find(b=>b.id==='human').x===30.4,null,{timeout:9000});
+ await game.evaluate(()=>{const w=window.__splotNext.world;w.food.x=32;w.food.y=24;});
+ await game.locator('#pause').click();
+ await game.waitForFunction(()=>window.__splotNext.world.boarIntent?.phase==='feeding',null,{timeout:5000});
+ report.walk={hidden:await game.evaluate(()=>({...window.__splotNext.world.boarIntent}))};
+ assert.equal(report.walk.hidden.playerVisible,false);
+ const walk=async(key,predicate)=>{
+  await game.keyboard.down(key);
+  try{await game.waitForFunction(predicate,null,{timeout:9000,polling:75});}
+  finally{await game.keyboard.up(key);}
+ };
+ await walk('w',()=>window.__splotNext.world.bodies.find(b=>b.id==='human').y>26.7);
+ await walk('d',()=>window.__splotNext.world.bodies.find(b=>b.id==='human').x>31.8);
+ await walk('s',()=>window.__splotNext.world.bodies.find(b=>b.id==='human').y<25.6);
+ await game.waitForFunction(()=>window.__splotNext.world.events.some(
+  e=>e.type==='boar-intent'&&e.phase==='wary'),null,{timeout:6000});
+ report.walk.revealed=await game.evaluate(()=>{
+  const g=window.__splotNext,w=g.world,b=w.bodies.find(b=>b.id==='boar'),
+   h=w.bodies.find(b=>b.id==='human');
+  return {phase:w.boarIntent.phase,playerVisible:w.boarIntent.playerVisible,
+   player:[h.x,h.y,h.z],boar:[b.x,b.y,b.z],lastSeen:w.boarIntent.lastSeen,
+   aware:w.events.some(e=>e.type==='boar-intent'&&e.phase==='wary'),
+   physics:g.physics,wallStillPresent:w.scene.elements.some(e=>e.id==='test-perception-wall')};
+ });
+ console.log('BOAR REAL WASD AROUND WALL',JSON.stringify(report.walk));
+ assert.equal(report.walk.revealed.aware,true,'actual WASD should trigger a new observed encounter');
+ assert.equal(report.walk.revealed.wallStillPresent,true,'wall never removed during player traversal');
+ assert.equal(report.walk.revealed.physics,'box3d');
+ await game.screenshot({path:'/tmp/splot-boar-real-WASD-encounter.png'});
+ await game.close();
  const get=(mode,blocked)=>report.cases.find(x=>x.mode===mode&&x.blocked===blocked);
  assert.equal(get('responsive',true).phase,'wary','old distance-only mode wrongly senses behind wall (control)');
  assert.equal(get('responsive-los',true).phase,'travel','never-seen player hidden by wall must not cause wary');
@@ -113,6 +153,6 @@ try{
   'without scene reset the boar must respond after seeing player again');
  assert.ok(report.cases.every(x=>x.physics==='box3d'));
  await writeFile('/tmp/splot-boar-perception.json',JSON.stringify(report,null,2));
- console.log('PASS: material hides player, remembered sight persists, authored wall removal restores sight and reaction');
+ console.log('PASS: physical authored wall occludes boar, wall edits restore sight, real WASD around wall triggers new encounter');
  await ctx.close();
 }finally{await browser.close();await new Promise(r=>server.close(r));}

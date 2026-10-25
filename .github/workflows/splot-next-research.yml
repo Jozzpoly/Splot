@@ -29,6 +29,7 @@ on:
       - 'tests/browser-next-grip-field-ab.mjs'
       - 'tests/browser-next-grip-wall.mjs'
       - 'tests/browser-next-panel-cues.mjs'
+      - 'tests/browser-next-R6-durable-world.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -226,6 +227,19 @@ jobs:
           path: |
             /tmp/splot-R5-*.png
             /tmp/splot-R5-panel-cues.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify R6 save, recover and portrait continuation with real UI
+        if: contains(github.event.head_commit.message, '[durable-r6]')
+        run: node tests/browser-next-R6-durable-world.mjs
+      - name: Preserve R6 persistence checkpoints without private Owner worlds
+        if: always() && contains(github.event.head_commit.message, '[durable-r6]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-R6-restore
+          path: |
+            /tmp/splot-R6-*.png
+            /tmp/splot-R6-restore.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

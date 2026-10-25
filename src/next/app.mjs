@@ -153,8 +153,18 @@ quality.onclick=()=>{
  playtest.event('render-resolution',{scale:renderScale});
  actionText('Obraz '+Math.round(renderScale*100)+'% · tylko rozdzielczość; świat i Box3D bez zmian.');
 };
+const syncMobilePause=()=>{
+ const control=$('#mobile-pause');
+ control.textContent=paused?'▶':'⏸';
+ control.setAttribute('aria-label',paused?'Uruchom symulację':'Zatrzymaj symulację');
+ control.setAttribute('aria-pressed',String(paused));
+ control.title=paused?'Uruchom':'Pauza';
+};
+$('#mobile-pause').onclick=()=>$('#pause').click();
 $('#pause').onclick=()=>{if(physicsState.startsWith('loading-'))return;paused=!paused;world.paused=paused;$('#pause').textContent=paused?'Uruchom':'Pauza';
+ syncMobilePause();
  actionText(paused?'Świat zatrzymany — możesz budować i poprawiać.':'Symulacja uruchomiona — materia znów reaguje.');};
+syncMobilePause();
 $('#grip').onclick=()=>{if(physicsState.startsWith('loading-')){actionText('Fizyka wczytuje się.');return;}const r=toggleGrip(world);playtest.event('grip-action',{ok:r.ok,gripped:r.gripped??null});actionText(r.ok?(r.gripped?'Trzymasz skrzynię.':'Puściłeś skrzynię.'): 'Poza zasięgiem lub inną wysokością.')};
 $('#height').onclick=()=>{const a=[0,1.2,2.4,3.6],i=a.indexOf(buildHeight);buildHeight=a[(i+1)%a.length];$('#height').textContent='Podnieś: +'+buildHeight.toFixed(1)+' m';};
 $('#width').onclick=()=>{buildWidth=buildWidth===2?3:buildWidth===3?1.2:2;$('#width').textContent='Szer.: '+buildWidth+' m';};
@@ -196,7 +206,7 @@ $('#reset').onclick=()=>{
  try{if(rapierLibrary&&physicsState==='rapier')bridge=createRapierBridge(world,rapierLibrary);
   if(box3dLibrary&&physicsState==='box3d')bridge=createBox3DBridge(world,box3dLibrary,box3dOptions);
  }catch(e){bridge=null;physicsState='legacy-fallback';physicsMessage='Physics reset failed: '+e.message;}
- camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
+ camTarget=[14.5,14,0];paused=false;world.paused=false;$('#pause').textContent='Pauza';syncMobilePause();setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();actionText('Świat odtworzony · fizyka '+physicsState+'.')};
 $('#save').onclick=()=>{const state={format:'splot-next-live-research-1',scene:world.scene,bodies:world.bodies,time:world.time};
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
  link.href=url;link.download='Splot_Nowy_Rozdzial.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
@@ -235,7 +245,7 @@ $('#load-file').onchange=async()=>{
   camTarget=[human.x,human.y,human.z+.7];
   keys.clear();stick.x=0;stick.y=0;stick.active=null;look.id=null;
   selected=null;cursor=null;cursorUv=null;selection=0;startPanel=null;
-  paused=true;world.paused=true;$('#pause').textContent='Uruchom';
+  paused=true;world.paused=true;$('#pause').textContent='Uruchom';syncMobilePause();
   setMode('move');refreshActorContactUI();refreshBoarUI();refreshMaterialUI();
   playtest.event('scene-loaded',{parts:world.scene.elements.length,bodies:world.bodies.length,
    mode:'fresh-physics-paused'});

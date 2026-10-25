@@ -37,11 +37,20 @@ try{
   console.log('R7 STEP',JSON.stringify({stage,...v}));return v;
  };
  const enterTool=async name=>{await page.locator('#mobile-menu').tap();await page.locator(name).tap();};
+ const quickPause=async()=>{
+  await page.locator('#mobile-pause').tap();
+  const mode=await page.locator('#mobile-pause').getAttribute('aria-pressed');
+  const gamePaused=await page.evaluate(()=>window.__splotNext.world.paused);
+  assert.equal(mode,String(gamePaused),'quick pause and actual solver world must agree');
+ };
  const begin=await capture('00-fresh');
  assert.equal(begin.mode,'move');assert.equal(begin.paused,false);
- await enterTool('#pause');
- assert.equal((await capture('01-paused')).paused,true);
- await page.locator('[data-mode="box"]').tap();
+ await quickPause();
+ const pausedState=await capture('01-paused');
+ assert.equal(pausedState.paused,true);
+ assert.equal(pausedState.menuOpen,false,'mobile pause must not need drawer');
+ assert.equal(await page.locator('#mobile-pause').getAttribute('aria-label'),'Uruchom symulację');
+ await enterTool('[data-mode="box"]');
  const tool=(await capture('02-tool')).mode;assert.equal(tool,'box');
  const ground=await page.evaluate(()=>{
   const g=window.__splotNext,c=document.querySelector('#world'),r=c.getBoundingClientRect();
@@ -66,10 +75,28 @@ try{
  await page.locator('#active-mode').tap();
  assert.equal((await capture('06-move')).mode,'move');
  // In baseline, pause requires reopening tool drawer. Count this friction.
- await enterTool('#pause');
+ await quickPause();
  const resumed=await capture('07-resumed');
  assert.equal(resumed.paused,false);
- await page.locator('#mobile-menu').tap();
+ assert.equal(resumed.menuOpen,false,'resuming should leave entire world visible');
+ assert.equal(await page.locator('#mobile-pause').getAttribute('aria-label'),'Zatrzymaj symulację');
+ // The pause control is paired with the return-to-move button; it must
+ // remain tappable and non-overlapping at 393px and smaller 320px screens.
+ const layout=async()=>page.evaluate(()=>{
+  const rect=s=>{const r=document.querySelector(s).getBoundingClientRect();
+   return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+  return {pause:rect('#mobile-pause'),mode:rect('#active-mode'),menu:rect('#mobile-menu'),viewport:innerWidth};
+ });
+ const check=state=>{
+  assert.ok(state.pause.width>=44&&state.pause.height>=44);
+  assert.ok(state.pause.left>=0&&state.pause.right<=state.viewport);
+  assert.ok(state.pause.left>=state.mode.right-1,'pause must not overlay mode control');
+  assert.ok(state.pause.top>=state.menu.bottom-1,'pause cannot overlap the tool drawer trigger');
+ };
+ result.layout393=await layout();check(result.layout393);
+ await page.setViewportSize({width:320,height:640});
+ result.layout320=await layout();check(result.layout320);
+ await page.setViewportSize({width:393,height:852});
  const stick=await page.locator('#joystick').boundingBox();
  const start=await page.evaluate(()=>{const b=window.__splotNext.world.bodies.find(b=>b.id==='human');return [b.x,b.y]});
  const input=await context.newCDPSession(page);
@@ -82,8 +109,8 @@ try{
  result.joystickMovement=Math.hypot(end[0]-start[0],end[1]-start[1]);
  assert.ok(result.joystickMovement>.25,'world should respond after mobile build and redo without scene reset');
  await capture('08-live');
- result.mobileMenuOpenings=2;result.physicsToggleAccessibleOnlyThroughMenu=true;
+ result.mobileMenuOpenings=1;result.physicsToggleAccessibleWithoutMenu=true;
  await writeFile('/tmp/splot-R7-loop.json',JSON.stringify(result,null,2));
- console.log('PASS R7 baseline mobile build→Undo/Redo→move→resume with menu friction evidence',JSON.stringify({ground,joystickMovement:result.joystickMovement,opens:result.mobileMenuOpenings}));
+ console.log('PASS R7 quick-pause mobile build→Undo/Redo→move→resume in one less menu cycle',JSON.stringify({ground,joystickMovement:result.joystickMovement,opens:result.mobileMenuOpenings}));
  await context.close();
 }finally{await browser.close();await new Promise(r=>server.close(r));}

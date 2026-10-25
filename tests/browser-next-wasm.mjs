@@ -319,8 +319,10 @@ try{
   await page.mouse.down();
   await page.waitForTimeout(60);
   const selectedPixels=await overlayPixels();
-  assert.ok(selectedPixels>hoverPixels+160,
-   'selecting a part must render a persistent geometry outline beyond the hover marker');
+  assert.ok(hoverPixels>=Math.max(150,selectedPixels*.45),
+   'hovering an authored part must already expose its whole geometry before pointer-down');
+  assert.ok(selectedPixels>160&&selectedPixels>=hoverPixels*.55,
+   'clicked part must retain a visible persistent outline without vanishing');
   await page.mouse.move(to.x,to.y,{steps:6});
   await page.mouse.up();
   const afterDrag=await page.evaluate(()=>structuredClone(window.__splotNext.world.scene.elements.find(e=>e.id==='block-10')));

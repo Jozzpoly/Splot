@@ -52,7 +52,12 @@ try{
  await page.locator('#save').click();
  const dl=await downloadPromise;
  assert.equal(dl.suggestedFilename(),'Splot_Nowy_Rozdzial.json');
- const savedPath=await dl.path();
+ // Playwright removes context-owned download artifacts on context.close().
+ // Copy the REAL downloaded bytes to a stable local test file before opening
+ // a fresh emulated portrait context. This is synthetic scene content only.
+ const downloadPath=await dl.path();
+ const savedPath='/tmp/splot-R6-synthetic-save.json';
+ await writeFile(savedPath,await readFile(downloadPath));
  const saved=JSON.parse(await readFile(savedPath,'utf8'));
  assert.equal(saved.format,'splot-next-live-research-1');
  assert.deepEqual(saved.scene.elements,created.parts);

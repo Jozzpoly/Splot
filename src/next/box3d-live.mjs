@@ -4,7 +4,7 @@
 // Splot (x,y,z) -> Box3D (x,z,-y), preserving handedness.
 // No renderer or editor ownership. DO NOT promote before a real browser run.
 import {createConstraintVelocityCharacter} from './box3d-donor/constraint-velocity-character.js';
-import {supportCandidates,clearanceAt} from './spatial-core.mjs';
+import {supportCandidates,clearanceAt,castRay} from './spatial-core.mjs';
 import {splotToBox3D,box3DToSplot,panelQuaternionInBox3D} from './box3d-basis.mjs';
 import {compliantActorImpulse} from './actor-contact.mjs';
 import {createBoarIntent} from './boar-intent.mjs';
@@ -12,6 +12,19 @@ import {partMotionMode,boxCenter,translateBoxToCenter,boxVolume} from './part-li
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>Math.hypot(x,y);
+// Opt-in research only: eye rays against authored solids, not a universal
+// NPC sensor (loose solver-owned crates are not in this test).
+function boarSeesPlayer(scene,boar,player){
+ if(!boar||!player||Math.hypot(player.x-boar.x,player.y-boar.y)>3.5||
+    boar.z>=player.z+player.h||player.z>=boar.z+boar.h)return false;
+ const eye=[boar.x,boar.y,boar.z+boar.h*.72];
+ for(const f of [.35,.76]){
+  const dest=[player.x,player.y,player.z+player.h*f],
+    dir=dest.map((v,i)=>v-eye[i]),len=Math.hypot(...dir);
+  if(len<.08||!castRay(scene,eye,dir,{ground:false,maxDistance:len-.06}).length)return true;
+ }
+ return false;
+}
 function bodyKey(x){return x.id;}
 export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMode='forage',substeps=4}={}){
  if(!['baseline','intent-force'].includes(gripLaw))throw Error('unknown Box3D grip law');
@@ -19,6 +32,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
  if(![4,8,12,16].includes(substeps))throw Error('unsupported research solver substeps');
  let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  const boarMind=createBoarIntent({mode:boarMode});
+ let sawPlayer=false,nextSightCheck=-Infinity,sightSceneRevision=-1;
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
   throw Error('Box3D 0.1.1 mover API unavailable');
  const wd=b3.b3DefaultWorldDef();
@@ -167,10 +181,17 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
   human?.controller.preStep(dt,intentFor(humanInput[0],humanInput[1]));
   if(norm(...input)>.001&&human)human.b.yaw=Math.atan2(input[1],input[0]);
   if(boar){
-   const decision=boarMind.choose({boar:boar.b,player:human?.b,food:w.food,time:w.time});
+   if(boarMind.mode==='responsive-los'&&
+     (w.time>=nextSightCheck||sightSceneRevision!==w.scene.revision)){
+      sawPlayer=boarSeesPlayer(w.scene,boar.b,human?.b);
+      sightSceneRevision=w.scene.revision;nextSightCheck=w.time+.1;
+   }
+   const decision=boarMind.choose({boar:boar.b,player:human?.b,food:w.food,
+     time:w.time,playerVisible:boarMind.mode==='responsive-los'&&sawPlayer});
    boar.controller.preStep(dt,intentFor(decision.dir[0],decision.dir[1]));
    w.boarIntent={phase:decision.phase,goal:decision.goal,
     foodDistance:decision.foodDistance,playerDistance:decision.playerDistance,
+    playerVisible:decision.playerVisible,lastSeen:decision.lastSeen,
     mode:boarMind.mode};
    if(decision.changed)w.events.push({type:'boar-intent',id:'boar',phase:decision.phase,
     reason:decision.goal,time:w.time});
@@ -298,6 +319,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
   get actorContactMode(){return contactMode},
   setBoarMode(next){
    boarMind.setMode(next);
+   nextSightCheck=-Infinity;sightSceneRevision=-1;sawPlayer=false;
    w.events.push({type:'boar-mode',id:'boar',mode:next,time:w.time});
   },
   get boarMode(){return boarMind.mode},

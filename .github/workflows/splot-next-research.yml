@@ -26,6 +26,7 @@ on:
       - 'tests/browser-next-creator-loop.mjs'
       - 'tests/browser-next-player-occlusion.mjs'
       - 'tests/browser-next-living-R3.mjs'
+      - 'tests/browser-next-grip-field-ab.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
 
@@ -184,6 +185,19 @@ jobs:
           path: |
             /tmp/splot-living-R3-*.png
             /tmp/splot-living-R3.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Compare genuine WASD and E grip under two opt-in physics laws
+        if: contains(github.event.head_commit.message, '[grip-field]')
+        run: node tests/browser-next-grip-field-ab.mjs
+      - name: Preserve recorded grip movement and release evidence
+        if: always() && contains(github.event.head_commit.message, '[grip-field]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-grip-field-ab
+          path: |
+            /tmp/splot-grip-*.png
+            /tmp/splot-grip-field-ab.json
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence

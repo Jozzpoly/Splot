@@ -119,6 +119,11 @@ try{
  const loaded=await capture(phone,'07-mobile-restored');
  assert.deepEqual(loaded.parts,saved.scene.elements,'portrait load must preserve exactly same world');
  assert.equal(loaded.paused,true);assert.equal(loaded.physics,'box3d');
+ // Import intentionally calls setMode('move'), which closes the mobile
+ // tool drawer. The player reopens tools before tapping Uruchom.
+ assert.equal(await phone.locator('body').evaluate(e=>e.classList.contains('menu-open')),false,
+  'import returns to game view, closing the tools drawer');
+ await phone.locator('#mobile-menu').click();
  await phone.locator('#pause').click();
  assert.equal(await phone.evaluate(()=>window.__splotNext.world.paused),false);
  await phone.locator('#mobile-menu').click();

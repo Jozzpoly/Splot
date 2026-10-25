@@ -212,10 +212,9 @@ try{
   try{await keyboard.waitForFunction(test,null,{timeout:9000,polling:100});}
   finally{await keyboard.keyboard.up(key);}
  };
- const human=()=>window.__splotNext.world.bodies.find(b=>b.id==='human');
- await move('w',()=>human().y>16.4);
- await move('d',()=>human().x>22.4);
- await move('s',()=>human().y<14.25);
+ await move('w',()=>window.__splotNext.world.bodies.find(b=>b.id==='human').y>16.4);
+ await move('d',()=>window.__splotNext.world.bodies.find(b=>b.id==='human').x>22.4);
+ await move('s',()=>window.__splotNext.world.bodies.find(b=>b.id==='human').y<14.25);
  await keyboard.waitForTimeout(650);
  const keyUnder=await keyboard.evaluate(()=>{
   const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
@@ -242,7 +241,7 @@ try{
  assert.equal(report.WASD.rotated.cue?.blocker,report.WASD.rotated.ray,
   'camera orbit must update own-player occlusion instead of stale pre-orbit state');
  await keyboard.locator('#turn-right').click();
- await move('w',()=>human().y>17);
+ await move('w',()=>window.__splotNext.world.bodies.find(b=>b.id==='human').y>17);
  await keyboard.waitForTimeout(450);
  report.WASD.emerged=await keyboard.evaluate(()=>{
   const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');

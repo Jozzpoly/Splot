@@ -136,6 +136,8 @@ try{
  console.log('CREATOR LOOP OBSERVATIONS',JSON.stringify(report));
  await writeFile('/tmp/splot-creator-loop.json',JSON.stringify(report,null,2));
  assert.ok(faceOutlineVisible,'RED: hovered anchored part lacks full visible pre-selection outline');
+ assert.match(report.crateUnderBuildTool.pointerTarget,/crate-1/,
+  'RED: creation through physical crate must disclose front matter even if target remains behind');
  console.log('PASS creator loop: pre-hover material intent plus real drag Undo/Redo');
  await context.close();
 }finally{

@@ -117,6 +117,34 @@ try{
  report.unoccluded=clear;
  assert.ok(clear.alphaCount<50,'No constant own-player cue where actor remains visible');
  await exposed.close();
+ // Phone-size real Chrome emulation is not evidence for an actual handset,
+ // but must catch overflow and disabled 2D overlay on portrait surfaces.
+ const mobileCtx=await browser.newContext({viewport:{width:393,height:852},
+  deviceScaleFactor:2,isMobile:true,hasTouch:true});
+ const phone=await mobileCtx.newPage();
+ await phone.goto(base+'?visibility=player-occlusion',{waitUntil:'domcontentloaded'});
+ await phone.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ await phone.evaluate(()=>{
+  const g=window.__splotNext,h=g.world.bodies.find(b=>b.id==='human');
+  g.pause();
+  const a=g.build({id:'synthetic-occlusion-roof',kind:'box',
+   min:[h.x-3.5,h.y-3.5,2.3],max:[h.x+3.5,h.y+3.5,2.65],material:'wood'});
+  if(!a.ok)throw Error('mobile-fixture:'+a.reason);
+  g.challenger.syncStatics();
+ });
+ await phone.waitForFunction(()=>window.__splotNext.presenceInfo?.occluded===true,null,{timeout:3500});
+ report.portrait=await phone.evaluate(()=>{
+  const g=window.__splotNext,el=document.querySelector('#overlay');
+  const px=el.getContext('2d').getImageData(0,0,el.width,el.height).data;
+  let alpha=0;for(let i=3;i<px.length;i+=4)if(px[i])alpha++;
+  return {width:el.width,height:el.height,alpha,solver:g.physics,info:g.presenceInfo,
+    hud:document.querySelector('#hud')?.textContent};
+ });
+ assert.equal(report.portrait.solver,'box3d');
+ assert.equal(report.portrait.info.blocker,'synthetic-occlusion-roof');
+ assert.ok(report.portrait.alpha>200,'portrait overlay must be present');
+ await phone.screenshot({path:'/tmp/splot-occlusion-portrait.png'});
+ await mobileCtx.close();
  await writeFile('/tmp/splot-occlusion-ab.json',JSON.stringify(report,null,2));
  console.log('OCCLUSION A/B',JSON.stringify(report));
  console.log('PASS actual Chrome own-presence visual research gated by raycast; ordinary rendering unchanged');

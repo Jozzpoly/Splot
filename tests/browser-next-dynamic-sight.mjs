@@ -108,7 +108,15 @@ try{
  assert.equal(find('responsive-los-crates',2).visible,false,'stack of two real crates must block BOTH sight rays');
  assert.equal(find('responsive-los-crates',2).phase,'feeding',
   'hidden-by-stacked-crates player must not trigger purely optical wary state');
- assert.ok(report.pull.start.grip==='crate-1','real E must grab lower physically modeled crate');
+ assert.ok(report.pull.start.grip==='crate-1','E must grip actual physical crate');
+ assert.equal(report.pull.reached,true,'WASD must move the actual Box3D crate beyond the optical ray, not just player');
+ assert.ok(report.pull.start.crate[1]-report.pull.afterPull.crate[1]>.5,
+  'real held crate must travel more than 0.5 metres sideways');
+ assert.equal(report.pull.end.boar.playerVisible,true,
+  'clearing sight with an actual moved crate must restore observation');
+ assert.ok(report.pull.end.boar.lastSeen,'boar must remember a genuinely newly observed player');
+ assert.ok(report.pull.end.events.some(e=>e.type==='boar-intent'&&e.phase==='wary'),
+  'live boar behavior must become wary through revealed visual contact');
  assert.ok(report.pull.end.crates.every(b=>[b.x,b.y,b.z].every(Number.isFinite)));
  assert.equal(report.pull.end.grip,null,'real player releases physical crate intentionally');
  await writeFile('/tmp/splot-R9-crates.json',JSON.stringify(report,null,2));

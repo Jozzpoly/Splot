@@ -2569,7 +2569,7 @@ function refreshBoarUI(){
  const btn=$('#boar-behavior'),supported=physicsState==='box3d'&&Boolean(bridge?.setBoarMode);
  btn.disabled=!supported;
  const mode=supported?bridge.boarMode:box3dOptions.boarMode;
- btn.textContent=supported?(mode==='responsive-los'?'Dzik: widzi materię (R&D)':mode==='responsive'?'Dzik: reaguje':'Dzik: żeruje'):'Dzik: Box3D';
+ btn.textContent=supported?(mode==='responsive-los'?'Dzik: widzi części (R&D)':mode==='responsive'?'Dzik: reaguje':'Dzik: żeruje'):'Dzik: Box3D';
  btn.classList.toggle('active',supported&&mode==='responsive');
 }
 $('#boar-behavior').onclick=()=>{

@@ -61,6 +61,23 @@ try{
    console.log('BOAR MATERIAL SIGHT',JSON.stringify({mode,blocked,...result}));
    report.cases.push({mode,blocked,...result});
    await page.screenshot({path:'/tmp/splot-boar-'+mode+'-'+(blocked?'wall':'open')+'.png'});
+   if(mode==='responsive-los'&&blocked){
+    // True world mutation while the SAME boar continues living: removing
+    // material must change perceptual truth without resetting cognition.
+    const opened=await page.evaluate(()=>{
+     const g=window.__splotNext,w=g.world;
+     const old={...w.boarIntent};
+     const out=removeElement(w.scene,'test-perception-wall');
+     if(!out.ok)throw Error('remove-wall:'+out.reason);
+     g.challenger.syncStatics();
+     w.paused=false;for(let i=0;i<7;i++)g.step(1,[0,0]);w.paused=true;
+     return {old,new:{...w.boarIntent},
+      removed:!w.scene.elements.some(x=>x.id==='test-perception-wall')};
+    });
+    report.opened=opened;
+    console.log('BOAR REACQUIRES AFTER WALL REMOVAL',JSON.stringify(opened));
+    await page.screenshot({path:'/tmp/splot-boar-reacquire-after-remove.png'});
+   }
    if(mode==='responsive-los'&&!blocked){
     const memory=await page.evaluate(()=>{
      const g=window.__splotNext,w=g.world,old={...w.boarIntent};
@@ -88,8 +105,14 @@ try{
  assert.equal(report.memory.new.phase,'wary','brief memory survives when sight blocked');
  assert.equal(report.memory.new.playerVisible,false);
  assert.deepEqual(report.memory.new.lastSeen,report.memory.old.lastSeen);
+ assert.equal(report.opened.removed,true);
+ assert.equal(report.opened.old.playerVisible,false);
+ assert.equal(report.opened.new.playerVisible,true,
+  'world edit removing the solid must restore actual sight of the player');
+ assert.equal(report.opened.new.phase,'wary',
+  'without scene reset the boar must respond after seeing player again');
  assert.ok(report.cases.every(x=>x.physics==='box3d'));
  await writeFile('/tmp/splot-boar-perception.json',JSON.stringify(report,null,2));
- console.log('PASS: Boar reacts to actual authored occlusion, not psychic distance; remembered observation survives');
+ console.log('PASS: material hides player, remembered sight persists, authored wall removal restores sight and reaction');
  await ctx.close();
 }finally{await browser.close();await new Promise(r=>server.close(r));}

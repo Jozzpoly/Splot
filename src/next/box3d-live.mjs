@@ -55,6 +55,8 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
  let contactMode=actorContact,contactNear=false,contactStarts=0,lastContactImpulse=0;
  const boarMind=createBoarIntent({mode:boarMode});
  let sawPlayer=false,nextSightCheck=-Infinity,sightSceneRevision=-1;
+ // Visual heading belongs to the current bridge, not the saved body.
+ let visualBoarYaw=null;
  if(!b3?.b3CreateWorld||!b3?.b3World_CollideMover||!b3?.b3SolvePlanes||!b3?.b3World_CastMover)
   throw Error('Box3D 0.1.1 mover API unavailable');
  const wd=b3.b3DefaultWorldDef();
@@ -214,7 +216,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
    // Opt-in visual grammar: heading comes from the actor's real intention,
    // not from a billboard fixed along the global X axis.
    if(actorFacing&&norm(...decision.dir)>.05)
-     boar.b.yaw=Math.atan2(decision.dir[1],decision.dir[0]);
+     visualBoarYaw=Math.atan2(decision.dir[1],decision.dir[0]);
    boar.controller.preStep(dt,intentFor(decision.dir[0],decision.dir[1]));
    w.boarIntent={phase:decision.phase,goal:decision.goal,
     foodDistance:decision.foodDistance,playerDistance:decision.playerDistance,
@@ -350,6 +352,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
    w.events.push({type:'boar-mode',id:'boar',mode:next,time:w.time});
   },
   get boarMode(){return boarMind.mode},
+  get visualBoarYaw(){return visualBoarYaw},
   get warning(){return state.warning},
   get status(){return {parts:statics.size,bodies:refs.size,dynamicParts:dynamicParts.size,gripLaw,
    actorContact:contactMode,contactStarts,lastContactImpulse,boarMode:boarMind.mode,boarPhase:boarMind.phase,

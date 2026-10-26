@@ -471,8 +471,9 @@ function box(x,y,z,rx,ry,h,material){return trianglesFor({kind:'box',id:'visual-
 // Same triangles, same material and silhouette parts. Orientation alters
 // visible pose only; solver-owned collision shapes are never rotated here.
 function faceActorTriangles(tris,b){
- if(!facingActors||!Number.isFinite(b.yaw))return tris;
- const a=b.yaw,c=Math.cos(a),s=Math.sin(a);
+ const a=bridge?.visualBoarYaw;
+ if(!facingActors||!Number.isFinite(a))return tris;
+ const c=Math.cos(a),s=Math.sin(a);
  const point=p=>{
   const x=p[0]-b.x,y=p[1]-b.y;
   return [b.x+x*c-y*s,b.y+x*s+y*c,p[2]];

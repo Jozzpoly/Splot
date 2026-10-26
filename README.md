@@ -8,7 +8,7 @@
 >
 > Sekcja **Start here** poniżej dotyczy historycznego grywalnego K2, nadal obecnego w `main`. Nie pomyl obu uruchamianych światów.
 
-> **Research state update (20.10.2026):** for the active but unpromoted Splot Next work, begin at [next-session entrypoint](docs/START_NEXT_SESSION_2026-10-21.md). K2 below remains the `main` baseline; PR #3→#4→#5 are *dependent draft experiments*, not released updates. The deterministic Next gate is `bash tests/verify-next.sh` on the PR #5 branch; gameplay/mobile approval remains pending.
+> **Active research truth (26.10.2026):** [compact agent status](docs/research/CURRENT_EXECUTION_STATE.md) · [Owner's short, safety-aware play guide](docs/PRETEST_SPLOT_NEXT_2026-10-22.md). [Full historical campaign/archive](docs/START_NEXT_SESSION_2026-10-21.md) is cold retrieval only. Latest verified real Box3D CI [#40257012692](https://github.com/Jozzpoly/Splot/actions/runs/40257012692), 94 Node PASS / 0 FAIL; PR #5 remains DRAFT, and Owner gameplay feel remains unapproved. Mobile map authoring is intentionally deprioritized in favor of a future professional Jaskinia/Studio environment. K2 below remains the `main` baseline; dependent PR #3→#4→#5 are research, not releases.
 
 **Status (2026-10-18): experimental / Owner review pending.** This public repository holds a reproducible **playable baseline** and a separate, **non-promoted** construction-geometry research donor. It is not a validated game engine, not the canonical geometry system for Feniks Studio, and not a replacement for Jaskinia.
 

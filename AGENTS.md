@@ -1,6 +1,6 @@
 # Splot — kontrakt pracy agentów
 
-> **Przed nowym runem na Splot Next:** odzyskaj [docs/START_NEXT_SESSION_2026-10-21.md](docs/START_NEXT_SESSION_2026-10-21.md). To stan badawczy, nie zastępcza lista implementacji ani zgoda na awans do main.
+> **Przed nowym runem na Splot Next:** przeczytaj KRÓTKI [aktualny stan i granice pracy](docs/research/CURRENT_EXECUTION_STATE.md) (PR HEAD i CI zweryfikuj na żywo). [Długi dziennik](docs/START_NEXT_SESSION_2026-10-21.md) to archiwum historyczne do odczytu tylko na żądanie dowodów — nie aktualna instrukcja i nie zgoda na awans do main.
 
 1. **Owner-observed FAIL ma veto** nad PASS kernela, estetyki lub syntetycznej przeglądarki. Nie usprawiedliwiaj gorszej gry czystszą geometrią.
 2. **Nie promuj laboratorium do następcy gry.** K3 ma dawstwo geometrii, ale nie odziedziczył chwytu, dzika, autorstwa, świata ani języka obrazu — Owner odrzucił go jako grę.
@@ -13,8 +13,9 @@
 9. Dług i otwarte kontrprzykłady są jawne. Nie kasuj wad przez przepisywanie testu, chyba że nowy wynik jest poprawny według rzeczywistych zasad świata — zachowaj uzasadnienie i niezależne próby obydwu sytuacji.
 10. Raportuj Ownerowi **krótko**, pracuj i testuj **długo**. Staraj się prowadzić autonomiczne wieloiteracyjne kampanie; nie kończ po pierwszym lokalnym PASS.
 
-11. **Mobile input is a product gate:** no positive label from tapping one button in Playwright. Check real pointer movement, hold, second-finger action, cancel, scroll/text selection, menu state and rotation at 320×568, 393×852 and 844×390. A physical Owner phone test remains separate.
-12. **A screen is not an occlusion proof.** Compare geometry, support, ray, actor layering and surface picking. Camera cutaway is a view aid. Do not call it full 2.5D or depth correctness.
+11. **Owner correction 25.10:** nie rozwijaj dalej map-authoringu na telefonie (nie blokuj istniejącego). Profesjonalny autorat map/światów należy do przyszłej linii Jaskinia/Studio, natomiast Splot ma badać świat fizyczny i swobodną interakcję. Mobilne **granie/sterowanie**, gdy jest przedmiotem konkretnej poprawki, nadal ma osobną bramkę jakości i nie jest zatwierdzone samym emulatorem.
+12. **Mobile input is a product gate when a mobile-play change actually matters:** no positive label from tapping one button in Playwright. Check real pointer movement, hold, second-finger action, cancel, scroll/text selection, menu state and rotation at 320×568, 393×852 and 844×390. A physical Owner phone test remains separate.
+13. **A screen is not an occlusion proof.** Compare geometry, support, ray, actor layering and surface picking. Camera cutaway is a view aid. Do not call it full 2.5D or depth correctness.
 
 ## 20.10.2026 — correction after Owner free play and excessive draft churn
 

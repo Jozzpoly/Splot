@@ -53,6 +53,20 @@ try{
  assert.equal(report.cases[0].triangleCount[0],report.cases[1].triangleCount[0],
   'visual heading keeps the exact same number of boar triangles');
  assert.ok(report.cases[1].triangleCount[0]>20,'must be testing the actual composed boar geometry');
+ // The default boar may have stood still during module fetch while the
+ // opt-in version already had a heading. Align ACTUAL starting physics by
+ // importing the SAME authentic JSON into both fresh worlds; avoid comparing
+ // two unrelated load times or a preexisting yaw to a movement-derived yaw.
+ const physicsFixture=await ctx.newPage();
+ await physicsFixture.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html',{waitUntil:'domcontentloaded'});
+ await physicsFixture.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ const fixture=await physicsFixture.evaluate(()=>{
+  const w=window.__splotNext.world;
+  const bodies=structuredClone(w.bodies);
+  const boar=bodies.find(b=>b.id==='boar');boar.yaw=0;
+  return JSON.stringify({format:'splot-next-live-research-1',scene:w.scene,bodies,time:0});
+ });
+ await physicsFixture.close();
  // Independent genuine Box3D controls: same world, same foraging velocity,
  // but ONLY the opt-in presenter synchronizes the intended yaw.
  for(const [mode,param] of [['default',''],['facing','?actorvisual=facing']]){
@@ -76,20 +90,6 @@ try{
   console.log('R10 ACTUAL MOVEMENT HEADING',JSON.stringify({mode,...state}));
   await page.close();
  }
- // The default boar may have stood still during module fetch while the
- // opt-in version already had a heading. Align ACTUAL starting physics by
- // importing the SAME authentic JSON into both fresh worlds; avoid comparing
- // two unrelated load times or a preexisting yaw to a movement-derived yaw.
- const physicsFixture=await ctx.newPage();
- await physicsFixture.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html',{waitUntil:'domcontentloaded'});
- await physicsFixture.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
- const fixture=await physicsFixture.evaluate(()=>{
-  const w=window.__splotNext.world;
-  const bodies=structuredClone(w.bodies);
-  const boar=bodies.find(b=>b.id==='boar');boar.yaw=0;
-  return JSON.stringify({format:'splot-next-live-research-1',scene:w.scene,bodies,time:0});
- });
- await physicsFixture.close();
  const [a,b]=report.cases;
  assert.equal(a.physics.physics,'box3d');assert.equal(b.physics.physics,'box3d');
  assert.equal(a.physics.was,a.physics.now,'default game stores historical yaw unchanged');

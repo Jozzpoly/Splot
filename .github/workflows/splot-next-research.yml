@@ -36,6 +36,12 @@ on:
       - 'tests/browser-next-actor-facing.mjs'
       - '.github/workflows/splot-next-research.yml'
   workflow_dispatch:
+    inputs:
+      historical_probes:
+        description: "Also run all costly historical R&D experiments (default: smoke only)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -67,13 +73,13 @@ jobs:
           command -v google-chrome || command -v chromium
           node tests/browser-next-wasm.mjs
       - name: Research dense creator-pressure Box3D A/B
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[storm]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[storm]')
         run: node tests/browser-next-creator-storm.mjs
       - name: Research 8-substep Box3D permissive 177-crate creator storm
         if: contains(github.event.head_commit.message, '[storm8]')
         run: SPLOT_SOLVER8_ONLY=1 node tests/browser-next-creator-storm.mjs
       - name: Archive dense creator visual evidence, including failed trials
-        if: always() && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[storm]') || contains(github.event.head_commit.message, '[storm8]'))
+        if: always() && ((github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[storm]') || contains(github.event.head_commit.message, '[storm8]'))
         uses: actions/upload-artifact@v4
         with:
           name: splot-creator-pressure
@@ -83,7 +89,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 3
       - name: Archive 100/75/50 dense matched-scene screenshots
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[storm]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[storm]')
         uses: actions/upload-artifact@v4
         with:
           name: splot-dense-resolution-ab
@@ -91,25 +97,25 @@ jobs:
           if-no-files-found: error
           retention-days: 3
       - name: Research CPU and rAF performance A/B
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[profile]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[profile]')
         run: node tests/browser-next-perf.mjs
       - name: Isolate deep-overlap ground contact and physical underlay A/B
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[ground]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[ground]')
         run: node tests/browser-next-ground-contact.mjs
       - name: Balanced 4-vs-8 substep CPU and rAF cost on sparse and dense material
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[substep-perf]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[substep-perf]')
         run: node tests/browser-next-substep-profile.mjs
       - name: Probe Box3D real sleep/wake around new anchored material
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[sleep-contact]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[sleep-contact]')
         run: node tests/browser-next-sleep-contact.mjs
       - name: Compare local vs all waking under dense authored material
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[sleep-density]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[sleep-density]')
         run: node tests/browser-next-sleep-density.mjs
       - name: Experiment with gradual versus bulk authored collision creation
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[material-tempo]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[material-tempo]')
         run: node tests/browser-next-material-tempo.mjs
       - name: Minimize Box3D contact-ejection set under identical edit schedule
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[contact-min]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[contact-min]')
         run: node tests/browser-next-contact-minimize.mjs
       - name: Automatically reduce and replay the exact Box3D contact failure
         if: contains(github.event.head_commit.message, '[contact-ddmin]')
@@ -299,7 +305,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
       - name: Archive temporary synthetic camera visual evidence
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual]')
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[visual]')
         uses: actions/upload-artifact@v4
         with:
           name: splot-synthetic-camera-views

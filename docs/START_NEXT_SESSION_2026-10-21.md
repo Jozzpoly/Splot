@@ -6,6 +6,8 @@
 - [Complete previous 11 KB Owner guide](https://github.com/Jozzpoly/Splot/blob/913964c1b96c8d18a9c49618b4d360d9ed60726b/docs/PRETEST_SPLOT_NEXT_2026-10-22.md)
 - [Complete previous 27 KB PR description, copied verbatim into the prior checkpoint](https://github.com/Jozzpoly/Splot/blob/73a1d45af00700603dd3ab5318dc3932cc132daa/docs/START_NEXT_SESSION_2026-10-21.md) — preserved in immutable commit `73a1d45`, without needing duplicate text on today's branch.
 
+**Durability limit:** content-addressed commit IDs prove exact bytes but not permanent availability. If this research branch is later squashed, rebased or deleted, old commits could become unreachable or eventually be pruned. Before any authorized branch consolidation, keep an intentional reachable reference or independent backup for historical material that is genuinely worth preserving. These links and short-lived CI screenshots are **not** an independent backup.
+
 **Historical checkpoint:** the old active documents had references to earlier CI and are not instructions to restart those campaigns. Follow [PR #5](https://github.com/Jozzpoly/Splot/pull/5) for current safety and merge limits.
 
 ---

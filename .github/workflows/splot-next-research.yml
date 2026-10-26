@@ -1,0 +1,314 @@
+name: Splot Next research checks
+
+on:
+  push:
+    branches:
+      - research/material-part-lifecycle-2026-10-20
+    paths:
+      - 'src/next/**'
+      - 'build-next.py'
+      - 'tests/research/**'
+      - 'tests/verify-next.sh'
+      - 'tests/check-next-bundle.mjs'
+      - 'tests/browser-next-wasm.mjs'
+      - 'tests/browser-next-creator-storm.mjs'
+      - 'tests/browser-next-perf.mjs'
+      - 'tests/browser-next-ground-contact.mjs'
+      - 'tests/browser-next-substep-profile.mjs'
+      - 'tests/browser-next-sleep-contact.mjs'
+      - 'tests/browser-next-sleep-density.mjs'
+      - 'tests/browser-next-material-tempo.mjs'
+      - 'tests/browser-next-contact-minimize.mjs'
+      - 'tests/browser-next-contact-ddmin.mjs'
+      - 'tests/browser-next-crate-ddmin.mjs'
+      - 'tests/browser-next-contact-chain.mjs'
+      - 'tests/browser-next-materialization-ab.mjs'
+      - 'tests/browser-next-creator-loop.mjs'
+      - 'tests/browser-next-player-occlusion.mjs'
+      - 'tests/browser-next-living-R3.mjs'
+      - 'tests/browser-next-grip-field-ab.mjs'
+      - 'tests/browser-next-grip-wall.mjs'
+      - 'tests/browser-next-panel-cues.mjs'
+      - 'tests/browser-next-R6-durable-world.mjs'
+      - 'tests/browser-next-R7-mobile-loop.mjs'
+      - 'tests/browser-next-boar-perception.mjs'
+      - 'tests/browser-next-dynamic-sight.mjs'
+      - 'tests/browser-next-actor-facing.mjs'
+      - '.github/workflows/splot-next-research.yml'
+  workflow_dispatch:
+    inputs:
+      historical_probes:
+        description: "Also run all costly historical R&D experiments (default: smoke only)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: splot-next-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deterministic-next:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check standalone and Next contracts
+        run: bash tests/verify-next.sh
+      - name: Install browser automation client
+        run: npm install --no-save --no-package-lock playwright-core@1.56.1
+      - name: Run actual Box3D WASM in headless Chrome
+        run: |
+          command -v google-chrome || command -v chromium
+          node tests/browser-next-wasm.mjs
+      - name: Research dense creator-pressure Box3D A/B
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[storm]')
+        run: node tests/browser-next-creator-storm.mjs
+      - name: Research 8-substep Box3D permissive 177-crate creator storm
+        if: contains(github.event.head_commit.message, '[storm8]')
+        run: SPLOT_SOLVER8_ONLY=1 node tests/browser-next-creator-storm.mjs
+      - name: Archive dense creator visual evidence, including failed trials
+        if: always() && ((github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[storm]') || contains(github.event.head_commit.message, '[storm8]'))
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-creator-pressure
+          path: |
+            /tmp/splot-creator-storm-dense-solver.png
+            /tmp/splot-creator-storm-FAIL.png
+          if-no-files-found: warn
+          retention-days: 3
+      - name: Archive 100/75/50 dense matched-scene screenshots
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[storm]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-dense-resolution-ab
+          path: /tmp/splot-dense-quality-*.png
+          if-no-files-found: error
+          retention-days: 3
+      - name: Research CPU and rAF performance A/B
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[profile]')
+        run: node tests/browser-next-perf.mjs
+      - name: Isolate deep-overlap ground contact and physical underlay A/B
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[ground]')
+        run: node tests/browser-next-ground-contact.mjs
+      - name: Balanced 4-vs-8 substep CPU and rAF cost on sparse and dense material
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[substep-perf]')
+        run: node tests/browser-next-substep-profile.mjs
+      - name: Probe Box3D real sleep/wake around new anchored material
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[sleep-contact]')
+        run: node tests/browser-next-sleep-contact.mjs
+      - name: Compare local vs all waking under dense authored material
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[sleep-density]')
+        run: node tests/browser-next-sleep-density.mjs
+      - name: Experiment with gradual versus bulk authored collision creation
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[material-tempo]')
+        run: node tests/browser-next-material-tempo.mjs
+      - name: Minimize Box3D contact-ejection set under identical edit schedule
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[contact-min]')
+        run: node tests/browser-next-contact-minimize.mjs
+      - name: Automatically reduce and replay the exact Box3D contact failure
+        if: contains(github.event.head_commit.message, '[contact-ddmin]')
+        run: node tests/browser-next-contact-ddmin.mjs
+      - name: Retain bounded contact-minimization evidence
+        if: always() && contains(github.event.head_commit.message, '[contact-ddmin]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-contact-ddmin
+          path: /tmp/splot-contact-ddmin.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Reduce causal crate population around the four-solid counterexample
+        if: contains(github.event.head_commit.message, '[crate-ddmin]')
+        run: node tests/browser-next-crate-ddmin.mjs
+      - name: Preserve crate reduction checkpoints
+        if: always() && contains(github.event.head_commit.message, '[crate-ddmin]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-crate-ddmin
+          path: /tmp/splot-crate-ddmin.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Trace reduced Box3D contact chain and two control worlds
+        if: contains(github.event.head_commit.message, '[contact-chain]')
+        run: node tests/browser-next-contact-chain.mjs
+      - name: Preserve contact-chain evidence
+        if: always() && contains(github.event.head_commit.message, '[contact-chain]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-contact-chain
+          path: /tmp/splot-contact-chain.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Compare opt-in matter-creation semantics on matched failure witness
+        if: contains(github.event.head_commit.message, '[material-ab]')
+        run: node tests/browser-next-materialization-ab.mjs
+      - name: Preserve synthetic materialization A/B evidence
+        if: always() && contains(github.event.head_commit.message, '[material-ab]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-materialization-ab
+          path: /tmp/splot-materialization-ab.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Rehearse the creator loop and collect K2/Next visual comparison
+        if: contains(github.event.head_commit.message, '[creator-loop]')
+        run: node tests/browser-next-creator-loop.mjs
+      - name: Preserve creator-loop visual evidence even when a UX hypothesis fails
+        if: always() && contains(github.event.head_commit.message, '[creator-loop]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-living-creator-rehearsal
+          path: |
+            /tmp/splot-creator-*.png
+            /tmp/splot-creator-loop.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify opt-in player occlusion research in real Chrome
+        if: contains(github.event.head_commit.message, '[presence-ab]')
+        run: node tests/browser-next-player-occlusion.mjs
+      - name: Keep paired occlusion screenshots and measurements
+        if: always() && contains(github.event.head_commit.message, '[presence-ab]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-presence-occlusion-ab
+          path: |
+            /tmp/splot-occlusion-*.png
+            /tmp/splot-occlusion-ab.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Rehearse one genuine R3 player creator session in real Chrome
+        if: contains(github.event.head_commit.message, '[living-r3]')
+        run: node tests/browser-next-living-R3.mjs
+      - name: Keep checkpoint images from R3 session
+        if: always() && contains(github.event.head_commit.message, '[living-r3]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-living-R3
+          path: |
+            /tmp/splot-living-R3-*.png
+            /tmp/splot-living-R3.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Compare genuine WASD and E grip under two opt-in physics laws
+        if: contains(github.event.head_commit.message, '[grip-field]')
+        run: node tests/browser-next-grip-field-ab.mjs
+      - name: Preserve recorded grip movement and release evidence
+        if: always() && contains(github.event.head_commit.message, '[grip-field]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-grip-field-ab
+          path: |
+            /tmp/splot-grip-*.png
+            /tmp/splot-grip-field-ab.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Exercise actual default grip against an authored blocking wall
+        if: contains(github.event.head_commit.message, '[grip-wall]')
+        run: node tests/browser-next-grip-wall.mjs
+      - name: Preserve lived contact comparison evidence
+        if: always() && contains(github.event.head_commit.message, '[grip-wall]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-grip-wall
+          path: |
+            /tmp/splot-grip-wall-*.png
+            /tmp/splot-grip-wall.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Compare R5 wood-panel material cues in real Chrome
+        if: contains(github.event.head_commit.message, '[plank-ab]')
+        run: node tests/browser-next-panel-cues.mjs
+      - name: Preserve paired R5 material images and geometry control
+        if: always() && contains(github.event.head_commit.message, '[plank-ab]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-r5-panel-cues
+          path: |
+            /tmp/splot-R5-*.png
+            /tmp/splot-R5-panel-cues.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify R6 save, recover and portrait continuation with real UI
+        if: contains(github.event.head_commit.message, '[durable-r6]')
+        run: node tests/browser-next-R6-durable-world.mjs
+      - name: Preserve R6 persistence checkpoints without private Owner worlds
+        if: always() && contains(github.event.head_commit.message, '[durable-r6]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-R6-restore
+          path: |
+            /tmp/splot-R6-*.png
+            /tmp/splot-R6-restore.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Characterize real mobile build/move loop friction
+        if: contains(github.event.head_commit.message, '[mobile-r7]')
+        run: node tests/browser-next-R7-mobile-loop.mjs
+      - name: Preserve touch interaction and mode evidence
+        if: always() && contains(github.event.head_commit.message, '[mobile-r7]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-R7-mobile-loop
+          path: |
+            /tmp/splot-R7-*.png
+            /tmp/splot-R7-loop.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Check boar sight against real authored wall in Box3D
+        if: contains(github.event.head_commit.message, '[boar-sight]')
+        run: node tests/browser-next-boar-perception.mjs
+      - name: Preserve only synthetic sight/memory experiment artifacts
+        if: always() && contains(github.event.head_commit.message, '[boar-sight]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-boar-perception
+          path: |
+            /tmp/splot-boar-*.png
+            /tmp/splot-boar-perception.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Compare boar perception of live stacked Box3D crates
+        if: contains(github.event.head_commit.message, '[crate-sight]')
+        run: node tests/browser-next-dynamic-sight.mjs
+      - name: Retain synthetic physical crate sight A/B
+        if: always() && contains(github.event.head_commit.message, '[crate-sight]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-dynamic-sight
+          path: |
+            /tmp/splot-R9-*.png
+            /tmp/splot-R9-crates.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify opt-in visual actor heading matches actual movement
+        if: contains(github.event.head_commit.message, '[actor-facing]')
+        run: node tests/browser-next-actor-facing.mjs
+      - name: Preserve actor heading visual and physics A/B
+        if: always() && contains(github.event.head_commit.message, '[actor-facing]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-actor-facing
+          path: |
+            /tmp/splot-R10-*.png
+            /tmp/splot-R10-facing.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Archive temporary synthetic camera visual evidence
+        if: (github.event_name == 'workflow_dispatch' && inputs.historical_probes == true) || contains(github.event.head_commit.message, '[visual]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: splot-synthetic-camera-views
+          path: /tmp/splot-orbit-*.png
+          if-no-files-found: error
+          retention-days: 3

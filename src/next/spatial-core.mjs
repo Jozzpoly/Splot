@@ -21,6 +21,7 @@ export function createSpatialWorld({width=42,height=32}={}) {
 function validElement(w,e){
  if(!e||typeof e!=='object'||Array.isArray(e)||typeof e.id!=='string'||!/^[-_a-zA-Z0-9]{1,64}$/.test(e.id))return 'invalid-id';
  if(!['panel','box'].includes(e.kind))return 'unsupported-kind';
+ if(e.motionType!==undefined&&(e.kind!=='box'||!['anchored','dynamic'].includes(e.motionType)))return 'unsupported-motion-type';
  if(e.material!==undefined&&(typeof e.material!=='string'||!/^[-_a-zA-Z0-9]{1,32}$/.test(e.material)))return 'invalid-material';
  let points=[];
  if(e.kind==='panel'){
@@ -108,8 +109,36 @@ export function castRay(world,origin,direction,{maxDistance=200,ground=true,only
 }
 export function supportCandidates(world,x,y,{maxZ=31}={}){
  if(!num(x)||!num(y)||!num(maxZ))throw Error('invalid-support-query');
- return castRay(world,[x,y,maxZ],[0,0,-1],{onlySupports:true,maxDistance:Math.max(1,maxZ+3)})
-  .map(h=>({id:h.id,z:h.point[2],normal:h.normal,point:h.point}));
+ // Exact vertical intersection against canonical authored primitives.
+ // A vertical ground/support query must never regenerate all triangles
+ // of the entire scene for each of hundreds of dynamic bodies per step.
+ // General-angle castRay/picking still uses the shared triangle geometry.
+ const out=[];
+ const hit=(id,z,normal)=>{
+  if(z<maxZ-EPS&&maxZ-z<=Math.max(1,maxZ+3)+EPS)
+   out.push({id,z,normal,point:[x,y,z]});
+ };
+ for(const e of world.elements){
+  if(e.kind==='box'){
+   if(x>=e.min[0]-EPS&&x<=e.max[0]+EPS&&
+      y>=e.min[1]-EPS&&y<=e.max[1]+EPS)
+    hit(e.id,e.max[2],[0,0,1]);
+   continue;
+  }
+  const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],len=Math.hypot(dx,dy);
+  if(len<EPS)continue;
+  const ux=dx/len,uy=dy/len,qx=x-e.a[0],qy=y-e.a[1];
+  const u=qx*ux+qy*uy,v=-qx*uy+qy*ux;
+  if(u < -EPS || u > len+EPS || Math.abs(v)>e.width/2+EPS)continue;
+  const slope=(e.b[2]-e.a[2])/len,nz=1/Math.sqrt(1+slope*slope);
+  if(nz<.45)continue; // same upward-face threshold as castRay
+  const z=e.a[2]+slope*u;
+  hit(e.id,z,[-slope*ux*nz,-slope*uy*nz,nz]);
+ }
+ if(x>=0&&x<=world.width&&y>=0&&y<=world.height&&maxZ>EPS)
+  hit('ground',0,[0,0,1]);
+ out.sort((a,b)=>b.z-a.z||a.id.localeCompare(b.id));
+ return out;
 }
 // A conservative volume gate until a complete swept-volume contact solver
 // earns its place. It NEVER claims accurate rotation or rigid-body impulses.

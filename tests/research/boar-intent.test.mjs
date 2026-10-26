@@ -38,3 +38,33 @@ test('fully coincident center does not generate NaN or teleport command',()=>{
  assert.ok(r.dir.every(Number.isFinite));
  assert.ok(Math.hypot(...r.dir)<=1+1e-8);
 });
+
+test('new boar perception reacts to a seen player, not a player behind opaque matter',()=>{
+ const m=createBoarIntent({mode:'responsive-los'}),b={x:10,y:10,z:0,h:.75},
+ p={x:11.5,y:10,z:0,h:1.6},food={x:15,y:13};
+ assert.equal(m.choose({boar:b,player:p,food,time:1,playerVisible:false}).phase,'travel');
+ const seen=m.choose({boar:b,player:p,food,time:1.1,playerVisible:true});
+ assert.equal(seen.phase,'wary');assert.deepEqual(seen.lastSeen,{x:11.5,y:10});
+ const hidden=m.choose({boar:b,player:{...p,x:8,y:13},food,time:1.4,playerVisible:false});
+ assert.equal(hidden.phase,'wary');
+ assert.deepEqual(hidden.lastSeen,{x:11.5,y:10});
+ assert.ok(hidden.dir[0]<0&&Math.abs(hidden.dir[1])<1e-8);
+ assert.equal(m.choose({boar:b,player:p,food,time:8,playerVisible:false}).phase,'travel');
+ m.setMode('forage');
+ assert.equal(m.choose({boar:b,player:p,food,time:9,playerVisible:true}).phase,'travel');
+});
+test('old responsive behavior remains the distance-only control',()=>{
+ const m=createBoarIntent({mode:'responsive'});
+ assert.equal(m.choose({boar:{x:10,y:10,z:0,h:.75},
+ player:{x:11.5,y:10,z:0,h:1.6},food:{x:15,y:10},time:1,playerVisible:false}).phase,'wary');
+});
+
+test('opt-in crate-sensitive vision shares last-seen memory without altering old modes',()=>{
+ const m=createBoarIntent({mode:'responsive-los-crates'});
+ const boar={x:10,y:10,z:0,h:.75},player={x:11.5,y:10,z:0,h:1.6},food={x:15,y:10};
+ assert.equal(m.choose({boar,player,food,time:1,playerVisible:false}).phase,'travel');
+ assert.equal(m.choose({boar,player,food,time:1.1,playerVisible:true}).phase,'wary');
+ assert.deepEqual(m.choose({boar,player:{...player,x:8,y:12},food,time:1.2,playerVisible:false}).lastSeen,{x:11.5,y:10});
+ m.setMode('responsive-los');
+ assert.equal(m.choose({boar,player,food,time:2,playerVisible:false}).phase,'travel');
+});

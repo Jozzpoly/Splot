@@ -1,7 +1,7 @@
 // Swappable render backend. The scene owns triangles and world coordinates.
 // Neither backend may decide support, collision, pick targets or game state.
 import {projectPoint} from './spatial-core.mjs';
-const palette={wood:[154,123,82],stone:[113,121,112],steel:[115,149,162],soil:[58,77,68],leaf:[73,111,88],player:[92,182,154],boar:[181,119,97],crate:[190,146,96],skin:[213,173,136],shadow:[35,51,49],mark:[243,197,118]};
+const palette={wood:[154,123,82],'wood-seam':[93,71,52],stone:[113,121,112],steel:[115,149,162],soil:[58,77,68],leaf:[73,111,88],player:[92,182,154],boar:[181,119,97],crate:[190,146,96],skin:[213,173,136],shadow:[35,51,49],mark:[243,197,118]};
 const normalized=v=>{const k=Math.hypot(...v)||1;return v.map(a=>a/k)};
 const LIGHT=normalized([-.4,-.7,1.1]);
 export function colorFor(triangle){

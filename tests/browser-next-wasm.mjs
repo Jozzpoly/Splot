@@ -1399,5 +1399,48 @@ try{
   await historyPage.screenshot({path:'/tmp/splot-mixed-history-FAIL.png'}).catch(()=>{});
  }
  await historyPage.close();
+ // World-grounded diagnostic: a crate may intersect newly created material,
+ // yet remains physically present. Exact touching does not count.
+ const overlapPage=await context.newPage();
+ try{
+  await overlapPage.goto(rootUrl,{waitUntil:'domcontentloaded'});
+  await overlapPage.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  await overlapPage.locator('#pause').click();
+  const result=await overlapPage.evaluate(()=>{
+   const g=window.__splotNext,w=g.world,c=w.bodies.find(b=>b.kind==='crate');
+   const position=[c.x,c.y,c.z],count=()=>w.events.filter(e=>e.type==='authored-crate-overlap').length;
+   const start=count();
+   const safe=g.build({id:'diagnostic-safe',kind:'box',min:[w.scene.width-4,w.scene.height-4,0],
+      max:[w.scene.width-3,w.scene.height-3,1],material:'stone'});
+   g.challenger.syncStatics();const afterSafe=count();
+   const touch=g.build({id:'diagnostic-touch',kind:'box',
+      min:[c.x+c.r,c.y-.30,0],max:[c.x+c.r+1,c.y+.30,1],material:'stone'});
+   g.challenger.syncStatics();const afterTouch=count();
+   const overlap=g.build({id:'diagnostic-overlap',kind:'box',
+      min:[c.x-.35,c.y-.35,0],max:[c.x+.35,c.y+.35,1],material:'stone'});
+   g.challenger.syncStatics();const afterOverlap=count();
+   g.challenger.syncStatics();const repeated=count();
+   return {start,afterSafe,afterTouch,afterOverlap,repeated,
+      safe:safe.ok,touch:touch.ok,overlap:overlap.ok,
+      event:w.events.findLast(e=>e.type==='authored-crate-overlap'),
+      unchanged:[c.x,c.y,c.z].every((v,i)=>v===position[i]),
+      paused:w.paused,retained:w.scene.elements.some(e=>e.id==='diagnostic-overlap')};
+  });
+  assert.ok(result.safe&&result.touch&&result.overlap&&result.retained);
+  assert.equal(result.paused,true);
+  assert.equal(result.afterSafe,result.start);
+  assert.equal(result.afterTouch,result.start,'face-touch is not a volume intersection');
+  assert.equal(result.afterOverlap,result.start+1,'overlap must raise exactly one event');
+  assert.equal(result.repeated,result.afterOverlap,'no re-notification without authored change');
+  assert.deepEqual(result.event.part,'diagnostic-overlap');
+  assert.equal(result.unchanged,true,'no hidden position change or teleport');
+  await overlapPage.waitForFunction(()=>document.querySelector('#notice')?.textContent.includes('diagnostic-overlap'),null,{timeout:3500});
+  const notice=await overlapPage.locator('#notice').textContent();
+  assert.match(notice,/Budowa dozwolona/);
+  console.log('PASS REAL CHROME permissive newly-authored material/crate collision warning',JSON.stringify({result,notice}));
+ }catch(e){
+  failures++;console.error('FAIL authored crate-contact diagnosis',String(e));
+  await overlapPage.screenshot({path:'/tmp/splot-material-contact-notice-FAIL.png'}).catch(()=>{});
+ }finally{await overlapPage.close();}
 }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 assert.equal(failures,0,`${failures} actual browser Box3D scenarios failed`);

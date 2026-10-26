@@ -1887,6 +1887,7 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
  }
  function syncStatics(){
   if(w.scene.revision===state.revision)return;
+  const initialized=state.revision>=0,changedBoxes=[];
   const current=new Map(w.scene.elements.map(e=>[e.id,e]));
   for(const [id,entry]of statics){
    const e=current.get(id);
@@ -1912,9 +1913,22 @@ function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',boarMod
     }
    }else if(!statics.has(id)){
     statics.set(id,{rb:makePart(e),hash:JSON.stringify(e)});
+    if(initialized&&e.kind==='box')changedBoxes.push(e);
    }
   }
   state.revision=w.scene.revision;
+  // One-time geometry evidence after authoring, NOT an impulse or future
+  // solver prediction. A new anchored box may intersect real moving crates.
+  // Report rather than teleport, forbid, clamp or repeatedly wake them.
+  const margin=.001;
+  for(const e of changedBoxes){
+   const crates=w.bodies.filter(b=>b.kind==='crate'&&
+    b.x+b.r>e.min[0]+margin&&b.x-b.r<e.max[0]-margin&&
+    b.y+b.r>e.min[1]+margin&&b.y-b.r<e.max[1]-margin&&
+    b.z+b.h>e.min[2]+margin&&b.z<e.max[2]-margin).map(b=>b.id);
+   if(crates.length)w.events.push({type:'authored-crate-overlap',
+    part:e.id,crates,basis:'AABB',time:w.time});
+  }
   // Editing remains permissive; unresolved deep overlaps are a visible debt.
   // Never disguise a teleport/reject as a solver feature.
   for(const a of w.bodies.filter(b=>b.kind!=='crate')){
@@ -2801,6 +2815,7 @@ function cursorPos(e){
 let cursor=null,targetSetSignature=null,creationForeground=null;
 let lastHoverRecheckAt=0,lastHoverWorldSignature=null;
 let autoGripReleaseWorld=world,lastAutoGripRelease=null;
+let overlapWorld=world,lastOverlap=null;
 function refreshSelection(){if(!cam||!cursor)return;
  // The backing canvas size can change without another pointer event.
  // Reproject the LAST CSS position into its current render-resolution pixels.
@@ -3168,6 +3183,16 @@ function frame(t){
   const reason=release.reason==='contact'?'kontakt z przeszkodą':'skrzynia za daleko';
   actionText('Chwyt zerwany — '+reason+'. Podejdź bliżej i naciśnij E.');
   playtest.event('auto-grip-release',{id:release.id||null,reason:release.reason});
+ }
+ // Explain possible unstable contacts, but preserve permissive construction.
+ const overlap=world.events.findLast(e=>e.type==='authored-crate-overlap');
+ if(overlapWorld!==world){overlapWorld=world;lastOverlap=overlap;}
+ else if(overlap&&overlap!==lastOverlap){
+  lastOverlap=overlap;
+  actionText('Uwaga: '+overlap.part+' przecina '+overlap.crates.length+
+   (overlap.crates.length===1?' skrzynię':' skrzyń')+
+   ' (objętości AABB). Budowa dozwolona; reakcja Box3D może być gwałtowna.');
+  playtest.event('authored-crate-overlap',{part:overlap.part,crates:overlap.crates});
  }
  // Camera and solver material can move under a stationary pointer.
  // Do not raycast every render frame; probe only during authoring and at 8 Hz.

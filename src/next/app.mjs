@@ -267,6 +267,7 @@ function cursorPos(e){
 let cursor=null,targetSetSignature=null,creationForeground=null;
 let lastHoverRecheckAt=0,lastHoverWorldSignature=null;
 let autoGripReleaseWorld=world,lastAutoGripRelease=null;
+let overlapWorld=world,lastOverlap=null;
 function refreshSelection(){if(!cam||!cursor)return;
  // The backing canvas size can change without another pointer event.
  // Reproject the LAST CSS position into its current render-resolution pixels.
@@ -634,6 +635,16 @@ function frame(t){
   const reason=release.reason==='contact'?'kontakt z przeszkodą':'skrzynia za daleko';
   actionText('Chwyt zerwany — '+reason+'. Podejdź bliżej i naciśnij E.');
   playtest.event('auto-grip-release',{id:release.id||null,reason:release.reason});
+ }
+ // Explain possible unstable contacts, but preserve permissive construction.
+ const overlap=world.events.findLast(e=>e.type==='authored-crate-overlap');
+ if(overlapWorld!==world){overlapWorld=world;lastOverlap=overlap;}
+ else if(overlap&&overlap!==lastOverlap){
+  lastOverlap=overlap;
+  actionText('Uwaga: '+overlap.part+' przecina '+overlap.crates.length+
+   (overlap.crates.length===1?' skrzynię':' skrzyń')+
+   ' (objętości AABB). Budowa dozwolona; reakcja Box3D może być gwałtowna.');
+  playtest.event('authored-crate-overlap',{part:overlap.part,crates:overlap.crates});
  }
  // Camera and solver material can move under a stationary pointer.
  // Do not raycast every render frame; probe only during authoring and at 8 Hz.

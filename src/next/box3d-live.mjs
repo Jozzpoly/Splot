@@ -103,6 +103,7 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
  }
  function syncStatics(){
   if(w.scene.revision===state.revision)return;
+  const initialized=state.revision>=0,changedBoxes=[];
   const current=new Map(w.scene.elements.map(e=>[e.id,e]));
   for(const [id,entry]of statics){
    const e=current.get(id);
@@ -128,9 +129,22 @@ export function createBox3DBridge(w,b3,{gripLaw='baseline',actorContact='ghost',
     }
    }else if(!statics.has(id)){
     statics.set(id,{rb:makePart(e),hash:JSON.stringify(e)});
+    if(initialized&&e.kind==='box')changedBoxes.push(e);
    }
   }
   state.revision=w.scene.revision;
+  // One-time geometry evidence after authoring, NOT an impulse or future
+  // solver prediction. A new anchored box may intersect real moving crates.
+  // Report rather than teleport, forbid, clamp or repeatedly wake them.
+  const margin=.001;
+  for(const e of changedBoxes){
+   const crates=w.bodies.filter(b=>b.kind==='crate'&&
+    b.x+b.r>e.min[0]+margin&&b.x-b.r<e.max[0]-margin&&
+    b.y+b.r>e.min[1]+margin&&b.y-b.r<e.max[1]-margin&&
+    b.z+b.h>e.min[2]+margin&&b.z<e.max[2]-margin).map(b=>b.id);
+   if(crates.length)w.events.push({type:'authored-crate-overlap',
+    part:e.id,crates,basis:'AABB',time:w.time});
+  }
   // Editing remains permissive; unresolved deep overlaps are a visible debt.
   // Never disguise a teleport/reject as a solver feature.
   for(const a of w.bodies.filter(b=>b.kind!=='crate')){

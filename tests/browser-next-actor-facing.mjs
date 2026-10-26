@@ -59,22 +59,44 @@ try{
   const page=await ctx.newPage();
   await page.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html'+param,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+  const picker=page.waitForEvent('filechooser');
+  await page.locator('#load').click();
+  const fc=await picker;page.once('dialog',d=>d.accept());
+  await fc.setFiles({name:'splot-R10-matched-synthetic.json',
+   mimeType:'application/json',buffer:Buffer.from(fixture)});
+  await page.waitForFunction(()=>window.__splotNext.world.paused===true,null,{timeout:8000});
   const state=await page.evaluate(()=>{
    const g=window.__splotNext,w=g.world,b=w.bodies.find(x=>x.id==='boar'),before=b.yaw;
+   const from=[b.x,b.y,b.z];
    w.paused=false;for(let i=0;i<18;i++)g.step(1,[0,0]);w.paused=true;
    return {mode:g.challenger.status.boarMode,physics:g.physics,was:before,now:b.yaw,
-    position:[b.x,b.y,b.z],phase:w.boarIntent.phase};
+    from,position:[b.x,b.y,b.z],phase:w.boarIntent.phase};
   });
   report.cases.find(x=>x.mode===mode).physics=state;
   console.log('R10 ACTUAL MOVEMENT HEADING',JSON.stringify({mode,...state}));
   await page.close();
  }
+ // The default boar may have stood still during module fetch while the
+ // opt-in version already had a heading. Align ACTUAL starting physics by
+ // importing the SAME authentic JSON into both fresh worlds; avoid comparing
+ // two unrelated load times or a preexisting yaw to a movement-derived yaw.
+ const physicsFixture=await ctx.newPage();
+ await physicsFixture.goto('http://127.0.0.1:'+port+'/src/next/Splot_Next_GRAJ.html',{waitUntil:'domcontentloaded'});
+ await physicsFixture.waitForFunction(()=>window.__splotNext?.physics==='box3d',null,{timeout:60000});
+ const fixture=await physicsFixture.evaluate(()=>{
+  const w=window.__splotNext.world;
+  const bodies=structuredClone(w.bodies);
+  const boar=bodies.find(b=>b.id==='boar');boar.yaw=0;
+  return JSON.stringify({format:'splot-next-live-research-1',scene:w.scene,bodies,time:0});
+ });
+ await physicsFixture.close();
  const [a,b]=report.cases;
  assert.equal(a.physics.physics,'box3d');assert.equal(b.physics.physics,'box3d');
  assert.equal(a.physics.was,a.physics.now,'default game stores historical yaw unchanged');
  assert.ok(Math.abs(b.physics.was-b.physics.now)>.4,'opt-in boar yaw changes with actual forage movement');
- assert.ok(Math.hypot(...a.physics.position.map((v,i)=>v-b.physics.position[i]))<.01,
-  'visual facing must not perturb actual Box3D movement/position');
+ assert.equal(a.physics.was,0);assert.equal(b.physics.was,0,'same imported initial yaw');
+ assert.ok(Math.hypot(...a.physics.position.map((v,i)=>v-b.physics.position[i]))<.003,
+  'same saved world and same Box3D physics must reach same boar position with or without visual heading');
  await writeFile('/tmp/splot-R10-facing.json',JSON.stringify(report,null,2));
  console.log('PASS R10 verified exact actual boar-render geometry and untouched physical trajectory; PNGs are review evidence only');
  await ctx.close();
